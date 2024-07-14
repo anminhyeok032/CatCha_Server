@@ -9,6 +9,13 @@ SOCKET g_server_socket, g_client_socket;
 HANDLE g_h_iocp;
 Over_IO g_over;
 
+int GetSessionNumber()
+{
+	// TODO : 매치메이킹 시스템 시 비어있는 매칭 서버 값 돌려줘야한다
+	return 0;
+}
+
+
 std::unordered_map<int, GameSession> g_sessions;
 
 void Worker()
@@ -50,13 +57,14 @@ void Worker()
 		switch (ex_over->io_key_) {
 		case IO_ACCEPT:
 		{
-			// 매치메이킹 시스템 정립 필요함
+			// TODO :매치메이킹 시스템 정립 필요함
 			break;
 		}
 		case IO_RECV:
 		{
 			char* p = ex_over->send_buf_;
 
+			// TODO : 매치 메이킹 이후 받은 세션값으로 변경이 필요함
 			int total_data = bytes + g_sessions[key].players_[0].prev_packet_.size();
 
 			auto& buffer = g_sessions[key].players_[0].prev_packet_;
@@ -76,6 +84,11 @@ void Worker()
 				}
 			}
 			g_sessions[key].players_[0].DoReceive();
+			break;
+		}
+		case IO_SEND:
+		{
+			delete ex_over;
 			break;
 		}
 		}
