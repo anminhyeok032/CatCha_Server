@@ -57,7 +57,40 @@ void Worker()
 		switch (ex_over->io_key_) {
 		case IO_ACCEPT:
 		{
-			// TODO :매치메이킹 시스템 정립 필요함
+			// TODO : DB 체크 후 로그인 시키는 과정 들어가야함. 디버깅 속도를 추후 추가 예정
+			int client_id = 0;
+			if (client_id != -1)
+			{
+				{
+					std::lock_guard<std::mutex> ll(objects[client_id]->mut_state_);
+					objects[client_id]->state_ = OS_ACTIVE;
+				}
+				g_sessions[client_id]->x_ = 0;
+				objects[client_id]->y_ = 0;
+				objects[client_id]->id_ = client_id;
+				objects[client_id]->name_[0] = 0;
+				objects[client_id]->prev_packet_.clear();
+				objects[client_id]->visual_ = 0;
+				objects[client_id]->SetSocket(g_client_socket);
+				objects[client_id]->PutInSector();
+				CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket),
+					g_h_iocp, client_id, 0);
+				objects[client_id]->DoReceive();
+				// 접속 플레이어 리스트에 저장
+				g_mut_player_list.lock();
+				g_player_list.insert(client_id);
+				g_mut_player_list.unlock();
+				// 다른 플레이어 위해 소켓 초기화
+				g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+			}
+			else
+			{
+				std::cout << "Error : Max User" << std::endl;
+			}
+
+			ZeroMemory(&g_over.over_, sizeof(g_over.over_));
+			AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
+			break;
 			break;
 		}
 		case IO_RECV:

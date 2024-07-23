@@ -1,13 +1,13 @@
 #pragma once
 #include "Over_IO.h"
 
-class Player;
+class Character;
 
 class GameSession
 {
 public:
-	std::unordered_map<int, Player> players_;
-	//std::unordered_map<int, Npc> Npcs_;
+	std::unordered_map<int, std::unique_ptr<Character>> players_;
+
 	
 	GameSession()
 	{
