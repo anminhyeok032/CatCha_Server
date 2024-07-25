@@ -61,27 +61,7 @@ void Worker()
 			int client_id = 0;
 			if (client_id != -1)
 			{
-				{
-					std::lock_guard<std::mutex> ll(objects[client_id]->mut_state_);
-					objects[client_id]->state_ = OS_ACTIVE;
-				}
-				g_sessions[client_id]->x_ = 0;
-				objects[client_id]->y_ = 0;
-				objects[client_id]->id_ = client_id;
-				objects[client_id]->name_[0] = 0;
-				objects[client_id]->prev_packet_.clear();
-				objects[client_id]->visual_ = 0;
-				objects[client_id]->SetSocket(g_client_socket);
-				objects[client_id]->PutInSector();
-				CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket),
-					g_h_iocp, client_id, 0);
-				objects[client_id]->DoReceive();
-				// 접속 플레이어 리스트에 저장
-				g_mut_player_list.lock();
-				g_player_list.insert(client_id);
-				g_mut_player_list.unlock();
-				// 다른 플레이어 위해 소켓 초기화
-				g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+				std::cout << "check accept**" << std::endl;	
 			}
 			else
 			{
@@ -91,32 +71,31 @@ void Worker()
 			ZeroMemory(&g_over.over_, sizeof(g_over.over_));
 			AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
 			break;
-			break;
 		}
 		case IO_RECV:
 		{
-			char* p = ex_over->send_buf_;
+			//char* p = ex_over->send_buf_;
 
-			// TODO : 매치 메이킹 이후 받은 세션값으로 변경이 필요함
-			int total_data = bytes + g_sessions[key].players_[0].prev_packet_.size();
+			//// TODO : 매치 메이킹 이후 받은 세션값으로 변경이 필요함
+			//int total_data = bytes + g_sessions[key].players_[0].prev_packet_.size();
 
-			auto& buffer = g_sessions[key].players_[0].prev_packet_;
-			buffer.insert(buffer.end(), ex_over->send_buf_, ex_over->send_buf_ + bytes);
+			//auto& buffer = g_sessions[key].players_[0].prev_packet_;
+			//buffer.insert(buffer.end(), ex_over->send_buf_, ex_over->send_buf_ + bytes);
 
-			while (buffer.size() > 0)
-			{
-				int packet_size = static_cast<int>(p[0]);
-				if (packet_size <= buffer.size())
-				{
-					g_sessions[key].players_[0].ProcessPacket(buffer.data());
-					buffer.erase(buffer.begin(), buffer.begin() + packet_size);
-				}
-				else
-				{
-					break;
-				}
-			}
-			g_sessions[key].players_[0].DoReceive();
+			//while (buffer.size() > 0)
+			//{
+			//	int packet_size = static_cast<int>(p[0]);
+			//	if (packet_size <= buffer.size())
+			//	{
+			//		g_sessions[key].players_[0].ProcessPacket(buffer.data());
+			//		buffer.erase(buffer.begin(), buffer.begin() + packet_size);
+			//	}
+			//	else
+			//	{
+			//		break;
+			//	}
+			//}
+			//g_sessions[key].players_[0].DoReceive();
 			break;
 		}
 		case IO_SEND:
