@@ -5,6 +5,7 @@
 #include <thread>
 #include <vector>
 #include <unordered_map>
+#include <mutex>
 #include <tchar.h>
 #include <WS2tcpip.h>
 #include <MSWSock.h>
@@ -17,6 +18,7 @@
 constexpr short PORT = 4000;
 constexpr int BUFSIZE = 256;
 constexpr int MAX_USER = 4;
+constexpr int MAX_NPC = 4;
 
 
 enum IO_TYPE

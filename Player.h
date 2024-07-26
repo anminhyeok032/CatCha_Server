@@ -8,8 +8,7 @@ public:
 	int id_;
 	
 
-	// packet ¿Á¡∂∏≥
-	std::vector<char> prev_packet_;
+
 
 	SOCKET socket_;
 
@@ -31,9 +30,11 @@ public:
 	}
 	~Player() {}
 
-	void DoReceive();
+	void SetSocket(SOCKET socket) override { socket_ = socket; }
+
+	void DoReceive() override;
 	void DoSend(void* packet);
 
-	void ProcessPacket(char* packet);
+	void ProcessPacket(char* packet) override;
 };
 

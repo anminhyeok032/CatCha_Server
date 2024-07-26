@@ -13,4 +13,13 @@ public:
 	// physics
 	float velocity_;
 	bool isJumping_;
+
+	// packet 재조립
+	std::vector<char> prev_packet_;
+
+public:
+	// Player 초기화를 위한 가상 함수
+	virtual void SetSocket(SOCKET socket) {}
+	virtual void DoReceive() {}
+	virtual void ProcessPacket(char* packet) {}
 };

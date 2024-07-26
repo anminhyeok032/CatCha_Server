@@ -11,8 +11,28 @@ Over_IO g_over;
 
 int GetSessionNumber()
 {
-	// TODO : 매치메이킹 시스템 시 비어있는 매칭 서버 값 돌려줘야한다
-	return 0;
+	int room_num = 0;
+	for (const auto& room : g_sessions)
+	{
+		std::lock_guard <std::mutex> lg{ g_sessions[room_num].mt_session_state_ };
+		if (room.second.state_ == SESSION_FULL)
+		{
+			room_num++;
+			continue;
+		}
+		else
+		{
+			if (g_sessions[room.first].CheckCharacterNum() < MAX_USER + MAX_NPC)
+			{
+				return room.first;
+			}
+			else
+			{
+				g_sessions[room.first].state_ = SESSION_FULL;
+			}
+		}
+	}
+	return room_num;
 }
 
 
@@ -25,6 +45,7 @@ void Worker()
 		DWORD bytes;
 		ULONG_PTR key;
 		WSAOVERLAPPED* over = nullptr;
+		// TODO : key를 2가지 값으로 받게 구조체로 Create해주자
 		BOOL ret = GetQueuedCompletionStatus(g_h_iocp, &bytes, &key, &over, INFINITE);
 		Over_IO* ex_over = reinterpret_cast<Over_IO*>(over);
 		// add logic
@@ -57,16 +78,22 @@ void Worker()
 		switch (ex_over->io_key_) {
 		case IO_ACCEPT:
 		{
-			// TODO : DB 체크 후 로그인 시키는 과정 들어가야함. 디버깅 속도를 추후 추가 예정
-			int client_id = 0;
-			if (client_id != -1)
-			{
-				std::cout << "check accept**" << std::endl;	
-			}
-			else
-			{
-				std::cout << "Error : Max User" << std::endl;
-			}
+			// TODO : DB 체크 후 로그인 시키는 과정 들어가야함. 디버깅 속도를 위해 추후 추가 예정
+
+			int room_num = GetSessionNumber();
+			std::cout << "check accept**" << std::endl;	
+			std::cout << "Session 생성 check : " << room_num << std::endl;	
+			int client_id = g_sessions[room_num].CheckCharacterNum();
+
+			// TODO : 세션에 플레이어가 다 찰때까지 대기 시키도록 분리할 것
+
+			// 플레이어 초기화
+			g_sessions[room_num].characters_[client_id] = std::make_unique<Player>();
+			g_sessions[room_num].characters_[client_id]->SetSocket(g_client_socket);
+
+			// 다른 플레이어 위해 소켓 초기화
+			g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+
 
 			ZeroMemory(&g_over.over_, sizeof(g_over.over_));
 			AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
@@ -74,28 +101,28 @@ void Worker()
 		}
 		case IO_RECV:
 		{
-			//char* p = ex_over->send_buf_;
+			char* p = ex_over->send_buf_;
 
-			//// TODO : 매치 메이킹 이후 받은 세션값으로 변경이 필요함
-			//int total_data = bytes + g_sessions[key].players_[0].prev_packet_.size();
+			// TODO : 매치 메이킹 이후 받은 세션값으로 변경이 필요함
+			int total_data = bytes + g_sessions[key].characters_[0]->prev_packet_.size();
 
-			//auto& buffer = g_sessions[key].players_[0].prev_packet_;
-			//buffer.insert(buffer.end(), ex_over->send_buf_, ex_over->send_buf_ + bytes);
+			auto& buffer = g_sessions[key].characters_[0]->prev_packet_;
+			buffer.insert(buffer.end(), ex_over->send_buf_, ex_over->send_buf_ + bytes);
 
-			//while (buffer.size() > 0)
-			//{
-			//	int packet_size = static_cast<int>(p[0]);
-			//	if (packet_size <= buffer.size())
-			//	{
-			//		g_sessions[key].players_[0].ProcessPacket(buffer.data());
-			//		buffer.erase(buffer.begin(), buffer.begin() + packet_size);
-			//	}
-			//	else
-			//	{
-			//		break;
-			//	}
-			//}
-			//g_sessions[key].players_[0].DoReceive();
+			while (buffer.size() > 0)
+			{
+				int packet_size = static_cast<int>(p[0]);
+				if (packet_size <= buffer.size())
+				{
+					g_sessions[key].characters_[0]->ProcessPacket(buffer.data());
+					buffer.erase(buffer.begin(), buffer.begin() + packet_size);
+				}
+				else
+				{
+					break;
+				}
+			}
+			g_sessions[key].characters_[0]->DoReceive();
 			break;
 		}
 		case IO_SEND:

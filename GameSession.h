@@ -3,20 +3,26 @@
 
 class Character;
 
+enum SESSION_STATE {
+	SESSION_WAIT,
+	SESSION_FULL
+};
+
 class GameSession
 {
 public:
-	std::unordered_map<int, std::unique_ptr<Character>> players_;
+	std::unordered_map<int, std::unique_ptr<Character>> characters_;
 
+	SESSION_STATE state_;
+	std::mutex mt_session_state_;
 	
 	GameSession()
 	{
-		players_.clear();
-		//Npcs_.clear();
+		characters_.clear();
 	}
 	~GameSession() {}
 
-
+	int CheckCharacterNum() { return characters_.size(); }
 
 };
 
