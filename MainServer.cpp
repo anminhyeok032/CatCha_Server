@@ -9,6 +9,8 @@ SOCKET g_server_socket, g_client_socket;
 HANDLE g_h_iocp;
 Over_IO g_over;
 
+std::unordered_map<int, GameSession> g_sessions;
+
 int GetSessionNumber()
 {
 	int room_num = 0;
@@ -22,7 +24,7 @@ int GetSessionNumber()
 		}
 		else
 		{
-			if (g_sessions[room.first].CheckCharacterNum() < MAX_USER + MAX_NPC)
+			if (g_sessions[room.first].CheckCharacterNum() < 1/*MAX_USER + MAX_NPC*/)
 			{
 				return room.first;
 			}
@@ -36,7 +38,7 @@ int GetSessionNumber()
 }
 
 
-std::unordered_map<int, GameSession> g_sessions;
+
 
 void Worker()
 {
@@ -75,6 +77,12 @@ void Worker()
 			}
 		}
 
+		// Completion Key를 통해 세션 및 플레이어 식별
+		CompletionKey* completionKey = reinterpret_cast<CompletionKey*>(key);
+		int sessionId = completionKey->session_id;
+		int playerIndex = completionKey->player_index;
+
+
 		switch (ex_over->io_key_) {
 		case IO_ACCEPT:
 		{
@@ -90,11 +98,12 @@ void Worker()
 			// 플레이어 초기화
 			g_sessions[room_num].characters_[client_id] = std::make_unique<Player>();
 			g_sessions[room_num].characters_[client_id]->SetSocket(g_client_socket);
+			auto completion_key = new CompletionKey{ room_num, client_id };
+			CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(completion_key), 0);
+			g_sessions[room_num].characters_[client_id]->DoReceive();
 
 			// 다른 플레이어 위해 소켓 초기화
 			g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-
-
 			ZeroMemory(&g_over.over_, sizeof(g_over.over_));
 			AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
 			break;
@@ -102,11 +111,11 @@ void Worker()
 		case IO_RECV:
 		{
 			char* p = ex_over->send_buf_;
-
+			std::cout << "Completion key check : " << sessionId << "player index : " << playerIndex << std::endl;
 			// TODO : 매치 메이킹 이후 받은 세션값으로 변경이 필요함
-			int total_data = bytes + g_sessions[key].characters_[0]->prev_packet_.size();
+			int total_data = bytes + g_sessions[sessionId].characters_[playerIndex]->prev_packet_.size();
 
-			auto& buffer = g_sessions[key].characters_[0]->prev_packet_;
+			auto& buffer = g_sessions[sessionId].characters_[playerIndex]->prev_packet_;
 			buffer.insert(buffer.end(), ex_over->send_buf_, ex_over->send_buf_ + bytes);
 
 			while (buffer.size() > 0)
@@ -114,7 +123,7 @@ void Worker()
 				int packet_size = static_cast<int>(p[0]);
 				if (packet_size <= buffer.size())
 				{
-					g_sessions[key].characters_[0]->ProcessPacket(buffer.data());
+					g_sessions[sessionId].characters_[playerIndex]->ProcessPacket(buffer.data());
 					buffer.erase(buffer.begin(), buffer.begin() + packet_size);
 				}
 				else
@@ -122,7 +131,7 @@ void Worker()
 					break;
 				}
 			}
-			g_sessions[key].characters_[0]->DoReceive();
+			g_sessions[sessionId].characters_[playerIndex]->DoReceive();
 			break;
 		}
 		case IO_SEND:
@@ -154,7 +163,8 @@ int main()
 	SOCKADDR_IN client_addr;
 	int client_addr_size = sizeof(client_addr);
 	g_h_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
-	CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_server_socket), g_h_iocp, 9999, 0);
+
+	CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_server_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(new CompletionKey{ 0, 0 }), 0);
 	g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 	g_over.io_key_ = IO_ACCEPT;
 	AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);

@@ -20,6 +20,11 @@ constexpr int BUFSIZE = 256;
 constexpr int MAX_USER = 4;
 constexpr int MAX_NPC = 4;
 
+struct CompletionKey
+{
+	int session_id;
+	int player_index;
+};
 
 enum IO_TYPE
 {
