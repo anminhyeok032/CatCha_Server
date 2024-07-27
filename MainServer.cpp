@@ -10,6 +10,7 @@ HANDLE g_h_iocp;
 Over_IO g_over;
 
 std::unordered_map<int, GameSession> g_sessions;
+Concurrency::concurrent_queue<Command> commandQueue;
 
 int GetSessionNumber()
 {
@@ -24,7 +25,7 @@ int GetSessionNumber()
 		}
 		else
 		{
-			if (g_sessions[room.first].CheckCharacterNum() < 1/*MAX_USER + MAX_NPC*/)
+			if (g_sessions[room.first].CheckCharacterNum() < MAX_USER + MAX_NPC)
 			{
 				return room.first;
 			}
@@ -34,9 +35,9 @@ int GetSessionNumber()
 			}
 		}
 	}
+	g_sessions[room_num].lastUpdateTime = std::chrono::high_resolution_clock::now();
 	return room_num;
 }
-
 
 
 
@@ -89,8 +90,6 @@ void Worker()
 			// TODO : DB 체크 후 로그인 시키는 과정 들어가야함. 디버깅 속도를 위해 추후 추가 예정
 
 			int room_num = GetSessionNumber();
-			std::cout << "check accept**" << std::endl;	
-			std::cout << "Session 생성 check : " << room_num << std::endl;	
 			int client_id = g_sessions[room_num].CheckCharacterNum();
 
 			// TODO : 세션에 플레이어가 다 찰때까지 대기 시키도록 분리할 것
@@ -111,8 +110,6 @@ void Worker()
 		case IO_RECV:
 		{
 			char* p = ex_over->send_buf_;
-			std::cout << "Completion key check : " << sessionId << "player index : " << playerIndex << std::endl;
-			// TODO : 매치 메이킹 이후 받은 세션값으로 변경이 필요함
 			int total_data = bytes + g_sessions[sessionId].characters_[playerIndex]->prev_packet_.size();
 
 			auto& buffer = g_sessions[sessionId].characters_[playerIndex]->prev_packet_;

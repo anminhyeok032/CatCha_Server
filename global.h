@@ -11,6 +11,9 @@
 #include <MSWSock.h>
 #include "protocol.h"
 
+#include <chrono>
+
+#include <concurrent_queue.h>
 
 #pragma comment(lib, "WS2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
@@ -33,9 +36,23 @@ enum IO_TYPE
 	IO_RECV
 };
 
+enum class CommandType 
+{
+	MOVE,
+	JUMP
+};
+
+struct Command 
+{
+	CommandType type;
+	int session_id, player_id;
+	float vx, vy, vz;
+};
 
 extern SOCKET g_server_socket, g_client_socket;
 extern HANDLE g_h_iocp;
+
+extern Concurrency::concurrent_queue<Command> commandQueue;
 
 
 

@@ -15,6 +15,10 @@ public:
 
 	SESSION_STATE state_;
 	std::mutex mt_session_state_;
+
+	// ElapsedTime 계산을 위한 변수
+	//std::atomic<std::chrono::steady_clock::time_point> lastUpdateTime;
+	std::chrono::steady_clock::time_point lastUpdateTime;
 	
 	GameSession()
 	{
