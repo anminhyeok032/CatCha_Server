@@ -24,6 +24,9 @@
     <ClCompile Include="Player.cpp">
       <Filter>Character</Filter>
     </ClCompile>
+    <ClCompile Include="GameSession.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="protocol.h">

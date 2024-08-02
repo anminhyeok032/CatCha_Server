@@ -18,12 +18,6 @@ void Player::DoSend(void* packet)
 
 void Player::ProcessPacket(char* packet)
 {
-	// ElapsedTime
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float elapsed_time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastUpdateTime).count();
-	float elapsed_time_insec = elapsed_time;
-	if (elapsed_time_insec > 0.01f)	elapsed_time_insec = 0.01f;
-	lastUpdateTime = currentTime;
 
 	switch (packet[1])
 	{

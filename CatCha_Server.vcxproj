@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GameSession.cpp" />
     <ClCompile Include="MainServer.cpp" />
     <ClCompile Include="Player.cpp" />
   </ItemGroup>

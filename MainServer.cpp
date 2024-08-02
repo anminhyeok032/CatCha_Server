@@ -35,7 +35,6 @@ int GetSessionNumber()
 			}
 		}
 	}
-	g_sessions[room_num].lastUpdateTime = std::chrono::high_resolution_clock::now();
 	return room_num;
 }
 
@@ -140,6 +139,22 @@ void Worker()
 	}
 }
 
+// 각 세션의 위치, 시간, 남은 velocity 계산 등의 동기화를 50ms(초당 20번)단위로 실행하는 update Thread
+void UpdateThread()
+{
+	while (true)
+	{
+		auto startTime = std::chrono::steady_clock::now();
+
+		for (auto& session : g_sessions)
+		{
+			session.second.Update();
+		}
+
+		// 1초에 20번 호출되도록 50ms 대기
+		std::this_thread::sleep_until(startTime + std::chrono::milliseconds(50));
+	}
+}
 
 int main()
 {
@@ -166,6 +181,8 @@ int main()
 	g_over.io_key_ = IO_ACCEPT;
 	AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
 
+	std::thread update_thread(UpdateThread);
+	
 
 	// 내 cpu 코어 개수만큼의 스레드 생성
 	int num_threads = std::thread::hardware_concurrency();
@@ -179,6 +196,8 @@ int main()
 	{
 		w.join();
 	}
+	update_thread.join();
+
 
 
 	closesocket(g_server_socket);
