@@ -14,13 +14,16 @@ constexpr int W_HEIGHT = 8;
 // Client -> Server
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
+constexpr char CS_TIME = 2;
+
 
 // Server -> Client
 constexpr char SC_LOGIN_INFO = 11;
 constexpr char SC_ADD_PLAYER = 12;
 constexpr char SC_REMOVE_PLAYER = 13;
 constexpr char SC_MOVE_PLAYER = 14;
-constexpr char SC_REBIRTH_PACKET = 15;
+constexpr char SC_REBIRTH = 15;
+constexpr char SC_TIME = 16;
 
 #pragma pack (push, 1)
 ///////////////////////////////////////////////
@@ -43,6 +46,11 @@ struct CS_MOVE_PACKET {
 	short	camera_yaw, player_yaw;	
 };
 
+struct CS_TIME_PACKET {
+	unsigned char size;
+	char type;
+	unsigned short time;
+};
 
 ///////////////////////////////////////////////
 // Server -> Client
@@ -54,6 +62,12 @@ struct SC_LOGIN_INFO_PACKET {
 	char	type;
 	int 	id;
 	float 	x, y, z;	// 이후 매칭 시스템 적용 후 종족값 추가 해야함
+};
+
+struct SC_TIME_PACKET {
+	unsigned char size;
+	char type;
+	unsigned short time;
 };
 
 // 클라이언트 개인 서버에 접속한 플레이어 정보

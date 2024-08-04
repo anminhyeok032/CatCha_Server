@@ -33,8 +33,7 @@ public:
 	void SetSocket(SOCKET socket) override { socket_ = socket; }
 
 	void DoReceive() override;
-	void DoSend(void* packet);
-
+	void DoSend(void* packet) override;
 	void ProcessPacket(char* packet) override;
 
 	void InputKey();

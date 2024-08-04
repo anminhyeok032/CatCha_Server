@@ -10,6 +10,7 @@ void GameSession::Update()
 
     // TODO : 플레이어 남은 Velocity 존재시 계산해주기
 
+
     // 현재 세션 시간 업데이트
     lastupdatetime_ = current_time;
 
@@ -33,7 +34,15 @@ void GameSession::SendPlayerUpdate()
 
 void GameSession::SendTimeUpdate()
 {
-    // TODO : 게임 시간 broadcast
+    SC_TIME_PACKET p;
+    p.size = sizeof(SC_TIME_PACKET);
+    p.type = SC_TIME;
+    p.time = remaining_time_;
+
+    for (auto& players : characters_)
+    {
+        players.second->DoSend(&p);
+    }
 }
 
 uint64_t GameSession::GetServerTime()

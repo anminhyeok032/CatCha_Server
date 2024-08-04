@@ -22,4 +22,5 @@ public:
 	virtual void SetSocket(SOCKET socket) {}
 	virtual void DoReceive() {}
 	virtual void ProcessPacket(char* packet) {}
+	virtual void DoSend(void* packet) {}
 };

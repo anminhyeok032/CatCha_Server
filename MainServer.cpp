@@ -44,6 +44,7 @@ void Worker()
 {
 	while (true)
 	{
+		std::cout << "check" << std::endl;
 		DWORD bytes;
 		ULONG_PTR key;
 		WSAOVERLAPPED* over = nullptr;

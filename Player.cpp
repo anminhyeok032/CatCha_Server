@@ -23,14 +23,24 @@ void Player::ProcessPacket(char* packet)
 	{
 		// 로그인 패킷 처리
 	case CS_LOGIN:
+	{
 		// TODO : 이동 처리 먼저 하고 클라이언트끼리 동기화 하는 코드 작성
 		break;
+	}
 	case CS_MOVE:
+	{
 		CS_MOVE_PACKET* p = reinterpret_cast<CS_MOVE_PACKET*>(packet);
 		Direction = p->keyinput;
 		InputKey();
 		break;
-
+	}
+	case CS_TIME:
+	{
+		CS_TIME_PACKET* p = reinterpret_cast<CS_TIME_PACKET*>(packet);
+		remaining_time_ = p->time;
+		std::cout << "게임 시간 : " << remaining_time_ << std::endl;
+		break;
+	}
 	}
 }
 

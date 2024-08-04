@@ -139,6 +139,13 @@ void ProcessPacket(char* ptr)
         }
         break;
     }
+    case SC_TIME:
+    {
+        SC_TIME_PACKET* time = reinterpret_cast<SC_TIME_PACKET*>(ptr);
+        unsigned short game_time = time->time;
+        DoSend(time);
+        break;
+    }
     default:
         printf("Unknown PACKET type [%d]\n", ptr[1]);
     }
