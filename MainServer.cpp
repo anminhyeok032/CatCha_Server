@@ -10,7 +10,9 @@ HANDLE g_h_iocp;
 Over_IO g_over;
 
 std::unordered_map<int, GameSession> g_sessions;
-Concurrency::concurrent_queue<Command> commandQueue;
+//Concurrency::concurrent_queue<Command> commandQueue;
+std::queue<int> commandQueue;
+std::mutex g_update_mutex;
 
 int GetSessionNumber()
 {
@@ -44,7 +46,6 @@ void Worker()
 {
 	while (true)
 	{
-		std::cout << "check" << std::endl;
 		DWORD bytes;
 		ULONG_PTR key;
 		WSAOVERLAPPED* over = nullptr;
@@ -97,8 +98,9 @@ void Worker()
 			// 플레이어 초기화
 			g_sessions[room_num].characters_[client_id] = std::make_unique<Player>();
 			g_sessions[room_num].characters_[client_id]->SetSocket(g_client_socket);
-			auto completion_key = new CompletionKey{ room_num, client_id };
-			CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(completion_key), 0);
+			CompletionKey completion_key{ room_num, client_id };
+			g_sessions[room_num].characters_[client_id]->SetCompletionKey(completion_key);
+			CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(&completion_key), 0);
 			g_sessions[room_num].characters_[client_id]->DoReceive();
 
 			// 다른 플레이어 위해 소켓 초기화
@@ -147,13 +149,23 @@ void UpdateThread()
 	{
 		auto startTime = std::chrono::steady_clock::now();
 
-		for (auto& session : g_sessions)
+		std::lock_guard<std::mutex> update(g_update_mutex);
 		{
-			session.second.Update();
-		}
+			if (commandQueue.empty())
+			{
+				continue;
+			}
+			int session_num = commandQueue.front();
+			if (!g_sessions[session_num].Update())
+			{
+				continue;
+			}
+			commandQueue.pop();
 
+
+		}
 		// 1초에 20번 호출되도록 50ms 대기
-		std::this_thread::sleep_until(startTime + std::chrono::milliseconds(50));
+		//std::this_thread::sleep_until(startTime + std::chrono::milliseconds(50));
 	}
 }
 

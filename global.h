@@ -5,6 +5,7 @@
 #include <thread>
 #include <vector>
 #include <unordered_map>
+#include <queue>
 #include <mutex>
 #include <tchar.h>
 #include <WS2tcpip.h>
@@ -42,20 +43,16 @@ enum class CommandType
 	JUMP
 };
 
-struct Command 
-{
-	CommandType type;
-	int session_id, player_id;
-	float vx, vy, vz;
-};
 
 extern SOCKET g_server_socket, g_client_socket;
 extern HANDLE g_h_iocp;
 
-extern Concurrency::concurrent_queue<Command> commandQueue;
+//extern Concurrency::concurrent_queue<int> commandQueue;
+extern std::queue<int> commandQueue;
+extern std::mutex g_update_mutex;
 
-
-
+constexpr float GRAVITY = 9.8f;
+constexpr float FRICTION = 0.1f;
 //===========================================================
 // Directx12
 //===========================================================

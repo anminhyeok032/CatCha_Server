@@ -26,7 +26,7 @@ public:
 		max_hp_ = 100;
 		curr_hp_ = 100;
 		velocity_ = 0.0f;
-		isJumping_ = false;
+		on_ground_ = false;
 	}
 	~Player() {}
 
@@ -35,6 +35,9 @@ public:
 	void DoReceive() override;
 	void DoSend(void* packet) override;
 	void ProcessPacket(char* packet) override;
+
+	// 움직임 변화 감지를 위한 bool return
+	bool UpdatePosition(float deltaTime) override;
 
 	void InputKey();
 };

@@ -34,7 +34,7 @@ public:
 
 	int CheckCharacterNum() { return characters_.size(); }
 
-	void Update();
+	bool Update();
 	uint64_t GetServerTime();
 	void SendPlayerUpdate();
 	void SendTimeUpdate();

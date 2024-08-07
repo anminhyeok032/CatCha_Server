@@ -12,7 +12,10 @@ public:
 
 	// physics
 	float velocity_;
-	bool isJumping_;
+	bool on_ground_;
+
+	// 세션 및 플레이어 번호
+	CompletionKey comp_key_;
 
 	// packet 재조립
 	std::vector<char> prev_packet_;
@@ -23,4 +26,7 @@ public:
 	virtual void DoReceive() {}
 	virtual void ProcessPacket(char* packet) {}
 	virtual void DoSend(void* packet) {}
+	void SetCompletionKey(CompletionKey& key) {	comp_key_ = key; }
+
+	virtual bool UpdatePosition(float deltaTime) { return false; }
 };

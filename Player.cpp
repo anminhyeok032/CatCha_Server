@@ -44,6 +44,35 @@ void Player::ProcessPacket(char* packet)
 	}
 }
 
+bool Player::UpdatePosition(float deltaTime)
+{
+	if (IsZeroVector(direction_vector_))
+	{
+		return false;
+	}
+
+	// 중력 적용 
+	if (!on_ground_)
+	{
+		direction_vector_.y -= GRAVITY * deltaTime;
+	}
+
+	// TODO : 마우스를 이용한 방향 벡터는 아직 고려되지 않음
+	// 현재 반암묵적 오일러를 이용한 위치 업데이트 사용중
+	// 클라이언트와 동기화가 지속적으로 안맞을시 Runge-Kutta 참고해서 수정할 것
+	// 마찰력 적용
+	direction_vector_ = direction_vector_ * (1.0f - FRICTION * deltaTime);
+	// 위치 계산
+	x_ += direction_vector_.x * deltaTime;
+	y_ += direction_vector_.y * deltaTime;
+	z_ += direction_vector_.z * deltaTime;
+
+	// TODO : 충돌 감지 및 처리 필요함
+	// CollisionCheck();
+
+	return true;
+}
+
 void Player::InputKey()
 {
 	bool is_key_pressed = Direction & 0x01;
@@ -63,8 +92,7 @@ void Player::InputKey()
 		keyboard_input_[key] = is_key_pressed;
 	}
 
-	XMFLOAT3 animation_vector = XMFLOAT3(0.f, 0.f, 0.f);
-	XMFLOAT3 direction_vector = XMFLOAT3(0.f, 0.f, 0.f);
+	XMFLOAT3 input_vector = XMFLOAT3(0.f, 0.f, 0.f);
 
 	// Process keyboard input
 	for (const auto& entry : keyboard_input_)
@@ -78,20 +106,21 @@ void Player::InputKey()
 			{
 				// Movement
 			case 'W':
-				direction_vector = Vector3::Add(direction_vector, { 0, 0, 1 });
+				input_vector = Vector3::Add(input_vector, { 0, 0, 1 });
 				break;
 			case 'S':
-				direction_vector = Vector3::Add(direction_vector, { 0, 0, 1 });
+				input_vector = Vector3::Add(input_vector, { 0, 0, 1 });
 				break;
 			case 'A':
-				direction_vector = Vector3::Add(direction_vector, { -1, 0, 0 });
+				input_vector = Vector3::Add(input_vector, { -1, 0, 0 });
 				break;
 			case 'D':
-				direction_vector = Vector3::Add(direction_vector, { 1, 0, 0 });
+				input_vector = Vector3::Add(input_vector, { 1, 0, 0 });
 				break;
 				// 
 			case ' ':
 				// Jump
+				input_vector = Vector3::Add(input_vector, { 0, 1, 0 });
 				break;
 			default:
 				break;
@@ -100,5 +129,7 @@ void Player::InputKey()
 
 	}
 
-	direction_vector_ = direction_vector;
+	direction_vector_ = direction_vector_ + input_vector;
+	//Command command{ CommandType::MOVE, comp_key_.session_id, comp_key_.player_index, direction_vector_ };
+	commandQueue.push(comp_key_.session_id);
 }

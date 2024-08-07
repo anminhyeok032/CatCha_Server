@@ -1,22 +1,33 @@
 #include "GameSession.h"
 #include "Character.h"
 
-void GameSession::Update()
+bool GameSession::Update()
 {
 	std::lock_guard<std::mutex> lock(mt_session_state_);
 
+    bool need_update = false;
     uint64_t current_time = GetServerTime();
     float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
+    if (deltaTime < 50)
+    {
+        return false;
+    }
 
-    // TODO : 플레이어 남은 Velocity 존재시 계산해주기
-
+    for (auto& character : characters_)
+    {
+        if (true == character.second->UpdatePosition(deltaTime)) need_update = true;
+    }
 
     // 현재 세션 시간 업데이트
     lastupdatetime_ = current_time;
 
     // 클라이언트에게 브로드캐스팅
-    SendPlayerUpdate();
+    if (true == need_update)
+    {
+        SendPlayerUpdate();
+    }
 
+    // TODO : 시간 스레드는 분리할것
     // 1초에 한번씩 게임 남은 시간 브로드캐스팅
     if (lastupdatetime_ - last_game_time_ >= 1000)
     {
