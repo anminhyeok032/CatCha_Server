@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>C:\mltest\test\CatCha_Server\x64\Debug\CatCha_Server.exe</FullPath>
+      <FullPath>D:\CatCha\CatCha_Server\x64\Debug\CatCha_Server.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

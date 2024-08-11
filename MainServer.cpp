@@ -10,9 +10,10 @@ HANDLE g_h_iocp;
 Over_IO g_over;
 
 std::unordered_map<int, GameSession> g_sessions;
-//Concurrency::concurrent_queue<Command> commandQueue;
-std::queue<int> commandQueue;
-std::mutex g_update_mutex;
+Concurrency::concurrent_queue<int> commandQueue;
+concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
+//std::queue<int> commandQueue;
+//std::mutex g_update_mutex;
 
 int GetSessionNumber()
 {
@@ -92,6 +93,7 @@ void Worker()
 
 			int room_num = GetSessionNumber();
 			int client_id = g_sessions[room_num].CheckCharacterNum();
+			g_sessions[room_num].session_num_ = room_num;
 
 			// TODO : 세션에 플레이어가 다 찰때까지 대기 시키도록 분리할 것
 
@@ -102,6 +104,9 @@ void Worker()
 			g_sessions[room_num].characters_[client_id]->SetCompletionKey(completion_key);
 			CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(&completion_key), 0);
 			g_sessions[room_num].characters_[client_id]->DoReceive();
+
+			TIMER_EVENT ev{ std::chrono::system_clock::now(), room_num };
+			timer_queue.push(ev);
 
 			// 다른 플레이어 위해 소켓 초기화
 			g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
@@ -138,6 +143,17 @@ void Worker()
 			delete ex_over;
 			break;
 		}
+		case IO_MOVE:
+			for (int i = 0; i < MAX_USER + MAX_NPC; i++)
+			{
+				bool has_moved = (playerIndex & (1 << i)) != 0;
+				if (true == has_moved)
+				{
+					g_sessions[sessionId].BroadcastPosition(i);
+				}
+			}
+			delete completionKey;
+			break;
 		}
 	}
 }
@@ -148,26 +164,48 @@ void UpdateThread()
 	while (true)
 	{
 		auto startTime = std::chrono::steady_clock::now();
-
-		std::lock_guard<std::mutex> update(g_update_mutex);
+		int session_num;
+		
+		if (true == commandQueue.try_pop(session_num))
 		{
-			if (commandQueue.empty())
+			if(false == g_sessions[session_num].Update())
 			{
-				continue;
+				commandQueue.push(session_num);
 			}
-			int session_num = commandQueue.front();
-			if (!g_sessions[session_num].Update())
-			{
-				continue;
-			}
-			commandQueue.pop();
-
-
 		}
-		// 1초에 20번 호출되도록 50ms 대기
-		//std::this_thread::sleep_until(startTime + std::chrono::milliseconds(50));
 	}
 }
+
+//void TimeThread()
+//{
+//	while (true)
+//	{
+//		TIMER_EVENT ev;
+//		auto current_time = std::chrono::system_clock::now();
+//		if (true == timer_queue.try_pop(ev))
+//		{
+//			if (ev.wakeup_time > current_time) {
+//				timer_queue.push(ev);		
+//				std::this_thread::yield();
+//				continue;
+//			}
+//			// TODO : 시간 스레드는 분리할것
+//			// 1초에 한번씩 게임 남은 시간 브로드캐스팅
+//			uint64_t current_time = g_sessions[ev.session_id].GetServerTime();
+//			std::cout << current_time << std::endl;
+//
+//			// 현재 세션 시간 업데이트
+//			g_sessions[ev.session_id].lastupdatetime_ = current_time;
+//			if (g_sessions[ev.session_id].lastupdatetime_ - g_sessions[ev.session_id].last_game_time_ >= 1000)
+//			{
+//				std::cout << "Time : " << g_sessions[ev.session_id].remaining_time_ << std::endl;
+//				g_sessions[ev.session_id].last_game_time_ = current_time;
+//				g_sessions[ev.session_id].remaining_time_--;
+//				g_sessions[ev.session_id].SendTimeUpdate();
+//			}
+//		}
+//	}
+//}
 
 int main()
 {
@@ -195,6 +233,7 @@ int main()
 	AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
 
 	std::thread update_thread(UpdateThread);
+	//std::thread timer_thread(TimeThread);
 	
 
 	// 내 cpu 코어 개수만큼의 스레드 생성
@@ -210,6 +249,7 @@ int main()
 		w.join();
 	}
 	update_thread.join();
+	//timer_thread.join();
 
 
 

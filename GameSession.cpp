@@ -8,14 +8,22 @@ bool GameSession::Update()
     bool need_update = false;
     uint64_t current_time = GetServerTime();
     float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
-    if (deltaTime < 50)
+
+    // 이전 updateTime이 50ms보다 적으면 false
+    if (deltaTime < 0.05f)
     {
         return false;
     }
 
+    // 움직인 플레이어의 Postion만 업데이트 하도록 int 8마리의 움직임 여부를 파싱해서 담음
+    int move_players = 0;
     for (auto& character : characters_)
     {
-        if (true == character.second->UpdatePosition(deltaTime)) need_update = true;
+        if (true == character.second->UpdatePosition(deltaTime))
+        {
+            need_update = true;
+            move_players |= (1 << character.second->comp_key_.player_index);
+        }
     }
 
     // 현재 세션 시간 업데이트
@@ -24,23 +32,18 @@ bool GameSession::Update()
     // 클라이언트에게 브로드캐스팅
     if (true == need_update)
     {
-        SendPlayerUpdate();
+        SendPlayerUpdate(move_players);
     }
 
-    // TODO : 시간 스레드는 분리할것
-    // 1초에 한번씩 게임 남은 시간 브로드캐스팅
-    if (lastupdatetime_ - last_game_time_ >= 1000)
-    {
-        last_game_time_ = current_time;
-        remaining_time_--;
-        SendTimeUpdate();
-    }
+    return true;
 }
 
-void GameSession::SendPlayerUpdate()
+void GameSession::SendPlayerUpdate(int move_players)
 {
-    // TODO : 시간은 1초가 지나면 보내주고 
-    //        변경된 플레이어의 움직임에 대한 Send는 PQCS로 Worker 스레드에서 처리
+    Over_IO* over = new Over_IO;
+    over->io_key_ = IO_MOVE;
+    CompletionKey* completion_key = new CompletionKey{ session_num_, move_players };
+    PostQueuedCompletionStatus(g_h_iocp, 1, reinterpret_cast<ULONG_PTR>(completion_key), &over->over_);
 }
 
 void GameSession::SendTimeUpdate()
@@ -53,6 +56,26 @@ void GameSession::SendTimeUpdate()
     for (auto& players : characters_)
     {
         players.second->DoSend(&p);
+    }
+
+    TIMER_EVENT ev{ std::chrono::system_clock::now(), session_num_ };
+    timer_queue.push(ev);
+
+}
+
+void GameSession::BroadcastPosition(int player)
+{
+    SC_MOVE_PLAYER_PACKET p;
+    p.size = sizeof(SC_MOVE_PLAYER_PACKET);
+    p.type = SC_MOVE_PLAYER;
+    p.id = player;
+    p.x = characters_[player]->x_;
+    p.y = characters_[player]->y_;
+    p.z = characters_[player]->z_;
+    
+    for (auto& player : characters_)
+    {
+        player.second->DoSend(&p);
     }
 }
 

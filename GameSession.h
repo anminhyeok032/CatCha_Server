@@ -16,8 +16,9 @@ public:
 	SESSION_STATE state_;
 	std::mutex mt_session_state_;
 
+	int session_num_;
+
 	// ElapsedTime 계산을 위한 변수
-	//std::atomic<std::chrono::steady_clock::time_point> lastUpdateTime;
 	uint64_t lastupdatetime_;
 	uint64_t last_game_time_;
 
@@ -32,12 +33,13 @@ public:
 	}
 	~GameSession() {}
 
-	int CheckCharacterNum() { return characters_.size(); }
+	int CheckCharacterNum() const { return characters_.size(); }
 
 	bool Update();
 	uint64_t GetServerTime();
-	void SendPlayerUpdate();
+	void SendPlayerUpdate(int move_players);
 	void SendTimeUpdate();
+	void BroadcastPosition(int player);
 };
 
 extern std::unordered_map <int, GameSession> g_sessions;

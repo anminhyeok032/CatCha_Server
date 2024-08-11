@@ -15,6 +15,7 @@
 #include <chrono>
 
 #include <concurrent_queue.h>
+#include <concurrent_priority_queue.h>
 
 #pragma comment(lib, "WS2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
@@ -34,7 +35,8 @@ enum IO_TYPE
 {
 	IO_ACCEPT = 0,
 	IO_SEND,
-	IO_RECV
+	IO_RECV,
+	IO_MOVE
 };
 
 enum class CommandType 
@@ -43,13 +45,23 @@ enum class CommandType
 	JUMP
 };
 
+struct TIMER_EVENT {
+	std::chrono::system_clock::time_point wakeup_time;
+	int session_id;
+	constexpr bool operator < (const TIMER_EVENT& L) const
+	{
+		return (wakeup_time > L.wakeup_time);
+	}
+};
+extern concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
+
 
 extern SOCKET g_server_socket, g_client_socket;
 extern HANDLE g_h_iocp;
 
-//extern Concurrency::concurrent_queue<int> commandQueue;
-extern std::queue<int> commandQueue;
-extern std::mutex g_update_mutex;
+extern Concurrency::concurrent_queue<int> commandQueue;
+//extern std::queue<int> commandQueue;
+//extern std::mutex g_update_mutex;
 
 constexpr float GRAVITY = 9.8f;
 constexpr float FRICTION = 0.1f;
