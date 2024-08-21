@@ -9,7 +9,7 @@ bool GameSession::Update()
     uint64_t current_time = GetServerTime();
     float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
 
-    // 이전 updateTime이 50ms보다 적으면 false
+    // 이전 updateTime이 50ms==20fps보다 적으면 false
     if (deltaTime < 0.05f)
     {
         return false;
@@ -34,7 +34,7 @@ bool GameSession::Update()
     {
         SendPlayerUpdate(move_players);
     }
-
+    commandQueue.push(session_num_);
     return true;
 }
 
@@ -49,7 +49,7 @@ void GameSession::SendPlayerUpdate(int move_players)
 void GameSession::SendTimeUpdate()
 {
     SC_TIME_PACKET p;
-    p.size = sizeof(SC_TIME_PACKET);
+    p.size = sizeof(p);
     p.type = SC_TIME;
     p.time = remaining_time_;
 
@@ -66,13 +66,14 @@ void GameSession::SendTimeUpdate()
 void GameSession::BroadcastPosition(int player)
 {
     SC_MOVE_PLAYER_PACKET p;
-    p.size = sizeof(SC_MOVE_PLAYER_PACKET);
+    p.size = sizeof(p);
     p.type = SC_MOVE_PLAYER;
     p.id = player;
     p.x = characters_[player]->x_;
     p.y = characters_[player]->y_;
     p.z = characters_[player]->z_;
-    
+    p.yaw = 0;
+    std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
     for (auto& player : characters_)
     {
         player.second->DoSend(&p);

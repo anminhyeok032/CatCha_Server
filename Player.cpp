@@ -1,5 +1,18 @@
 #include "Player.h"
 
+void print_error(const char* msg, int err_no)
+{
+	WCHAR* msg_buf;
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, err_no,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		reinterpret_cast<LPWSTR>(&msg_buf), 0, NULL);
+	std::cout << msg;
+	std::wcout << L" : 에러 : " << msg_buf;
+	while (true);
+	LocalFree(msg_buf);
+}
+
 void Player::DoReceive()
 {
 	DWORD recv_flag = 0;
@@ -12,8 +25,20 @@ void Player::DoReceive()
 
 void Player::DoSend(void* packet)
 {
-	Over_IO* send_over = new Over_IO {reinterpret_cast<char*>(prev_packet_.data())};
-	WSASend(socket_, &send_over->wsabuf_, 1, 0, 0, &send_over->over_, 0);
+	Over_IO* send_over = new Over_IO {reinterpret_cast<unsigned char*>(packet)};
+	int res = WSASend(socket_, &send_over->wsabuf_, 1, 0, 0, &send_over->over_, 0);
+}
+
+void Player::SendLoginInfoPacket()
+{
+	SC_LOGIN_INFO_PACKET p;
+	p.id = id_;
+	p.size = sizeof(p);
+	p.type = SC_LOGIN_INFO;
+	p.x = x_;
+	p.y = y_;
+	p.z = z_;
+	DoSend(&p);
 }
 
 void Player::ProcessPacket(char* packet)
@@ -24,7 +49,10 @@ void Player::ProcessPacket(char* packet)
 		// 로그인 패킷 처리
 	case CS_LOGIN:
 	{
-		// TODO : 이동 처리 먼저 하고 클라이언트끼리 동기화 하는 코드 작성
+		CS_LOGIN_PACKET* p = reinterpret_cast<CS_LOGIN_PACKET*>(packet);
+		std::cout << p->name << " login " << std::endl;
+		
+		SendLoginInfoPacket();
 		break;
 	}
 	case CS_MOVE:
@@ -46,32 +74,61 @@ void Player::ProcessPacket(char* packet)
 
 bool Player::UpdatePosition(float deltaTime)
 {
-	if (IsZeroVector(direction_vector_))
+	if (true == IsZeroVector(direction_vector_))
 	{
-		return false;
+		if (true == IsZeroVector(velocity_vector_))
+		{
+			return false;
+		}
 	}
 
 	// 중력 적용 
-	if (!on_ground_)
+	if (false == on_ground_)
 	{
 		direction_vector_.y -= GRAVITY * deltaTime;
 	}
 
+
 	// TODO : 마우스를 이용한 방향 벡터는 아직 고려되지 않음
 	// 현재 반암묵적 오일러를 이용한 위치 업데이트 사용중
 	// 클라이언트와 동기화가 지속적으로 안맞을시 Runge-Kutta 참고해서 수정할 것
+	
+	// 가속도 계산 (힘 = 가속도 * 질량, 여기서는 방향 벡터가 힘을 나타냄)
+	float mass = 0.001f;
+	XMFLOAT3 acceleration = direction_vector_ / mass;
+
+	// 속도 업데이트 (반암묵적 오일러 방법 사용)
+	//velocity_vector_ = velocity_vector_ + acceleration * deltaTime;
+	velocity_vector_ = velocity_vector_ + direction_vector_ * (deltaTime / mass);
 	// 마찰력 적용
-	direction_vector_ = direction_vector_ * (1.0f - FRICTION * deltaTime);
-	// 위치 계산
-	x_ += direction_vector_.x * deltaTime;
-	y_ += direction_vector_.y * deltaTime;
-	z_ += direction_vector_.z * deltaTime;
+	velocity_vector_ = velocity_vector_ * std::pow(1.0f - FRICTION, deltaTime);
+
+	// 속도 업데이트 (반암묵적 오일러 방법)
+	x_ += velocity_vector_.x * deltaTime;
+	y_ += velocity_vector_.y * deltaTime;
+	z_ += velocity_vector_.z * deltaTime;
+
+
+	// 속도가 매우 작아지면 0으로 설정
+	if (std::fabs(velocity_vector_.x) < STOP_THRESHOLD) velocity_vector_.x = 0;
+	if (std::fabs(velocity_vector_.y) < STOP_THRESHOLD) velocity_vector_.y = 0;
+	if (std::fabs(velocity_vector_.z) < STOP_THRESHOLD) velocity_vector_.z = 0;
+
+	// 바닥에 닿았을 때
+	if (y_ <= 0)
+	{
+		y_ = 0;
+		on_ground_ = true;
+		velocity_vector_.y = 0; // 수직 속도를 0으로 설정하여 떨어지지 않게 함
+	}
 
 	// TODO : 충돌 감지 및 처리 필요함
 	// CollisionCheck();
 
 	return true;
 }
+
+
 
 void Player::InputKey()
 {
@@ -109,7 +166,7 @@ void Player::InputKey()
 				input_vector = Vector3::Add(input_vector, { 0, 0, 1 });
 				break;
 			case 'S':
-				input_vector = Vector3::Add(input_vector, { 0, 0, 1 });
+				input_vector = Vector3::Add(input_vector, { 0, 0, -1 });
 				break;
 			case 'A':
 				input_vector = Vector3::Add(input_vector, { -1, 0, 0 });
@@ -121,6 +178,7 @@ void Player::InputKey()
 			case ' ':
 				// Jump
 				input_vector = Vector3::Add(input_vector, { 0, 1, 0 });
+				on_ground_ = false;
 				break;
 			default:
 				break;
@@ -129,7 +187,7 @@ void Player::InputKey()
 
 	}
 
-	direction_vector_ = direction_vector_ + input_vector;
-	//Command command{ CommandType::MOVE, comp_key_.session_id, comp_key_.player_index, direction_vector_ };
+	// 방향 벡터 업데이트
+	direction_vector_ = Vector3::Normalize(input_vector);
 	commandQueue.push(comp_key_.session_id);
 }

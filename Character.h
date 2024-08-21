@@ -9,6 +9,8 @@ public:
 	// 동기화를 위한 스냅샷 좌표
 	float prev_x_, prev_y_, prev_z_;
 	int max_hp_, curr_hp_;
+	
+	// 닉네임 
 
 	// physics
 	float velocity_;

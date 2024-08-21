@@ -89,8 +89,6 @@ void Worker()
 		switch (ex_over->io_key_) {
 		case IO_ACCEPT:
 		{
-			// TODO : DB 체크 후 로그인 시키는 과정 들어가야함. 디버깅 속도를 위해 추후 추가 예정
-
 			int room_num = GetSessionNumber();
 			int client_id = g_sessions[room_num].CheckCharacterNum();
 			g_sessions[room_num].session_num_ = room_num;
@@ -104,9 +102,6 @@ void Worker()
 			g_sessions[room_num].characters_[client_id]->SetCompletionKey(completion_key);
 			CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(&completion_key), 0);
 			g_sessions[room_num].characters_[client_id]->DoReceive();
-
-			TIMER_EVENT ev{ std::chrono::system_clock::now(), room_num };
-			timer_queue.push(ev);
 
 			// 다른 플레이어 위해 소켓 초기화
 			g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
@@ -233,6 +228,7 @@ int main()
 	AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
 
 	std::thread update_thread(UpdateThread);
+	std::thread update_thread2(UpdateThread);
 	//std::thread timer_thread(TimeThread);
 	
 
@@ -249,6 +245,7 @@ int main()
 		w.join();
 	}
 	update_thread.join();
+	update_thread2.join();
 	//timer_thread.join();
 
 

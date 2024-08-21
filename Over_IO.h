@@ -21,7 +21,7 @@ public:
 		io_key_ = IO_RECV;
 		ZeroMemory(&over_, sizeof(over_));
 	}
-	Over_IO(char* packet)
+	Over_IO(unsigned char* packet)
 	{
 		wsabuf_.len = packet[0];
 		wsabuf_.buf = send_buf_;

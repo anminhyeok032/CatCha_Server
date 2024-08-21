@@ -13,10 +13,12 @@ public:
 	std::unordered_map<char, bool> keyboard_input_;
 	uint8_t Direction;
 	XMFLOAT3 direction_vector_ = XMFLOAT3(0.f, 0.f, 0.f);
+	XMFLOAT3 velocity_vector_ = XMFLOAT3(0.f, 0.f, 0.f);
+	float max_speed_ = 1000.f;
 
 	Player()
 	{
-		id_ = -1;
+		id_ = 0;
 		x_ = 0.0f;
 		y_ = 0.0f;
 		z_ = 0.0f;
@@ -34,6 +36,7 @@ public:
 
 	void DoReceive() override;
 	void DoSend(void* packet) override;
+	void SendLoginInfoPacket();
 	void ProcessPacket(char* packet) override;
 
 	// 움직임 변화 감지를 위한 bool return

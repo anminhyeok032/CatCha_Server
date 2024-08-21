@@ -17,6 +17,8 @@
 #include <concurrent_queue.h>
 #include <concurrent_priority_queue.h>
 
+#include<cmath>
+
 #pragma comment(lib, "WS2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
 
@@ -64,7 +66,8 @@ extern Concurrency::concurrent_queue<int> commandQueue;
 //extern std::mutex g_update_mutex;
 
 constexpr float GRAVITY = 9.8f;
-constexpr float FRICTION = 0.1f;
+constexpr float FRICTION = 0.99f;
+constexpr float STOP_THRESHOLD = 0.9f;	// 속도가 이 값보다 작아지면 멈추는 것으로 간주
 //===========================================================
 // Directx12
 //===========================================================
@@ -293,5 +296,9 @@ namespace Plane
 
 // xmf 관련 연산자 오버로딩
 inline XMFLOAT3 operator+(const XMFLOAT3& lhs, const XMFLOAT3& rhs) { return Vector3::Add(lhs, rhs); }
+inline XMFLOAT3 operator+(const XMFLOAT3& lhs, const float& rhs) {
+	return XMFLOAT3{ lhs.x + rhs, lhs.y + rhs, lhs.z + rhs };
+}
 inline XMFLOAT3 operator-(const XMFLOAT3& lhs, const XMFLOAT3& rhs) { return Vector3::Add(lhs, rhs, -1); }
 inline XMFLOAT3 operator*(const XMFLOAT3& lhs, const float& rhs) { return Vector3::ScalarProduct(lhs, rhs, false); }
+inline XMFLOAT3 operator/(const XMFLOAT3& lhs, const float& rhs) { return XMFLOAT3{ lhs.x / rhs, lhs.y / rhs, lhs.z / rhs }; }
