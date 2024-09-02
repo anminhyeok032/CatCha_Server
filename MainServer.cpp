@@ -49,9 +49,9 @@ void Worker()
 	{
 		DWORD bytes;
 		ULONG_PTR key;
-		WSAOVERLAPPED* over = nullptr;
+		Over_IO* over = nullptr;
 		// TODO : key를 2가지 값으로 받게 구조체로 Create해주자
-		BOOL ret = GetQueuedCompletionStatus(g_h_iocp, &bytes, &key, &over, INFINITE);
+		BOOL ret = GetQueuedCompletionStatus(g_h_iocp, &bytes, &key, (LPOVERLAPPED*)&over, INFINITE);
 		Over_IO* ex_over = reinterpret_cast<Over_IO*>(over);
 		// add logic
 		if (FALSE == ret)
@@ -85,70 +85,93 @@ void Worker()
 		int sessionId = completionKey->session_id;
 		int playerIndex = completionKey->player_index;
 
+		// 소켓 타입에 따라 처리 분기
+		// UDP
+		//if (ex_over->socket_type_ == SOCKET_TYPE::UDP_SOCKET)
+		//{
+		//	// UDP 패킷 처리
+		//	Packet* packet = reinterpret_cast<Packet*>(ex_over->wsabuf_.buf);
+		//	g_sessions[sessionId].ProcessPacket(packet);  // 게임 세션을 통해 패킷 처리
 
-		switch (ex_over->io_key_) {
-		case IO_ACCEPT:
+		//	// ACK 패킷 전송
+		//	g_sessions[sessionId].SendAck((SOCKET)completionKey, packet.sequenceNumber, ex_over->clientAddr_, ex_over->clientAddrLen_);
+
+		//	// 비동기 수신을 위해 IOCP에 다시 등록
+		//	memset(&(ex_over->over_), 0, sizeof(WSAOVERLAPPED));
+		//	ex_over->wsabuf_.buf = ex_over->send_buf_;
+		//	ex_over->wsabuf_.len = sizeof(Packet);
+		//	ex_over->clientAddrLen_ = sizeof(ex_over->clientAddr_);
+
+		//	DWORD flags = 0;
+		//	WSARecvFrom((SOCKET)completionKey, &(ex_over->wsabuf_), 1, NULL, &flags,
+		//		reinterpret_cast<sockaddr*>(&ex_over->clientAddr_), &ex_over->clientAddrLen_, &(ex_over->over_), NULL);
+		//}
+		//else if (ex_over->socket_type_ == SOCKET_TYPE::TCP_SOCKET)
 		{
-			int room_num = GetSessionNumber();
-			int client_id = g_sessions[room_num].CheckCharacterNum();
-			g_sessions[room_num].session_num_ = room_num;
-
-			// TODO : 세션에 플레이어가 다 찰때까지 대기 시키도록 분리할 것
-
-			// 플레이어 초기화
-			g_sessions[room_num].characters_[client_id] = std::make_unique<Player>();
-			g_sessions[room_num].characters_[client_id]->SetSocket(g_client_socket);
-			CompletionKey completion_key{ room_num, client_id };
-			g_sessions[room_num].characters_[client_id]->SetCompletionKey(completion_key);
-			CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(&completion_key), 0);
-			g_sessions[room_num].characters_[client_id]->DoReceive();
-
-			// 다른 플레이어 위해 소켓 초기화
-			g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-			ZeroMemory(&g_over.over_, sizeof(g_over.over_));
-			AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
-			break;
-		}
-		case IO_RECV:
-		{
-			char* p = ex_over->send_buf_;
-			int total_data = bytes + g_sessions[sessionId].characters_[playerIndex]->prev_packet_.size();
-
-			auto& buffer = g_sessions[sessionId].characters_[playerIndex]->prev_packet_;
-			buffer.insert(buffer.end(), ex_over->send_buf_, ex_over->send_buf_ + bytes);
-
-			while (buffer.size() > 0)
+			switch (ex_over->io_key_) {
+			case IO_ACCEPT:
 			{
-				int packet_size = static_cast<int>(p[0]);
-				if (packet_size <= buffer.size())
-				{
-					g_sessions[sessionId].characters_[playerIndex]->ProcessPacket(buffer.data());
-					buffer.erase(buffer.begin(), buffer.begin() + packet_size);
-				}
-				else
-				{
-					break;
-				}
+				int room_num = GetSessionNumber();
+				int client_id = g_sessions[room_num].CheckCharacterNum();
+				g_sessions[room_num].session_num_ = room_num;
+
+				// TODO : 세션에 플레이어가 다 찰때까지 대기 시키도록 분리할 것
+
+				// 플레이어 초기화
+				g_sessions[room_num].characters_[client_id] = std::make_unique<Player>();
+				g_sessions[room_num].characters_[client_id]->SetSocket(g_client_socket);
+				CompletionKey completion_key{ room_num, client_id };
+				g_sessions[room_num].characters_[client_id]->SetCompletionKey(completion_key);
+				CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(&completion_key), 0);
+				g_sessions[room_num].characters_[client_id]->DoReceive();
+
+				// 다른 플레이어 위해 소켓 초기화
+				g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+				ZeroMemory(&g_over.over_, sizeof(g_over.over_));
+				AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
+				break;
 			}
-			g_sessions[sessionId].characters_[playerIndex]->DoReceive();
-			break;
-		}
-		case IO_SEND:
-		{
-			delete ex_over;
-			break;
-		}
-		case IO_MOVE:
-			for (int i = 0; i < MAX_USER + MAX_NPC; i++)
+			case IO_RECV:
 			{
-				bool has_moved = (playerIndex & (1 << i)) != 0;
-				if (true == has_moved)
+				char* p = ex_over->send_buf_;
+				int total_data = bytes + g_sessions[sessionId].characters_[playerIndex]->prev_packet_.size();
+
+				auto& buffer = g_sessions[sessionId].characters_[playerIndex]->prev_packet_;
+				buffer.insert(buffer.end(), ex_over->send_buf_, ex_over->send_buf_ + bytes);
+
+				while (buffer.size() > 0)
 				{
-					g_sessions[sessionId].BroadcastPosition(i);
+					int packet_size = static_cast<int>(p[0]);
+					if (packet_size <= buffer.size())
+					{
+						g_sessions[sessionId].characters_[playerIndex]->ProcessPacket(buffer.data());
+						buffer.erase(buffer.begin(), buffer.begin() + packet_size);
+					}
+					else
+					{
+						break;
+					}
 				}
+				g_sessions[sessionId].characters_[playerIndex]->DoReceive();
+				break;
 			}
-			delete completionKey;
-			break;
+			case IO_SEND:
+			{
+				delete ex_over;
+				break;
+			}
+			case IO_MOVE:
+				for (int i = 0; i < MAX_USER + MAX_NPC; i++)
+				{
+					bool has_moved = (playerIndex & (1 << i)) != 0;
+					if (true == has_moved)
+					{
+						g_sessions[sessionId].BroadcastPosition(i);
+					}
+				}
+				delete completionKey;
+				break;
+			}
 		}
 	}
 }

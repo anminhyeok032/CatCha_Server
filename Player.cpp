@@ -25,7 +25,7 @@ void Player::DoReceive()
 
 void Player::DoSend(void* packet)
 {
-	Over_IO* send_over = new Over_IO {reinterpret_cast<unsigned char*>(packet)};
+	Over_IO* send_over = new Over_IO {reinterpret_cast<unsigned char*>(packet), SOCKET_TYPE::TCP_SOCKET};
 	int res = WSASend(socket_, &send_over->wsabuf_, 1, 0, 0, &send_over->over_, 0);
 }
 
@@ -74,51 +74,50 @@ void Player::ProcessPacket(char* packet)
 
 bool Player::UpdatePosition(float deltaTime)
 {
+	// TODO : 마우스를 이용한 방향 벡터는 아직 고려되지 않음
+	// 현재 반암묵적 오일러를 이용한 위치 업데이트 사용중
+	// 클라이언트와 동기화가 지속적으로 안맞을시 Runge-Kutta 참고해서 수정할 것
+
 	if (true == IsZeroVector(direction_vector_))
 	{
+		// 입력이 없으면 마찰력만 적용시켜 속도 급감소
+		velocity_vector_ = velocity_vector_ * std::pow(1.0f - FRICTION, deltaTime);
+
+		// 속도가 STOP_THRESHOLD보다 작아지면 0으로 설정
+		if (std::fabs(velocity_vector_.x) < STOP_THRESHOLD) velocity_vector_.x = 0;
+		if (std::fabs(velocity_vector_.y) < STOP_THRESHOLD) velocity_vector_.y = 0;
+		if (std::fabs(velocity_vector_.z) < STOP_THRESHOLD) velocity_vector_.z = 0;
+
+		// 남은 velocity 없으면 해당 플레이어 업데이트 false
 		if (true == IsZeroVector(velocity_vector_))
 		{
 			return false;
 		}
 	}
-
-	// 중력 적용 
-	if (false == on_ground_)
+	else
 	{
-		direction_vector_.y -= GRAVITY * deltaTime;
+		// 입력이 있을 때는 일정 속도로 움직임
+		velocity_vector_ = velocity_vector_ + (direction_vector_ * 500.f);
+		// 마찰력 적용
+		velocity_vector_ = velocity_vector_ * std::pow(1.0f - FRICTION, deltaTime);
 	}
 
+	// 중력 적용 
+	if (true == is_jumping_)
+	{
+		velocity_vector_.y -= GRAVITY * deltaTime * 10.f;
+	}
 
-	// TODO : 마우스를 이용한 방향 벡터는 아직 고려되지 않음
-	// 현재 반암묵적 오일러를 이용한 위치 업데이트 사용중
-	// 클라이언트와 동기화가 지속적으로 안맞을시 Runge-Kutta 참고해서 수정할 것
-	
-	// 가속도 계산 (힘 = 가속도 * 질량, 여기서는 방향 벡터가 힘을 나타냄)
-	float mass = 0.001f;
-	XMFLOAT3 acceleration = direction_vector_ / mass;
-
-	// 속도 업데이트 (반암묵적 오일러 방법 사용)
-	//velocity_vector_ = velocity_vector_ + acceleration * deltaTime;
-	velocity_vector_ = velocity_vector_ + direction_vector_ * (deltaTime / mass);
-	// 마찰력 적용
-	velocity_vector_ = velocity_vector_ * std::pow(1.0f - FRICTION, deltaTime);
-
-	// 속도 업데이트 (반암묵적 오일러 방법)
+	// 속도 업데이트 ( velocity 먼저 반영한 반암묵적 오일러)
 	x_ += velocity_vector_.x * deltaTime;
 	y_ += velocity_vector_.y * deltaTime;
 	z_ += velocity_vector_.z * deltaTime;
-
-
-	// 속도가 매우 작아지면 0으로 설정
-	if (std::fabs(velocity_vector_.x) < STOP_THRESHOLD) velocity_vector_.x = 0;
-	if (std::fabs(velocity_vector_.y) < STOP_THRESHOLD) velocity_vector_.y = 0;
-	if (std::fabs(velocity_vector_.z) < STOP_THRESHOLD) velocity_vector_.z = 0;
 
 	// 바닥에 닿았을 때
 	if (y_ <= 0)
 	{
 		y_ = 0;
-		on_ground_ = true;
+		is_jumping_ = false;
 		velocity_vector_.y = 0; // 수직 속도를 0으로 설정하여 떨어지지 않게 함
 	}
 
@@ -136,7 +135,7 @@ void Player::InputKey()
 	uint8_t key_stroke = Direction >> 1;
 	char key = static_cast<char>(key_stroke);
 
-	//std::cout << "key input : " << key << " = " << is_key_pressed << std::endl;
+	std::cout << "key input : " << key << " = " << (is_key_pressed ? "true" : "false") << std::endl;
 
 
 	// keyboard 업데이트
@@ -177,8 +176,11 @@ void Player::InputKey()
 				// 
 			case ' ':
 				// Jump
-				input_vector = Vector3::Add(input_vector, { 0, 1, 0 });
-				on_ground_ = false;
+				if (false == is_jumping_)
+				{
+					input_vector = Vector3::Add(input_vector, { 0, 1, 0 });
+					is_jumping_ = true;
+				}
 				break;
 			default:
 				break;

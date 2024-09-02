@@ -25,6 +25,10 @@ public:
 	// 해당 세션의 남은 시간
 	int remaining_time_;
 
+	// udp 처리를 위한 값
+	Concurrency::concurrent_unordered_map<int, Packet> packetBuffer_; // 시퀀스 번호를 키로 하는 패킷 버퍼
+	int expectedSequenceNumber_ = 0;               // 다음에 처리할 패킷의 시퀀스 번호
+
 	GameSession()
 	{
 		characters_.clear();

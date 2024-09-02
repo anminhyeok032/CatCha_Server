@@ -16,6 +16,7 @@
 
 #include <concurrent_queue.h>
 #include <concurrent_priority_queue.h>
+#include <concurrent_unordered_map.h>
 
 #include<cmath>
 
@@ -47,6 +48,12 @@ enum class CommandType
 	JUMP
 };
 
+enum class SOCKET_TYPE
+{
+	UDP_SOCKET,
+	TCP_SOCKET
+};
+
 struct TIMER_EVENT {
 	std::chrono::system_clock::time_point wakeup_time;
 	int session_id;
@@ -55,6 +62,14 @@ struct TIMER_EVENT {
 		return (wakeup_time > L.wakeup_time);
 	}
 };
+
+
+struct Packet {
+	int sequenceNumber;
+	char data[BUF_SIZE];
+};
+
+
 extern concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
 
 

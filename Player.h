@@ -28,7 +28,7 @@ public:
 		max_hp_ = 100;
 		curr_hp_ = 100;
 		velocity_ = 0.0f;
-		on_ground_ = false;
+		is_jumping_ = false;
 	}
 	~Player() {}
 

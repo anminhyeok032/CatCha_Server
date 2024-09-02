@@ -48,6 +48,9 @@ void CMovementComponent::Update(const float& elapsed_time)
 
 	//owner_->set_position_vector(xmf3NewPosition);
 
+
+
+
 	//++ 이전 위치와 새로 갱신된 위치의 차를 구해 걷는 애니메이션 구현
 	XMFLOAT3 prev = owner_->get_prev_position_vector();
 	// TODO : 자신의 번호를 받아서 돌리기

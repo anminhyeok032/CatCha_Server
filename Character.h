@@ -14,7 +14,7 @@ public:
 
 	// physics
 	float velocity_;
-	bool on_ground_;
+	bool is_jumping_;
 
 	// 세션 및 플레이어 번호
 	CompletionKey comp_key_;
