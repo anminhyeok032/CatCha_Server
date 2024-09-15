@@ -1,6 +1,7 @@
 #include "GameSession.h"
 #include "Character.h"
 
+
 bool GameSession::Update()
 {
 	std::lock_guard<std::mutex> lock(mt_session_state_);
@@ -63,6 +64,29 @@ void GameSession::SendTimeUpdate()
 
 }
 
+void GameSession::InitUDPSocket()
+{
+    // UDP 소켓 설정
+    udp_socket_ = socket(AF_INET, SOCK_DGRAM, 0);
+    if (udp_socket_ == INVALID_SOCKET) {
+        std::cerr << "Failed to create socket" << std::endl;
+        return;
+    }
+    
+    udp_socket_ = WSASocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, nullptr, 0, WSA_FLAG_OVERLAPPED);
+
+    // Bind socket to port
+    sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(PORT);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(udp_socket_, (sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
+        std::cerr << "Bind failed" << std::endl;
+        return;
+    }
+}
+
 void GameSession::BroadcastPosition(int player)
 {
     SC_MOVE_PLAYER_PACKET p;
@@ -74,9 +98,19 @@ void GameSession::BroadcastPosition(int player)
     p.z = characters_[player]->z_;
     p.yaw = 0;
     std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
-    for (auto& player : characters_)
+    /*for (auto& player : characters_)
     {
         player.second->DoSend(&p);
+    }*/
+    
+    for (auto& player : characters_) // 세션에 속한 클라이언트 목록
+    {
+        int res = sendto(udp_socket_, (char*)&p, sizeof(p), 0,
+            (sockaddr*)&player.second->client_addr_.sin_addr, sizeof(player.second->client_addr_));
+        if (res != 0)
+        {
+            //print_error("udp", WSAGetLastError());
+        }
     }
 }
 

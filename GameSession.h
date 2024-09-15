@@ -26,8 +26,10 @@ public:
 	int remaining_time_;
 
 	// udp 처리를 위한 값
+	SOCKET udp_socket_;
 	Concurrency::concurrent_unordered_map<int, Packet> packetBuffer_; // 시퀀스 번호를 키로 하는 패킷 버퍼
 	int expectedSequenceNumber_ = 0;               // 다음에 처리할 패킷의 시퀀스 번호
+
 
 	GameSession()
 	{
@@ -43,6 +45,8 @@ public:
 	uint64_t GetServerTime();
 	void SendPlayerUpdate(int move_players);
 	void SendTimeUpdate();
+
+	void InitUDPSocket();
 	void BroadcastPosition(int player);
 };
 

@@ -19,6 +19,8 @@ public:
 	// 세션 및 플레이어 번호
 	CompletionKey comp_key_;
 
+	sockaddr_in client_addr_;
+
 	// packet 재조립
 	std::vector<char> prev_packet_;
 
@@ -28,6 +30,7 @@ public:
 	virtual void DoReceive() {}
 	virtual void ProcessPacket(char* packet) {}
 	virtual void DoSend(void* packet) {}
+	virtual void SetAddr() {}
 	void SetCompletionKey(CompletionKey& key) {	comp_key_ = key; }
 
 	virtual bool UpdatePosition(float deltaTime) { return false; }

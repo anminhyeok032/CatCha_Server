@@ -23,6 +23,7 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 int g_myid;
 SOCKET g_server_socket;
+SOCKET g_udp_socket;
 SOCKADDR_IN g_server_a;
 std::string avatar_name;
 WSAOVERLAPPED g_wsaover;
@@ -105,6 +106,29 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     unsigned long noblock = 1;
     int nRet = ioctlsocket(g_server_socket, FIONBIO, &noblock);
+
+
+    // UDP 소켓 생성 및 초기화
+    g_udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (g_udp_socket == INVALID_SOCKET)
+    {
+        print_error("UDP socket creation failed", WSAGetLastError());
+        return -1;
+    }
+
+    // UDP 소켓 비동기 모드 설정
+    u_long mode = 1;
+    ioctlsocket(g_udp_socket, FIONBIO, &mode);
+
+    // 서버 주소 설정 (예: 로컬 호스트와 특정 포트로 설정)
+    sockaddr_in udpServerAddr;
+    udpServerAddr.sin_family = AF_INET;
+    udpServerAddr.sin_port = htons(PORT);  // 서버의 UDP 포트
+    inet_pton(AF_INET, SERVER_ADDR, &udpServerAddr.sin_addr);
+
+    // UDP 소켓을 서버에 바인딩
+    bind(g_udp_socket, (sockaddr*)&udpServerAddr, sizeof(udpServerAddr));
+
 
     while (1)
     {

@@ -38,6 +38,8 @@ int GetSessionNumber()
 			}
 		}
 	}
+
+	g_sessions[room_num].InitUDPSocket();
 	return room_num;
 }
 
@@ -124,6 +126,8 @@ void Worker()
 				g_sessions[room_num].characters_[client_id]->SetCompletionKey(completion_key);
 				CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(&completion_key), 0);
 				g_sessions[room_num].characters_[client_id]->DoReceive();
+
+				
 
 				// 다른 플레이어 위해 소켓 초기화
 				g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);

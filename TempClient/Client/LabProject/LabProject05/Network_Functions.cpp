@@ -151,6 +151,35 @@ void ProcessPacket(char* ptr)
     }
 }
 
+void DoRecvUDP(SOCKET udpSocket)
+{
+    char buffer[BUFSIZE];
+    sockaddr_in fromAddr;
+    int fromAddrLen = sizeof(fromAddr);
+
+    // 비동기적으로 UDP 패킷을 수신합니다.
+    int res = recvfrom(udpSocket, buffer, BUFSIZE, 0, (sockaddr*)&fromAddr, &fromAddrLen);
+    if (res == SOCKET_ERROR)
+    {
+        int err = WSAGetLastError();
+        if (err == WSAEWOULDBLOCK)
+        {
+            // NON-Blocking 모드에서 데이터가 없는 경우
+            return;
+        }
+        else
+        {
+            print_error("recvfrom", err);
+            return;
+        }
+    }
+    else
+    {
+        // 수신된 UDP 데이터 처리
+        ProcessData(buffer, res);
+    }
+}
+
 
 void DoRecv() 
 {
@@ -188,5 +217,7 @@ void DoRecv()
         // 수신된 데이터 처리
         ProcessData(wsabuf.buf, bytes_received);
     }
+
+    DoRecvUDP(g_udp_socket);
 }
 

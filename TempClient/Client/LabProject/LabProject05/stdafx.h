@@ -134,6 +134,7 @@ enum class S_STATE { ST_FREE, ST_ALLOC, ST_INGAME };
 extern int g_myid;
 extern SOCKET g_server_socket;
 extern SOCKADDR_IN g_server_a;
+extern SOCKET g_udp_socket;
 extern std::string avatar_name;
 extern WSAOVERLAPPED g_wsaover;
 

@@ -9,6 +9,7 @@ public:
 	
 	SOCKET socket_;
 
+
 	// KeyInput
 	std::unordered_map<char, bool> keyboard_input_;
 	uint8_t Direction;
@@ -41,6 +42,9 @@ public:
 
 	// 움직임 변화 감지를 위한 bool return
 	bool UpdatePosition(float deltaTime) override;
+
+	// UDP를 위한 소켓 주소 설정
+	void SetAddr() override;
 
 	void InputKey();
 };

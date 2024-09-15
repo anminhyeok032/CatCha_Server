@@ -29,6 +29,20 @@ void Player::DoSend(void* packet)
 	int res = WSASend(socket_, &send_over->wsabuf_, 1, 0, 0, &send_over->over_, 0);
 }
 
+void Player::SetAddr() {
+	// TCP 소켓을 통해 얻은 클라이언트의 주소를 저장
+	sockaddr_in addr;
+	int addrLen = sizeof(addr);
+
+	// TCP 소켓의 주소
+	getpeername(socket_, (sockaddr*)&addr, &addrLen);
+
+	// UDP 소켓 주소로 저장
+	client_addr_.sin_family = AF_INET;
+	client_addr_.sin_port = htons(PORT);
+	client_addr_.sin_addr = addr.sin_addr;
+}
+
 void Player::SendLoginInfoPacket()
 {
 	SC_LOGIN_INFO_PACKET p;
@@ -53,6 +67,7 @@ void Player::ProcessPacket(char* packet)
 		std::cout << p->name << " login " << std::endl;
 		
 		SendLoginInfoPacket();
+		SetAddr();
 		break;
 	}
 	case CS_MOVE:
