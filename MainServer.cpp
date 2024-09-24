@@ -38,7 +38,7 @@ int GetSessionNumber()
 			}
 		}
 	}
-
+	g_sessions[room_num].session_num_ = room_num;
 	g_sessions[room_num].InitUDPSocket();
 	return room_num;
 }
@@ -89,7 +89,10 @@ void Worker()
 
 		// 소켓 타입에 따라 처리 분기
 		// UDP
-		//if (ex_over->socket_type_ == SOCKET_TYPE::UDP_SOCKET)
+		if (ex_over->socket_type_ == SOCKET_TYPE::UDP_SOCKET)
+		{
+			std::cout << "udp 받음\n";
+		}
 		//{
 		//	// UDP 패킷 처리
 		//	Packet* packet = reinterpret_cast<Packet*>(ex_over->wsabuf_.buf);
@@ -115,7 +118,6 @@ void Worker()
 			{
 				int room_num = GetSessionNumber();
 				int client_id = g_sessions[room_num].CheckCharacterNum();
-				g_sessions[room_num].session_num_ = room_num;
 
 				// TODO : 세션에 플레이어가 다 찰때까지 대기 시키도록 분리할 것
 

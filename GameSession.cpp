@@ -67,23 +67,33 @@ void GameSession::SendTimeUpdate()
 void GameSession::InitUDPSocket()
 {
     // UDP 소켓 설정
-    udp_socket_ = socket(AF_INET, SOCK_DGRAM, 0);
+    udp_socket_ = WSASocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, nullptr, 0, WSA_FLAG_OVERLAPPED);
     if (udp_socket_ == INVALID_SOCKET) {
         std::cerr << "Failed to create socket" << std::endl;
         return;
     }
-    
-    udp_socket_ = WSASocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, nullptr, 0, WSA_FLAG_OVERLAPPED);
 
     // Bind socket to port
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
+    server_addr.sin_port = htons(UDPPORT);
     server_addr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(udp_socket_, (sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
         std::cerr << "Bind failed" << std::endl;
         return;
+    }
+
+    CompletionKey completion_key{ session_num_, -1 };
+    CreateIoCompletionPort(reinterpret_cast<HANDLE>(udp_socket_), g_h_iocp, reinterpret_cast<ULONG_PTR>(&completion_key), 0);
+    
+    Over_IO* over = new Over_IO();
+    DWORD flag = 0;
+    int res = WSARecvFrom(udp_socket_, &over->wsabuf_, 1, nullptr, &flag, reinterpret_cast<sockaddr*>(&over->clientAddr_),
+        &over->clientAddrLen_, &over->over_, nullptr);
+    if (res == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
+    {
+        print_error("WSARecvFrom", WSAGetLastError());
     }
 }
 
@@ -109,7 +119,7 @@ void GameSession::BroadcastPosition(int player)
             (sockaddr*)&player.second->client_addr_.sin_addr, sizeof(player.second->client_addr_));
         if (res != 0)
         {
-            //print_error("udp", WSAGetLastError());
+            print_error("udp", WSAGetLastError());
         }
     }
 }

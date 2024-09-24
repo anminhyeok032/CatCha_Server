@@ -24,6 +24,7 @@
 #pragma comment(lib, "MSWSock.lib")
 
 constexpr short PORT = 4000;
+constexpr short UDPPORT = 8000;
 constexpr int BUFSIZE = 256;
 constexpr int MAX_USER = 4;
 constexpr int MAX_NPC = 4;
@@ -83,6 +84,9 @@ extern Concurrency::concurrent_queue<int> commandQueue;
 constexpr float GRAVITY = 9.8f;
 constexpr float FRICTION = 0.99f;
 constexpr float STOP_THRESHOLD = 0.9f;	// 속도가 이 값보다 작아지면 멈추는 것으로 간주
+
+extern void print_error(const char* msg, int err_no);
+
 //===========================================================
 // Directx12
 //===========================================================

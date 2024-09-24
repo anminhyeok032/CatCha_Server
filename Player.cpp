@@ -39,8 +39,11 @@ void Player::SetAddr() {
 
 	// UDP 家南 林家肺 历厘
 	client_addr_.sin_family = AF_INET;
-	client_addr_.sin_port = htons(PORT);
-	client_addr_.sin_addr = addr.sin_addr;
+	client_addr_.sin_port = htons(UDPPORT);
+	char SERVER_ADDR[BUFSIZE] = "127.0.0.1";
+	inet_pton(AF_INET, SERVER_ADDR, &client_addr_.sin_addr);
+
+	//client_addr_.sin_addr = addr.sin_addr;
 }
 
 void Player::SendLoginInfoPacket()
