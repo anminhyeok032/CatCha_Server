@@ -43,11 +43,13 @@ enum IO_TYPE
 	IO_MOVE
 };
 
-enum class CommandType 
+enum class Action 
 {
-	MOVE,
-	JUMP
+	MOVE_FORWARD, MOVE_BACK, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, MOVE_DOWN,
+	TELEPORT_FORWARD, TELEPORT_BACK, TELEPORT_LEFT, TELEPORT_RIGHT, TELEPORT_UP, TELEPORT_DOWN,
+	ROTATE, ROTATE_ROLL, ROTATE_PITCH, ROTATE_YAW
 };
+
 
 enum class SOCKET_TYPE
 {
@@ -78,8 +80,6 @@ extern SOCKET g_server_socket, g_client_socket;
 extern HANDLE g_h_iocp;
 
 extern Concurrency::concurrent_queue<int> commandQueue;
-//extern std::queue<int> commandQueue;
-//extern std::mutex g_update_mutex;
 
 constexpr float GRAVITY = 9.8f;
 constexpr float FRICTION = 0.99f;

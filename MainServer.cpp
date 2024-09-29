@@ -89,10 +89,10 @@ void Worker()
 
 		// 소켓 타입에 따라 처리 분기
 		// UDP
-		if (ex_over->socket_type_ == SOCKET_TYPE::UDP_SOCKET)
+		/*if (ex_over->socket_type_ == SOCKET_TYPE::UDP_SOCKET)
 		{
 			std::cout << "udp 받음\n";
-		}
+		}*/
 		//{
 		//	// UDP 패킷 처리
 		//	Packet* packet = reinterpret_cast<Packet*>(ex_over->wsabuf_.buf);

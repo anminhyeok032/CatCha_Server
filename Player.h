@@ -11,8 +11,8 @@ public:
 
 
 	// KeyInput
-	std::unordered_map<char, bool> keyboard_input_;
-	uint8_t Direction;
+	std::unordered_map<Action, bool> keyboard_input_;
+	uint8_t key_;
 	XMFLOAT3 direction_vector_ = XMFLOAT3(0.f, 0.f, 0.f);
 	XMFLOAT3 velocity_vector_ = XMFLOAT3(0.f, 0.f, 0.f);
 	float max_speed_ = 1000.f;

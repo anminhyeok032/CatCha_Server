@@ -107,21 +107,21 @@ void GameSession::BroadcastPosition(int player)
     p.y = characters_[player]->y_;
     p.z = characters_[player]->z_;
     p.yaw = 0;
-    std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
-    /*for (auto& player : characters_)
+    //std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
+    for (auto& player : characters_)
     {
         player.second->DoSend(&p);
-    }*/
-    
-    for (auto& player : characters_) // 세션에 속한 클라이언트 목록
-    {
-        int res = sendto(udp_socket_, (char*)&p, sizeof(p), 0,
-            (sockaddr*)&player.second->client_addr_.sin_addr, sizeof(player.second->client_addr_));
-        if (res != 0)
-        {
-            print_error("udp", WSAGetLastError());
-        }
     }
+    
+    //for (auto& player : characters_) // 세션에 속한 클라이언트 목록
+    //{
+    //    int res = sendto(udp_socket_, (char*)&p, sizeof(p), 0,
+    //        (sockaddr*)&player.second->client_addr_.sin_addr, sizeof(player.second->client_addr_));
+    //    if (res != 0)
+    //    {
+    //        print_error("udp", WSAGetLastError());
+    //    }
+    //}
 }
 
 uint64_t GameSession::GetServerTime()

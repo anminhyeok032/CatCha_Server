@@ -76,7 +76,7 @@ void Player::ProcessPacket(char* packet)
 	case CS_MOVE:
 	{
 		CS_MOVE_PACKET* p = reinterpret_cast<CS_MOVE_PACKET*>(packet);
-		Direction = p->keyinput;
+		key_ = p->keyinput;
 		InputKey();
 		break;
 	}
@@ -149,29 +149,22 @@ bool Player::UpdatePosition(float deltaTime)
 
 void Player::InputKey()
 {
-	bool is_key_pressed = Direction & 0x01;
-	uint8_t key_stroke = Direction >> 1;
-	char key = static_cast<char>(key_stroke);
+	bool is_key_pressed = key_ & 0x01;
+	uint8_t key_stroke = key_ >> 1;
+	Action key = static_cast<Action>(key_stroke);
 
-	std::cout << "key input : " << key << " = " << (is_key_pressed ? "true" : "false") << std::endl;
-
+	std::cout << "key input : " << (int)key << " = " << (is_key_pressed ? "true" : "false") << std::endl;
 
 	// keyboard 업데이트
-	if (false == is_key_pressed)
-	{
-		keyboard_input_.erase(key);
-	}
-	else
-	{
-		keyboard_input_[key] = is_key_pressed;
-	}
+	keyboard_input_[key] = is_key_pressed;
+	
 
 	XMFLOAT3 input_vector = XMFLOAT3(0.f, 0.f, 0.f);
 
 	// Process keyboard input
 	for (const auto& entry : keyboard_input_)
 	{
-		char key_char = entry.first;
+		Action key_char = entry.first;
 		bool is_pressed = entry.second;
 
 		if (is_pressed)
@@ -179,28 +172,29 @@ void Player::InputKey()
 			switch (key_char)
 			{
 				// Movement
-			case 'W':
+			case Action::MOVE_FORWARD:
 				input_vector = Vector3::Add(input_vector, { 0, 0, 1 });
 				break;
-			case 'S':
+			case Action::MOVE_BACK:
 				input_vector = Vector3::Add(input_vector, { 0, 0, -1 });
 				break;
-			case 'A':
+			case Action::MOVE_LEFT:
 				input_vector = Vector3::Add(input_vector, { -1, 0, 0 });
 				break;
-			case 'D':
+			case Action::MOVE_RIGHT:
 				input_vector = Vector3::Add(input_vector, { 1, 0, 0 });
 				break;
-				// 
-			case ' ':
-				// Jump
-				if (false == is_jumping_)
-				{
-					input_vector = Vector3::Add(input_vector, { 0, 1, 0 });
-					is_jumping_ = true;
-				}
-				break;
+			// TODO : 클라이언트 점프 구현 후 추가 구현
+			//case ' ':
+			//	// Jump
+			//	if (false == is_jumping_)
+			//	{
+			//		input_vector = Vector3::Add(input_vector, { 0, 1, 0 });
+			//		is_jumping_ = true;
+			//	}
+			//	break;
 			default:
+				std::cout << "Invalid key input" << std::endl;
 				break;
 			}
 		}
