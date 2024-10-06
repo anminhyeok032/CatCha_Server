@@ -15,7 +15,7 @@ constexpr int W_HEIGHT = 8;
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
 constexpr char CS_TIME = 2;
-
+constexpr char CS_ROTATE = 3;
 
 // Server -> Client
 constexpr char SC_LOGIN_INFO = 11;
@@ -43,7 +43,12 @@ struct CS_MOVE_PACKET {
 	unsigned char size;
 	char	type;
 	uint8_t	keyinput;
-	short	camera_yaw, player_yaw;	
+};
+
+struct CS_ROTATE_PACKET {
+	unsigned char size;
+	char type;
+	short player_pitch;
 };
 
 struct CS_TIME_PACKET {
@@ -91,7 +96,7 @@ struct SC_MOVE_PLAYER_PACKET {
 	char	type;
 	int		id;				// 서버에 접속해 있는 캐릭터 번호
 	float 	x, y, z;		// 움직인 위치
-	float	yaw;	// look vector
+	short	player_pitch;	// rotate 정보	
 };
 
 // 현재 무기 및 스킬 키 인풋, 사용 스킬

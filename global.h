@@ -28,6 +28,7 @@ constexpr short UDPPORT = 8000;
 constexpr int BUFSIZE = 256;
 constexpr int MAX_USER = 4;
 constexpr int MAX_NPC = 4;
+constexpr int FLOOR = 20;
 
 struct CompletionKey
 {

@@ -80,6 +80,13 @@ void Player::ProcessPacket(char* packet)
 		InputKey();
 		break;
 	}
+	case CS_ROTATE:
+	{
+		CS_ROTATE_PACKET* p = reinterpret_cast<CS_ROTATE_PACKET*>(packet);
+		player_pitch_ = p->player_pitch;
+		std::cout << "플레이어 pitch : " << player_pitch_ << std::endl;
+		break;
+	}
 	case CS_TIME:
 	{
 		CS_TIME_PACKET* p = reinterpret_cast<CS_TIME_PACKET*>(packet);
@@ -95,6 +102,13 @@ bool Player::UpdatePosition(float deltaTime)
 	// TODO : 마우스를 이용한 방향 벡터는 아직 고려되지 않음
 	// 현재 반암묵적 오일러를 이용한 위치 업데이트 사용중
 	// 클라이언트와 동기화가 지속적으로 안맞을시 Runge-Kutta 참고해서 수정할 것
+	bool is_moving = false;
+
+	if(prev_player_pitch_ != player_pitch_)
+	{
+		is_moving = true;
+		prev_player_pitch_ = player_pitch_;
+	}
 
 	if (true == IsZeroVector(direction_vector_))
 	{
@@ -109,11 +123,12 @@ bool Player::UpdatePosition(float deltaTime)
 		// 남은 velocity 없으면 해당 플레이어 업데이트 false
 		if (true == IsZeroVector(velocity_vector_))
 		{
-			return false;
+			return is_moving;
 		}
 	}
 	else
 	{
+		is_moving = true;
 		// 입력이 있을 때는 일정 속도로 움직임
 		velocity_vector_ = velocity_vector_ + (direction_vector_ * 500.f);
 		// 마찰력 적용
@@ -132,17 +147,17 @@ bool Player::UpdatePosition(float deltaTime)
 	z_ += velocity_vector_.z * deltaTime;
 
 	// 바닥에 닿았을 때
-	if (y_ <= 0)
+	if (y_ <= FLOOR)
 	{
-		y_ = 0;
+		y_ = FLOOR;
 		is_jumping_ = false;
-		velocity_vector_.y = 0; // 수직 속도를 0으로 설정하여 떨어지지 않게 함
+		velocity_vector_.y = FLOOR; // 수직 속도를 0으로 설정하여 떨어지지 않게 함
 	}
 
 	// TODO : 충돌 감지 및 처리 필요함
 	// CollisionCheck();
 
-	return true;
+	return is_moving;
 }
 
 

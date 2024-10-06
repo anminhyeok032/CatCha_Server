@@ -16,6 +16,7 @@ bool GameSession::Update()
         return false;
     }
 
+
     // 움직인 플레이어의 Postion만 업데이트 하도록 int 8마리의 움직임 여부를 파싱해서 담음
     int move_players = 0;
     for (auto& character : characters_)
@@ -106,8 +107,8 @@ void GameSession::BroadcastPosition(int player)
     p.x = characters_[player]->x_;
     p.y = characters_[player]->y_;
     p.z = characters_[player]->z_;
-    p.yaw = 0;
-    //std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
+    p.player_pitch = characters_[player]->player_pitch_;
+    std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
     for (auto& player : characters_)
     {
         player.second->DoSend(&p);

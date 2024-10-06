@@ -129,7 +129,7 @@ void Worker()
 				CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(&completion_key), 0);
 				g_sessions[room_num].characters_[client_id]->DoReceive();
 
-				
+
 
 				// 다른 플레이어 위해 소켓 초기화
 				g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
@@ -167,6 +167,7 @@ void Worker()
 				break;
 			}
 			case IO_MOVE:
+			{
 				for (int i = 0; i < MAX_USER + MAX_NPC; i++)
 				{
 					bool has_moved = (playerIndex & (1 << i)) != 0;
@@ -177,6 +178,8 @@ void Worker()
 				}
 				delete completionKey;
 				break;
+			}
+
 			}
 		}
 	}
@@ -197,6 +200,7 @@ void UpdateThread()
 				commandQueue.push(session_num);
 			}
 		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }
 
