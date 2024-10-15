@@ -30,6 +30,9 @@ constexpr int MAX_USER = 4;
 constexpr int MAX_NPC = 4;
 constexpr int FLOOR = 20;
 
+// 고정 시간 스텝 설정 (1/60초)
+constexpr float FIXED_TIME_STEP = 1.0f / 60.0f;
+
 struct CompletionKey
 {
 	int session_id;
@@ -109,216 +112,151 @@ inline bool IsZeroVector(const XMFLOAT3& vec)
 	return vec.x == 0.0f && vec.y == 0.0f && vec.z == 0.0f;
 }
 
-namespace Vector3
-{
-	inline XMFLOAT3 XMVectorToFloat3(XMVECTOR& xmvVector)
-	{
-		XMFLOAT3 xmf3Result;
-		XMStoreFloat3(&xmf3Result, xmvVector);
-		return(xmf3Result);
+// math
+struct MathHelper {
+	static float Infinity() { return FLT_MAX; }
+	static float Pi() { return DirectX::XM_PI; }
+
+	static float Rand_F() { return (float)rand() / (float)RAND_MAX; }
+	static float Rand_F(float a, float b) { return a + Rand_F() * (b - a); }
+	static int Rand_I() { return rand(); }
+	static int Rand_I(int a, int b) { return a + rand() % ((b - a) + 1); }
+
+	template<typename T>
+	static T Min(const T& a, const T& b) { return a < b ? a : b; }
+
+	template<typename T>
+	static T Max(const T& a, const T& b) { return a > b ? a : b; }
+
+	template<typename T>
+	static T Lerp(const T& a, const T& b, float t) { return a + (b - a) * t; }
+
+	template<typename T>
+	static T Clamp(const T& x, const T& min, float max) { return x < min ? min : (x > max ? max : x); }
+
+	static DirectX::XMMATRIX Inverse_Transpose(DirectX::XMMATRIX m) {
+		m.r[3] = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+
+		DirectX::XMVECTOR determinant = DirectX::XMMatrixDeterminant(m);
+
+		return DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&determinant, m));
 	}
 
-	inline XMFLOAT3 ScalarProduct(const XMFLOAT3& xmf3Vector, float fScalar, bool bNormalize = true)
-	{
-		XMFLOAT3 xmf3Result;
-		if (bNormalize)
-			XMStoreFloat3(&xmf3Result, XMVector3Normalize(XMLoadFloat3(&xmf3Vector)) * fScalar);
-		else
-			XMStoreFloat3(&xmf3Result, XMLoadFloat3(&xmf3Vector) * fScalar);
-		return(xmf3Result);
+	static DirectX::XMFLOAT4X4 Identity_4x4() {
+		static DirectX::XMFLOAT4X4 identity{
+			1.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		};
+
+		return identity;
 	}
 
-	inline XMFLOAT3 Add(const XMFLOAT3& xmf3Vector1, const XMFLOAT3& xmf3Vector2)
-	{
-		XMFLOAT3 xmf3Result;
-		XMStoreFloat3(&xmf3Result, XMLoadFloat3(&xmf3Vector1) + XMLoadFloat3(&xmf3Vector2));
-		return(xmf3Result);
+	static DirectX::XMFLOAT2 Multiply(const DirectX::XMFLOAT2& xmfloat2, const DirectX::XMMATRIX& matrix) {
+		DirectX::XMVECTOR vector = DirectX::XMLoadFloat2(&xmfloat2);
+
+		DirectX::XMFLOAT2 result;
+		DirectX::XMStoreFloat2(&result, DirectX::XMVector2Transform(vector, matrix));
+
+		return result;
 	}
 
-	inline XMFLOAT3 Add(const XMFLOAT3& xmf3Vector1, const XMFLOAT3& xmf3Vector2, float fScalar)
-	{
-		XMFLOAT3 xmf3Result;
-		XMStoreFloat3(&xmf3Result, XMLoadFloat3(&xmf3Vector1) + (XMLoadFloat3(&xmf3Vector2) * fScalar));
-		return(xmf3Result);
+	static DirectX::XMFLOAT3 Multiply(const DirectX::XMFLOAT3& xmfloat3, const DirectX::XMMATRIX& matrix) {
+		DirectX::XMVECTOR vector = DirectX::XMLoadFloat3(&xmfloat3);
+
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVector3Transform(vector, matrix));
+
+		return result;
 	}
 
-	inline XMFLOAT3 Subtract(XMFLOAT3& xmf3Vector1, XMFLOAT3& xmf3Vector2)
-	{
-		XMFLOAT3 xmf3Result;
-		XMStoreFloat3(&xmf3Result, XMLoadFloat3(&xmf3Vector1) - XMLoadFloat3(&xmf3Vector2));
-		return(xmf3Result);
+	static DirectX::XMFLOAT4X4 Multiply(const DirectX::XMFLOAT4X4& xmfloat4x4, const DirectX::XMMATRIX& matrix) {
+		DirectX::XMFLOAT4X4 result;
+		DirectX::XMStoreFloat4x4(&result, DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&xmfloat4x4), matrix));
+
+		return result;
 	}
 
-	inline float DotProduct(XMFLOAT3& xmf3Vector1, XMFLOAT3& xmf3Vector2)
-	{
-		XMFLOAT3 xmf3Result;
-		XMStoreFloat3(&xmf3Result, XMVector3Dot(XMLoadFloat3(&xmf3Vector1), XMLoadFloat3(&xmf3Vector2)));
-		return(xmf3Result.x);
+	//
+	static DirectX::XMFLOAT3 Add(const DirectX::XMFLOAT3& xmfloat3_a, const DirectX::XMFLOAT3 xmfloat3_b) {
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVectorAdd(DirectX::XMLoadFloat3(&xmfloat3_a), DirectX::XMLoadFloat3(&xmfloat3_b)));
+
+		return result;
 	}
 
-	inline XMFLOAT3 CrossProduct(XMFLOAT3& xmf3Vector1, XMFLOAT3& xmf3Vector2, bool bNormalize = true)
-	{
-		XMFLOAT3 xmf3Result;
-		if (bNormalize)
-			XMStoreFloat3(&xmf3Result, XMVector3Normalize(XMVector3Cross(XMLoadFloat3(&xmf3Vector1), XMLoadFloat3(&xmf3Vector2))));
-		else
-			XMStoreFloat3(&xmf3Result, XMVector3Cross(XMLoadFloat3(&xmf3Vector1), XMLoadFloat3(&xmf3Vector2)));
-		return(xmf3Result);
+	static DirectX::XMFLOAT3 Add(const DirectX::XMFLOAT3& xmfloat3_a, const DirectX::XMFLOAT3 xmfloat3_b, float scalar) {
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVectorAdd(DirectX::XMLoadFloat3(&xmfloat3_a),
+			DirectX::XMVectorScale(DirectX::XMLoadFloat3(&xmfloat3_b), scalar)));
+
+		return result;
 	}
 
-	inline XMFLOAT3 Normalize(XMFLOAT3& xmf3Vector)
-	{
-		XMFLOAT3 m_xmf3Normal;
-		XMStoreFloat3(&m_xmf3Normal, XMVector3Normalize(XMLoadFloat3(&xmf3Vector)));
-		return(m_xmf3Normal);
+	static DirectX::XMFLOAT3 Subtract(const DirectX::XMFLOAT3& xmfloat3_a, const DirectX::XMFLOAT3 xmfloat3_b) {
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&xmfloat3_a), DirectX::XMLoadFloat3(&xmfloat3_b)));
+
+		return result;
 	}
 
-	inline float Length(const XMFLOAT3& xmf3Vector)
-	{
-		XMFLOAT3 xmf3Result;
-		XMStoreFloat3(&xmf3Result, XMVector3Length(XMLoadFloat3(&xmf3Vector)));
-		return(xmf3Result.x);
+	static DirectX::XMFLOAT3 Multiply(const DirectX::XMFLOAT3& xmfloat3, float scalar) {
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVectorScale(DirectX::XMLoadFloat3(&xmfloat3), scalar));
+
+		return result;
 	}
 
-	inline float Angle(XMVECTOR& xmvVector1, XMVECTOR& xmvVector2)
-	{
-		XMVECTOR xmvAngle = XMVector3AngleBetweenNormals(xmvVector1, xmvVector2);
-		return(XMConvertToDegrees(XMVectorGetX(xmvAngle)));
+	static DirectX::XMFLOAT3 Normalize(const DirectX::XMFLOAT3& xmfloat3) {
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&xmfloat3)));
+
+		return result;
 	}
 
-	inline float Angle(XMFLOAT3& xmf3Vector1, XMFLOAT3& xmf3Vector2)
-	{
-		return(Angle(XMLoadFloat3(&xmf3Vector1), XMLoadFloat3(&xmf3Vector2)));
+	static float Length(const DirectX::XMFLOAT3& xmfloat3) {
+		return DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMLoadFloat3(&xmfloat3)));
 	}
 
-	inline XMFLOAT3 TransformNormal(XMFLOAT3& xmf3Vector, XMMATRIX& xmmtxTransform)
-	{
-		XMFLOAT3 xmf3Result;
-		XMStoreFloat3(&xmf3Result, XMVector3TransformNormal(XMLoadFloat3(&xmf3Vector), xmmtxTransform));
-		return(xmf3Result);
+	static float Length_XZ(const DirectX::XMFLOAT3& xmfloat3) {
+		DirectX::XMFLOAT3 xmfloat3_xz(xmfloat3.x, 0.0f, xmfloat3.z);
+
+		return DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMLoadFloat3(&xmfloat3_xz)));
 	}
 
-	inline XMFLOAT3 TransformCoord(XMFLOAT3& xmf3Vector, XMMATRIX& xmmtxTransform)
-	{
-		XMFLOAT3 xmf3Result;
-		XMStoreFloat3(&xmf3Result, XMVector3TransformCoord(XMLoadFloat3(&xmf3Vector), xmmtxTransform));
-		return(xmf3Result);
+	static DirectX::XMFLOAT3 Dot(const DirectX::XMFLOAT3& xmfloat3_a, const DirectX::XMFLOAT3 xmfloat3_b) {
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVector3Dot(DirectX::XMLoadFloat3(&xmfloat3_a), DirectX::XMLoadFloat3(&xmfloat3_b)));
+
+		return result;
 	}
 
-	inline XMFLOAT3 TransformCoord(XMFLOAT3& xmf3Vector, XMFLOAT4X4& xmmtx4x4Matrix)
-	{
-		return(TransformCoord(xmf3Vector, XMLoadFloat4x4(&xmmtx4x4Matrix)));
+	static DirectX::XMFLOAT3 Cross(const DirectX::XMFLOAT3& xmfloat3_a, const DirectX::XMFLOAT3 xmfloat3_b) {
+		DirectX::XMFLOAT3 result;
+		DirectX::XMStoreFloat3(&result, DirectX::XMVector3Cross(DirectX::XMLoadFloat3(&xmfloat3_a), DirectX::XMLoadFloat3(&xmfloat3_b)));
+
+		return result;
 	}
+};
+
+// Math Helper XMFLOAT3 사용을 위한 오버로딩
+// Overload + for XMFLOAT3
+static DirectX::XMFLOAT3 operator+(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b) {
+	return MathHelper::Add(a, b);
 }
 
-namespace Vector4
-{
-	inline XMFLOAT4 Add(XMFLOAT4& xmf4Vector1, XMFLOAT4& xmf4Vector2)
-	{
-		XMFLOAT4 xmf4Result;
-		XMStoreFloat4(&xmf4Result, XMLoadFloat4(&xmf4Vector1) + XMLoadFloat4(&xmf4Vector2));
-		return(xmf4Result);
-	}
-
-	inline XMFLOAT4 Multiply(XMFLOAT4& xmf4Vector1, XMFLOAT4& xmf4Vector2)
-	{
-		XMFLOAT4 xmf4Result;
-		XMStoreFloat4(&xmf4Result, XMLoadFloat4(&xmf4Vector1) * XMLoadFloat4(&xmf4Vector2));
-		return(xmf4Result);
-	}
-
-	inline XMFLOAT4 Multiply(float fScalar, XMFLOAT4& xmf4Vector)
-	{
-		XMFLOAT4 xmf4Result;
-		XMStoreFloat4(&xmf4Result, fScalar * XMLoadFloat4(&xmf4Vector));
-		return(xmf4Result);
-	}
-
+// Overload - for XMFLOAT3
+static DirectX::XMFLOAT3 operator-(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b) {
+	return MathHelper::Subtract(a, b);
 }
 
-namespace Matrix4x4
-{
-	inline XMFLOAT4X4 Identity()
-	{
-		XMFLOAT4X4 xmmtx4x4Result;
-		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixIdentity());
-		return(xmmtx4x4Result);
-	}
-
-	inline XMFLOAT4X4 Multiply(XMFLOAT4X4& xmmtx4x4Matrix1, XMFLOAT4X4& xmmtx4x4Matrix2)
-	{
-		XMFLOAT4X4 xmmtx4x4Result;
-		XMStoreFloat4x4(&xmmtx4x4Result, XMLoadFloat4x4(&xmmtx4x4Matrix1) * XMLoadFloat4x4(&xmmtx4x4Matrix2));
-		return(xmmtx4x4Result);
-	}
-
-	inline XMFLOAT4X4 Multiply(XMFLOAT4X4& xmmtx4x4Matrix1, XMMATRIX& xmmtxMatrix2)
-	{
-		XMFLOAT4X4 xmmtx4x4Result;
-		XMStoreFloat4x4(&xmmtx4x4Result, XMLoadFloat4x4(&xmmtx4x4Matrix1) * xmmtxMatrix2);
-		return(xmmtx4x4Result);
-	}
-
-	inline XMFLOAT4X4 Multiply(XMMATRIX& xmmtxMatrix1, XMFLOAT4X4& xmmtx4x4Matrix2)
-	{
-		XMFLOAT4X4 xmmtx4x4Result;
-		XMStoreFloat4x4(&xmmtx4x4Result, xmmtxMatrix1 * XMLoadFloat4x4(&xmmtx4x4Matrix2));
-		return(xmmtx4x4Result);
-	}
-
-	inline XMFLOAT4X4 Inverse(XMFLOAT4X4& xmmtx4x4Matrix)
-	{
-		XMFLOAT4X4 xmmtx4x4Result;
-		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixInverse(NULL, XMLoadFloat4x4(&xmmtx4x4Matrix)));
-		return(xmmtx4x4Result);
-	}
-
-	inline XMFLOAT4X4 Transpose(XMFLOAT4X4& xmmtx4x4Matrix)
-	{
-		XMFLOAT4X4 xmmtx4x4Result;
-		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixTranspose(XMLoadFloat4x4(&xmmtx4x4Matrix)));
-		return(xmmtx4x4Result);
-	}
-
-	inline XMFLOAT4X4 PerspectiveFovLH(float FovAngleY, float AspectRatio, float NearZ, float FarZ)
-	{
-		XMFLOAT4X4 xmmtx4x4Result;
-		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixPerspectiveFovLH(FovAngleY, AspectRatio, NearZ, FarZ));
-		return(xmmtx4x4Result);
-	}
-
-	inline XMFLOAT4X4 LookAtLH(XMFLOAT3& xmf3EyePosition, XMFLOAT3& xmf3LookAtPosition, XMFLOAT3& xmf3UpDirection)
-	{
-		XMFLOAT4X4 xmmtx4x4Result;
-		XMStoreFloat4x4(&xmmtx4x4Result, XMMatrixLookAtLH(XMLoadFloat3(&xmf3EyePosition), XMLoadFloat3(&xmf3LookAtPosition), XMLoadFloat3(&xmf3UpDirection)));
-		return(xmmtx4x4Result);
-	}
+// Overload * for scalar
+static DirectX::XMFLOAT3 operator*(const DirectX::XMFLOAT3& a, float scalar) {
+	return MathHelper::Multiply(a, scalar);
 }
 
-namespace Triangle
-{
-	inline bool Intersect(XMFLOAT3& xmf3RayPosition, XMFLOAT3& xmf3RayDirection, XMFLOAT3& v0, XMFLOAT3& v1, XMFLOAT3& v2, float& fHitDistance)
-	{
-		return(TriangleTests::Intersects(XMLoadFloat3(&xmf3RayPosition), XMLoadFloat3(&xmf3RayDirection), XMLoadFloat3(&v0), XMLoadFloat3(&v1), XMLoadFloat3(&v2), fHitDistance));
-	}
+// Overload * for scalar
+static DirectX::XMFLOAT3 operator*(float scalar, const DirectX::XMFLOAT3& a) {
+	return MathHelper::Multiply(a, scalar);
 }
-
-namespace Plane
-{
-	inline XMFLOAT4 Normalize(XMFLOAT4& xmf4Plane)
-	{
-		XMFLOAT4 xmf4Result;
-		XMStoreFloat4(&xmf4Result, XMPlaneNormalize(XMLoadFloat4(&xmf4Plane)));
-		return(xmf4Result);
-	}
-}
-
-
-// xmf 관련 연산자 오버로딩
-inline XMFLOAT3 operator+(const XMFLOAT3& lhs, const XMFLOAT3& rhs) { return Vector3::Add(lhs, rhs); }
-inline XMFLOAT3 operator+(const XMFLOAT3& lhs, const float& rhs) {
-	return XMFLOAT3{ lhs.x + rhs, lhs.y + rhs, lhs.z + rhs };
-}
-inline XMFLOAT3 operator-(const XMFLOAT3& lhs, const XMFLOAT3& rhs) { return Vector3::Add(lhs, rhs, -1); }
-inline XMFLOAT3 operator*(const XMFLOAT3& lhs, const float& rhs) { return Vector3::ScalarProduct(lhs, rhs, false); }
-inline XMFLOAT3 operator/(const XMFLOAT3& lhs, const float& rhs) { return XMFLOAT3{ lhs.x / rhs, lhs.y / rhs, lhs.z / rhs }; }

@@ -168,6 +168,7 @@ void Worker()
 			}
 			case IO_MOVE:
 			{
+
 				for (int i = 0; i < MAX_USER + MAX_NPC; i++)
 				{
 					bool has_moved = (playerIndex & (1 << i)) != 0;
@@ -175,6 +176,15 @@ void Worker()
 					{
 						g_sessions[sessionId].BroadcastPosition(i);
 					}
+				}
+
+				// 10번 이상 이동이 있을 때마다 보정을 위한 위치 브로드캐스팅
+				g_sessions[sessionId].update_count_++;
+				if(g_sessions[sessionId].update_count_ >= 10)
+				{
+					g_sessions[sessionId].update_count_ = 0;
+					std::cout << "****Update Position****\n";
+					g_sessions[sessionId].BroadcastPosition();
 				}
 				delete completionKey;
 				break;

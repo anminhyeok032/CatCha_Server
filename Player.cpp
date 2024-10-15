@@ -52,9 +52,9 @@ void Player::SendLoginInfoPacket()
 	p.id = id_;
 	p.size = sizeof(p);
 	p.type = SC_LOGIN_INFO;
-	p.x = x_;
-	p.y = y_;
-	p.z = z_;
+	p.x = position_.x;
+	p.y = position_.y;
+	p.z = position_.z;
 	DoSend(&p);
 }
 
@@ -63,7 +63,7 @@ void Player::ProcessPacket(char* packet)
 
 	switch (packet[1])
 	{
-		// 로그인 패킷 처리
+	// 로그인 패킷 처리
 	case CS_LOGIN:
 	{
 		CS_LOGIN_PACKET* p = reinterpret_cast<CS_LOGIN_PACKET*>(packet);
@@ -83,8 +83,24 @@ void Player::ProcessPacket(char* packet)
 	case CS_ROTATE:
 	{
 		CS_ROTATE_PACKET* p = reinterpret_cast<CS_ROTATE_PACKET*>(packet);
-		player_pitch_ = p->player_pitch;
-		std::cout << "플레이어 pitch : " << player_pitch_ << std::endl;
+		player_yaw_ = p->player_yaw;
+		total_yaw_ += player_yaw_;
+		std::cout << "플레이어 yaw : " << player_yaw_ << std::endl;
+		UpdateRotation(player_yaw_);
+		if (dirty_)
+		{
+			DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&rotation_quat_));
+
+			m_look = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
+			m_up = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), rotate_matrix));
+			m_right = MathHelper::Normalize(MathHelper::Cross(GetUp(), GetLook()));
+			
+			// 회전 상태 초기화
+			dirty_ = false;
+
+			// 회전 업데이트
+			commandQueue.push(comp_key_.session_id);
+		}
 		break;
 	}
 	case CS_TIME:
@@ -99,68 +115,121 @@ void Player::ProcessPacket(char* packet)
 
 bool Player::UpdatePosition(float deltaTime)
 {
-	// TODO : 마우스를 이용한 방향 벡터는 아직 고려되지 않음
-	// 현재 반암묵적 오일러를 이용한 위치 업데이트 사용중
-	// 클라이언트와 동기화가 지속적으로 안맞을시 Runge-Kutta 참고해서 수정할 것
 	bool is_moving = false;
 
-	if(prev_player_pitch_ != player_pitch_)
+	if(prev_player_yaw_ != player_yaw_)
 	{
 		is_moving = true;
-		prev_player_pitch_ = player_pitch_;
+		prev_player_yaw_ = player_yaw_;
 	}
 
-	if (true == IsZeroVector(direction_vector_))
+	float time_remaining = 0.0f;
+
+	// 남은 시간을 누적
+	time_remaining += deltaTime;
+
+	while (time_remaining >= FIXED_TIME_STEP)
 	{
-		// 입력이 없으면 마찰력만 적용시켜 속도 급감소
-		velocity_vector_ = velocity_vector_ * std::pow(1.0f - FRICTION, deltaTime);
+		delta_position_ = DirectX::XMFLOAT3();
 
-		// 속도가 STOP_THRESHOLD보다 작아지면 0으로 설정
-		if (std::fabs(velocity_vector_.x) < STOP_THRESHOLD) velocity_vector_.x = 0;
-		if (std::fabs(velocity_vector_.y) < STOP_THRESHOLD) velocity_vector_.y = 0;
-		if (std::fabs(velocity_vector_.z) < STOP_THRESHOLD) velocity_vector_.z = 0;
-
-		// 남은 velocity 없으면 해당 플레이어 업데이트 false
-		if (true == IsZeroVector(velocity_vector_))
+		// 속도 계산 및 검사
+		if (UpdateVelocity(FIXED_TIME_STEP)) 
 		{
-			return is_moving;
+			is_moving = true;
 		}
-	}
-	else
-	{
-		is_moving = true;
-		// 입력이 있을 때는 일정 속도로 움직임
-		velocity_vector_ = velocity_vector_ + (direction_vector_ * 500.f);
-		// 마찰력 적용
-		velocity_vector_ = velocity_vector_ * std::pow(1.0f - FRICTION, deltaTime);
-	}
 
-	// 중력 적용 
-	if (true == is_jumping_)
-	{
-		velocity_vector_.y -= GRAVITY * deltaTime * 10.f;
+		// 대기 상태일 때 감속 적용 및 검사
+		ApplyDecelerationIfStop(FIXED_TIME_STEP);
+
+		// 힘 적용
+		ApplyForces(FIXED_TIME_STEP);
+
+		// 마찰 적용
+		ApplyFriction(FIXED_TIME_STEP);
+
+		// 중력 적용
+		//ApplyGravity(FIXED_TIME_STEP);
+
+		// 위치 업데이트
+		position_ = MathHelper::Add(position_, delta_position_);
+
+		time_remaining -= FIXED_TIME_STEP;  // 고정 시간 스텝만큼 누적된 시간을 감소시킴
 	}
-
-	// 속도 업데이트 ( velocity 먼저 반영한 반암묵적 오일러)
-	x_ += velocity_vector_.x * deltaTime;
-	y_ += velocity_vector_.y * deltaTime;
-	z_ += velocity_vector_.z * deltaTime;
-
-	// 바닥에 닿았을 때
-	if (y_ <= FLOOR)
-	{
-		y_ = FLOOR;
-		is_jumping_ = false;
-		velocity_vector_.y = FLOOR; // 수직 속도를 0으로 설정하여 떨어지지 않게 함
-	}
-
-	// TODO : 충돌 감지 및 처리 필요함
-	// CollisionCheck();
+	
 
 	return is_moving;
 }
 
+void Player::UpdateRotation(float yaw)
+{
+	DirectX::XMStoreFloat4(&rotation_quat_,
+		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&rotation_quat_),
+			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), yaw / 100.0f)));
 
+	dirty_ = true;
+}
+
+bool Player::UpdateVelocity(float time_step) 
+{
+	speed_ = MathHelper::Length_XZ(GetVelocity());
+	if (speed_ > max_speed_) 
+	{
+		float scale_factor = max_speed_ / speed_;
+		velocity_vector_.x *= scale_factor;
+		velocity_vector_.z *= scale_factor;
+		speed_ = max_speed_;
+	}
+	DirectX::XMFLOAT3 delta = MathHelper::Multiply(GetVelocity(), time_step);
+	delta_position_ = MathHelper::Add(delta_position_, delta);
+
+	// 속도가 0인지 검사
+	return speed_ != 0.0f;
+}
+
+void Player::ApplyDecelerationIfStop(float time_step)
+{
+	if (speed_ > 0.0f) 
+	{
+		float dec = deceleration_ * time_step;
+		float new_speed = MathHelper::Max(speed_ - dec, 0.0f);
+		if (speed_ > 0) // 0으로 안나눠지게
+		{
+			float scale_factor = new_speed / speed_;
+			velocity_vector_.x *= scale_factor;
+			velocity_vector_.z *= scale_factor;
+		}
+		
+	}
+}
+
+void Player::ApplyForces(float time_step)
+{
+	if (false == IsZeroVector(force_vector_))
+	{
+		DirectX::XMFLOAT3 delta_force = MathHelper::Multiply(GetForce(), time_step);
+		delta_position_ = MathHelper::Add(delta_position_, delta_force);
+	}
+}
+
+void Player::ApplyFriction(float time_step) 
+{
+	float speed = MathHelper::Length(delta_position_);
+	if (speed > 0.0f) 
+	{
+		float dec = deceleration_ * time_step;
+		float new_speed = MathHelper::Max(speed - dec, 0.0f);
+		if (speed > 0) // 0으로 안나눠지게
+		{ 
+			float scale_factor = new_speed / speed;
+			force_vector_ = MathHelper::Multiply(GetForce(), scale_factor);
+		}
+	}
+}
+
+void Player::ApplyGravity(float time_step)
+{
+	velocity_vector_.y -= GRAVITY * time_step;
+}
 
 void Player::InputKey()
 {
@@ -188,16 +257,16 @@ void Player::InputKey()
 			{
 				// Movement
 			case Action::MOVE_FORWARD:
-				input_vector = Vector3::Add(input_vector, { 0, 0, 1 });
+				Move_Forward();
 				break;
 			case Action::MOVE_BACK:
-				input_vector = Vector3::Add(input_vector, { 0, 0, -1 });
+				Move_Back();
 				break;
 			case Action::MOVE_LEFT:
-				input_vector = Vector3::Add(input_vector, { -1, 0, 0 });
+				Move_Left();
 				break;
 			case Action::MOVE_RIGHT:
-				input_vector = Vector3::Add(input_vector, { 1, 0, 0 });
+				Move_Right();
 				break;
 			// TODO : 클라이언트 점프 구현 후 추가 구현
 			//case ' ':
@@ -216,7 +285,28 @@ void Player::InputKey()
 
 	}
 
-	// 방향 벡터 업데이트
-	direction_vector_ = Vector3::Normalize(input_vector);
+	// 키 입력에 따른 이동 업데이트
 	commandQueue.push(comp_key_.session_id);
+}
+
+
+
+void Player::Move_Forward() 
+{
+	velocity_vector_ = MathHelper::Add(GetVelocity(), GetLook(), acceleration_);
+}
+
+void Player::Move_Back() 
+{
+	velocity_vector_ = MathHelper::Add(GetVelocity(), GetLook(), -acceleration_);
+}
+
+void Player::Move_Left()
+{
+	velocity_vector_ = MathHelper::Add(GetVelocity(), GetRight(), -acceleration_);
+}
+
+void Player::Move_Right() 
+{
+	velocity_vector_ = MathHelper::Add(GetVelocity(), GetRight(), acceleration_);
 }

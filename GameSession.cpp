@@ -10,8 +10,8 @@ bool GameSession::Update()
     uint64_t current_time = GetServerTime();
     float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
 
-    // 이전 updateTime이 50ms==20fps보다 적으면 false
-    if (deltaTime < 0.05f)
+    // 이전 updateTime이 FIXED_TIME_STEP보다 적으면 false
+    if (deltaTime < FIXED_TIME_STEP)
     {
         return false;
     }
@@ -104,10 +104,11 @@ void GameSession::BroadcastPosition(int player)
     p.size = sizeof(p);
     p.type = SC_MOVE_PLAYER;
     p.id = player;
-    p.x = characters_[player]->x_;
-    p.y = characters_[player]->y_;
-    p.z = characters_[player]->z_;
-    p.player_pitch = characters_[player]->player_pitch_;
+    p.x = characters_[player]->position_.x;
+    p.y = characters_[player]->position_.y;
+    p.z = characters_[player]->position_.z;
+    p.player_yaw_ = characters_[player]->total_yaw_;
+    characters_[player]->total_yaw_ = 0.0f;
     std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
     for (auto& player : characters_)
     {
@@ -123,6 +124,28 @@ void GameSession::BroadcastPosition(int player)
     //        print_error("udp", WSAGetLastError());
     //    }
     //}
+}
+
+void GameSession::BroadcastPosition()
+{
+    for (auto& player : characters_) // 세션에 속한 클라이언트 목록
+    {
+        SC_SYNC_PLAYER_PACKET p;
+        p.size = sizeof(p);
+        p.type = SC_MOVE_PLAYER;
+        p.id = player.first;
+        p.x = characters_[player.first]->position_.x;
+        p.y = characters_[player.first]->position_.y;
+        p.z = characters_[player.first]->position_.z;
+        p.look_x = characters_[player.first]->m_look.x;
+        p.look_y = characters_[player.first]->m_look.y;
+        p.look_z = characters_[player.first]->m_look.z;
+        //std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
+        for (auto& player : characters_) // 세션에 속한 클라이언트 목록
+        {
+            player.second->DoSend(&p);
+        }
+    }
 }
 
 uint64_t GameSession::GetServerTime()

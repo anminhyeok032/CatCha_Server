@@ -30,6 +30,8 @@ public:
 	Concurrency::concurrent_unordered_map<int, Packet> packetBuffer_; // 시퀀스 번호를 키로 하는 패킷 버퍼
 	int expectedSequenceNumber_ = 0;               // 다음에 처리할 패킷의 시퀀스 번호
 
+	// 업데이트 호출 횟수
+	int update_count_ = 0;
 
 	GameSession()
 	{
@@ -48,6 +50,7 @@ public:
 
 	void InitUDPSocket();
 	void BroadcastPosition(int player);
+	void BroadcastPosition();
 };
 
 extern std::unordered_map <int, GameSession> g_sessions;
