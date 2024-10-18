@@ -107,9 +107,9 @@ void GameSession::BroadcastPosition(int player)
     p.x = characters_[player]->position_.x;
     p.y = characters_[player]->position_.y;
     p.z = characters_[player]->position_.z;
-    p.player_yaw_ = characters_[player]->total_yaw_;
-    characters_[player]->total_yaw_ = 0.0f;
-    std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
+    p.player_pitch = characters_[player]->total_pitch_;
+    characters_[player]->total_pitch_ = 0.0f;
+    //std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
     for (auto& player : characters_)
     {
         player.second->DoSend(&p);
@@ -132,7 +132,7 @@ void GameSession::BroadcastPosition()
     {
         SC_SYNC_PLAYER_PACKET p;
         p.size = sizeof(p);
-        p.type = SC_MOVE_PLAYER;
+        p.type = SC_SYNC_PLAYER;
         p.id = player.first;
         p.x = characters_[player.first]->position_.x;
         p.y = characters_[player.first]->position_.y;

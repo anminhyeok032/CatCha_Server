@@ -11,7 +11,9 @@ class Character;
 class GameSession
 {
 public:
+
 	std::unordered_map<int, std::unique_ptr<Character>> characters_;
+	std::mutex	mt_packet_buffer_;
 
 	SESSION_STATE state_;
 	std::mutex mt_session_state_;
@@ -41,7 +43,7 @@ public:
 	}
 	~GameSession() {}
 
-	int CheckCharacterNum() const { return characters_.size(); }
+	size_t CheckCharacterNum() const { return characters_.size(); }
 
 	bool Update();
 	uint64_t GetServerTime();

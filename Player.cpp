@@ -83,17 +83,14 @@ void Player::ProcessPacket(char* packet)
 	case CS_ROTATE:
 	{
 		CS_ROTATE_PACKET* p = reinterpret_cast<CS_ROTATE_PACKET*>(packet);
-		player_yaw_ = p->player_yaw;
-		total_yaw_ += player_yaw_;
-		std::cout << "플레이어 yaw : " << player_yaw_ << std::endl;
-		UpdateRotation(player_yaw_);
+		player_pitch_ = p->player_pitch;
+		total_pitch_ += player_pitch_;
+		//std::cout << "플레이어 pitch : " << player_pitch_ << std::endl;
+		UpdateRotation(player_pitch_);
 		if (dirty_)
 		{
-			DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&rotation_quat_));
-
-			m_look = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
-			m_up = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), rotate_matrix));
-			m_right = MathHelper::Normalize(MathHelper::Cross(GetUp(), GetLook()));
+			
+			UpdateLookUpRight();
 			
 			// 회전 상태 초기화
 			dirty_ = false;
@@ -101,6 +98,22 @@ void Player::ProcessPacket(char* packet)
 			// 회전 업데이트
 			commandQueue.push(comp_key_.session_id);
 		}
+		break;
+	}
+	case CS_SYNC_PLAYER:
+	{
+		CS_SYNC_PLAYER_PACKET* p = reinterpret_cast<CS_SYNC_PLAYER_PACKET*>(packet);
+		position_ = DirectX::XMFLOAT3(p->x, p->y, p->z);
+		m_look = DirectX::XMFLOAT3(p->look_x, p->look_y, p->look_z);
+
+		//std::cout << "플레이어 위치 : " << position_.x << ", " << position_.y << ", " << position_.z << std::endl;
+		//std::cout << "플레이어 look : " << m_look.x << ", " << m_look.y << ", " << m_look.z << std::endl;
+
+		// TODO : 받은 look vector로 쿼터니언 업데이트 코드 구현
+		
+
+		dirty_ = true;
+
 		break;
 	}
 	case CS_TIME:
@@ -117,10 +130,10 @@ bool Player::UpdatePosition(float deltaTime)
 {
 	bool is_moving = false;
 
-	if(prev_player_yaw_ != player_yaw_)
+	if(prev_player_pitch_ != player_pitch_)
 	{
 		is_moving = true;
-		prev_player_yaw_ = player_yaw_;
+		prev_player_pitch_ = player_pitch_;
 	}
 
 	float time_remaining = 0.0f;
@@ -169,6 +182,15 @@ void Player::UpdateRotation(float yaw)
 	dirty_ = true;
 }
 
+void Player::UpdateLookUpRight()
+{
+	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&rotation_quat_));
+
+	m_look = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
+	m_up = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), rotate_matrix));
+	m_right = MathHelper::Normalize(MathHelper::Cross(GetUp(), GetLook()));
+}
+
 bool Player::UpdateVelocity(float time_step) 
 {
 	speed_ = MathHelper::Length_XZ(GetVelocity());
@@ -176,10 +198,12 @@ bool Player::UpdateVelocity(float time_step)
 	{
 		float scale_factor = max_speed_ / speed_;
 		velocity_vector_.x *= scale_factor;
+		velocity_vector_.y = 0.0f;  // Y축 제거
 		velocity_vector_.z *= scale_factor;
 		speed_ = max_speed_;
 	}
 	DirectX::XMFLOAT3 delta = MathHelper::Multiply(GetVelocity(), time_step);
+	delta.y = 0.0f;  // Y축 제거
 	delta_position_ = MathHelper::Add(delta_position_, delta);
 
 	// 속도가 0인지 검사
@@ -207,6 +231,7 @@ void Player::ApplyForces(float time_step)
 	if (false == IsZeroVector(force_vector_))
 	{
 		DirectX::XMFLOAT3 delta_force = MathHelper::Multiply(GetForce(), time_step);
+		delta_force.y = 0.0f;  // Y축 제거
 		delta_position_ = MathHelper::Add(delta_position_, delta_force);
 	}
 }
@@ -237,7 +262,7 @@ void Player::InputKey()
 	uint8_t key_stroke = key_ >> 1;
 	Action key = static_cast<Action>(key_stroke);
 
-	std::cout << "key input : " << (int)key << " = " << (is_key_pressed ? "true" : "false") << std::endl;
+	//std::cout << "key input : " << (int)key << " = " << (is_key_pressed ? "true" : "false") << std::endl;
 
 	// keyboard 업데이트
 	keyboard_input_[key] = is_key_pressed;

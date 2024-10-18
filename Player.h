@@ -49,6 +49,7 @@ public:
 	// 움직임 변화 감지를 위한 bool return
 	bool UpdatePosition(float deltaTime) override;
 	void UpdateRotation(float yaw);
+	void UpdateLookUpRight();
 
 	bool UpdateVelocity(float time_step);
 

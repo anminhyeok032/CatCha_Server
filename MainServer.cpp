@@ -140,14 +140,16 @@ void Worker()
 			case IO_RECV:
 			{
 				char* p = ex_over->send_buf_;
-				int total_data = bytes + g_sessions[sessionId].characters_[playerIndex]->prev_packet_.size();
+				size_t total_data = bytes + g_sessions[sessionId].characters_[playerIndex]->prev_packet_.size();
 
 				auto& buffer = g_sessions[sessionId].characters_[playerIndex]->prev_packet_;
-				buffer.insert(buffer.end(), ex_over->send_buf_, ex_over->send_buf_ + bytes);
+				buffer.insert(buffer.end(), p, p + bytes);
 
 				while (buffer.size() > 0)
 				{
-					int packet_size = static_cast<int>(p[0]);
+					size_t packet_size = static_cast<size_t>(buffer[0]);
+
+					// 패킷이 현재 완전한 패킷인지 검사
 					if (packet_size <= buffer.size())
 					{
 						g_sessions[sessionId].characters_[playerIndex]->ProcessPacket(buffer.data());
@@ -155,6 +157,7 @@ void Worker()
 					}
 					else
 					{
+						std::cout << "패킷이 완전하지 않음\n";
 						break;
 					}
 				}
@@ -184,7 +187,7 @@ void Worker()
 				{
 					g_sessions[sessionId].update_count_ = 0;
 					std::cout << "****Update Position****\n";
-					g_sessions[sessionId].BroadcastPosition();
+					//g_sessions[sessionId].BroadcastPosition();
 				}
 				delete completionKey;
 				break;

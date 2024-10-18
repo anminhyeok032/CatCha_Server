@@ -8,9 +8,9 @@ public:
 	DirectX::XMFLOAT3 position_ = DirectX::XMFLOAT3();
 	int max_hp_, curr_hp_;
 
-	float player_yaw_;
-	float total_yaw_;
-	float prev_player_yaw_;
+	float player_pitch_;
+	float total_pitch_;
+	float prev_player_pitch_;
 
 	DirectX::XMFLOAT4 rotation_quat_ = { 0, 0, 0, 1 };  // 초기 쿼터니언 (단위 쿼터니언)
 	DirectX::XMFLOAT4X4 rotation_matrix_ = MathHelper::Identity_4x4();               // 회전 행렬
