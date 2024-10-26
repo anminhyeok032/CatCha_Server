@@ -17,13 +17,14 @@ constexpr char CS_MOVE = 1;
 constexpr char CS_TIME = 2;
 constexpr char CS_ROTATE = 3;
 constexpr char CS_SYNC_PLAYER = 4;
+constexpr char CS_CHOOSE_CHARACTER = 5;
 
 // Server -> Client
 constexpr char SC_LOGIN_INFO = 11;
 constexpr char SC_ADD_PLAYER = 12;
 constexpr char SC_REMOVE_PLAYER = 13;
 constexpr char SC_MOVE_PLAYER = 14;
-constexpr char SC_REBIRTH = 15;
+constexpr char SC_CHANGE_CHARACTER = 15;
 constexpr char SC_TIME = 16;
 constexpr char SC_SYNC_PLAYER = 17;
 
@@ -61,6 +62,11 @@ struct CS_SYNC_PLAYER_PACKET {
 	float	look_x, look_y, look_z;	// rotate 정보	
 };
 
+struct CS_CHOOSE_CHARACTER_PACKET {
+	unsigned char size;
+	char	type;
+	bool	is_cat;			// true : Cat, false : Mouse
+};
 
 struct CS_TIME_PACKET {
 	unsigned char size;
@@ -77,7 +83,7 @@ struct SC_LOGIN_INFO_PACKET {
 	unsigned char size;
 	char	type;
 	int 	id;
-	float 	x, y, z;	// 이후 매칭 시스템 적용 후 종족값 추가 해야함
+	float 	x, y, z;	
 };
 
 struct SC_TIME_PACKET {
@@ -118,12 +124,12 @@ struct SC_SYNC_PLAYER_PACKET {
 	float	look_x, look_y, look_z;	// rotate 정보	
 };
 
-
-// 현재 무기 및 스킬 키 인풋, 사용 스킬
-struct SC_REBIRTH_PACKET {
+struct SC_CHANGE_CHARACTER_PACKET {
 	unsigned char size;
 	char	type;
 	int		id;
-	int		ai_num;
+	uint8_t prev_character_num;
+	uint8_t new_character_num;
 };
+
 #pragma pack (pop)

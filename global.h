@@ -61,6 +61,19 @@ enum class SOCKET_TYPE
 	TCP_SOCKET
 };
 
+enum CHARACTER_NUMBER
+{
+	NUM_MOUSE0 = 0,
+	NUM_MOUSE1,
+	NUM_MOUSE2,
+	NUM_MOUSE3,
+	NUM_AI1,
+	NUM_AI2,
+	NUM_AI3,
+	NUM_AI4,
+	NUM_CAT
+};
+
 struct TIMER_EVENT {
 	std::chrono::system_clock::time_point wakeup_time;
 	int session_id;
@@ -90,6 +103,7 @@ constexpr float FRICTION = 0.99f;
 constexpr float STOP_THRESHOLD = 0.9f;	// 속도가 이 값보다 작아지면 멈추는 것으로 간주
 
 extern void print_error(const char* msg, int err_no);
+
 
 //===========================================================
 // Directx12

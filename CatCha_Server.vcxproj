@@ -127,11 +127,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CatPlayer.cpp" />
     <ClCompile Include="GameSession.cpp" />
     <ClCompile Include="MainServer.cpp" />
     <ClCompile Include="Player.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CatPlayer.h" />
     <ClInclude Include="Character.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="Over_IO.h" />
