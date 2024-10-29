@@ -16,6 +16,9 @@
     <Filter Include="Character">
       <UniqueIdentifier>{32a267be-ebd1-4d2d-bfb8-8dad37475e85}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Global">
+      <UniqueIdentifier>{f2b6c0b0-4ffe-44dd-b376-7aae014dcb76}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MainServer.cpp">
@@ -30,14 +33,11 @@
     <ClCompile Include="CatPlayer.cpp">
       <Filter>Character</Filter>
     </ClCompile>
+    <ClCompile Include="MousePlayer.cpp">
+      <Filter>Character</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="protocol.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="global.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Over_IO.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -51,6 +51,18 @@
       <Filter>Character</Filter>
     </ClInclude>
     <ClInclude Include="CatPlayer.h">
+      <Filter>Character</Filter>
+    </ClInclude>
+    <ClInclude Include="MousePlayer.h">
+      <Filter>Character</Filter>
+    </ClInclude>
+    <ClInclude Include="protocol.h">
+      <Filter>Global</Filter>
+    </ClInclude>
+    <ClInclude Include="global.h">
+      <Filter>Global</Filter>
+    </ClInclude>
+    <ClInclude Include="CharacterState.h">
       <Filter>Character</Filter>
     </ClInclude>
   </ItemGroup>

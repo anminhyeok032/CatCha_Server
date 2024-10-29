@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "CharacterState.h"
 
 void print_error(const char* msg, int err_no)
 {
@@ -11,6 +12,11 @@ void print_error(const char* msg, int err_no)
 	std::wcout << L" : 에러 : " << msg_buf;
 	while (true);
 	LocalFree(msg_buf);
+}
+
+void Player::SetState(std::unique_ptr<CharacterState> new_state)
+{
+	state_ = std::move(new_state);
 }
 
 void Player::DoReceive()
@@ -34,7 +40,7 @@ void Player::DoSend(void* packet)
 void Player::SendLoginInfoPacket()
 {
 	SC_LOGIN_INFO_PACKET p;
-	p.id = id_;
+	p.id = comp_key_.player_index;
 	p.size = sizeof(p);
 	p.type = SC_LOGIN_INFO;
 	p.x = position_.x;
@@ -62,9 +68,8 @@ void Player::SetAddr()
 	//client_addr_.sin_addr = addr.sin_addr;
 }
 
-bool Player::ProcessPacket(char* packet)
+void Player::ProcessPacket(char* packet)
 {
-	bool ret = true;
 	switch (packet[1])
 	{
 		// 로그인 패킷 처리
@@ -72,6 +77,7 @@ bool Player::ProcessPacket(char* packet)
 	{
 		CS_LOGIN_PACKET* p = reinterpret_cast<CS_LOGIN_PACKET*>(packet);
 		std::cout << p->name << " login " << std::endl;
+		std::cout << "플레이어 번호 : " << comp_key_.player_index << std::endl;
 
 		SendLoginInfoPacket();
 		SetAddr();
@@ -85,14 +91,16 @@ bool Player::ProcessPacket(char* packet)
 		int playerIndex = comp_key_.player_index;
 		
 		g_sessions[sessionId].SetCharacter(sessionId, playerIndex, p->is_cat);
-		ret = false;
 		break;
 	}
 	case CS_MOVE:
 	{
 		CS_MOVE_PACKET* p = reinterpret_cast<CS_MOVE_PACKET*>(packet);
 		key_ = p->keyinput;
-		InputKey();
+		if (state_)
+		{
+			state_->InputKey(this, key_);
+		}
 		break;
 	}
 	case CS_ROTATE:
@@ -110,8 +118,13 @@ bool Player::ProcessPacket(char* packet)
 			// 회전 상태 초기화
 			dirty_ = false;
 
-			// 회전 업데이트
-			commandQueue.push(comp_key_.session_id);
+			// 플레이어 업데이트
+			//if (false == g_sessions[comp_key_.session_id].IsDirty())
+			{
+				//g_sessions[comp_key_.session_id].MarkDirty();
+				commandQueue.push(comp_key_.session_id);
+			}
+			
 		}
 		break;
 	}
@@ -144,10 +157,42 @@ bool Player::ProcessPacket(char* packet)
 		break;
 	}
 	}
-	return ret;
 }
 
 
+bool Player::UpdatePosition(float deltaTime)
+{
+	// TODO : 고양이와 쥐의 처리를 나눠서 구현
+	// 첫 다운된 키에 따른 이동 처리
+	for(const auto& key : keyboard_input_)
+	{
+		if (key.second)
+		{
+			switch (key.first)
+			{
+			case Action::MOVE_FORWARD:
+				MoveForward();
+				break;
+			case Action::MOVE_BACK:
+				MoveBack();
+				break;
+			case Action::MOVE_LEFT:
+				MoveLeft();
+				break;
+			case Action::MOVE_RIGHT:
+				MoveRight();
+				break;
+			
+			}
+		}
+	}
+	// 물리처리 - 움직였다면 true 반환
+	if (state_)
+	{
+		return state_->CalculatePhysics(this, deltaTime);
+	}
+	return false;
+}
 
 void Player::UpdateRotation(float yaw)
 {
@@ -233,22 +278,22 @@ void Player::ApplyGravity(float time_step)
 }
 
 
-void Player::Move_Forward() 
+void Player::MoveForward()
 {
 	velocity_vector_ = MathHelper::Add(GetVelocity(), GetLook(), acceleration_);
 }
 
-void Player::Move_Back() 
+void Player::MoveBack() 
 {
 	velocity_vector_ = MathHelper::Add(GetVelocity(), GetLook(), -acceleration_);
 }
 
-void Player::Move_Left()
+void Player::MoveLeft()
 {
 	velocity_vector_ = MathHelper::Add(GetVelocity(), GetRight(), -acceleration_);
 }
 
-void Player::Move_Right() 
+void Player::MoveRight() 
 {
 	velocity_vector_ = MathHelper::Add(GetVelocity(), GetRight(), acceleration_);
 }

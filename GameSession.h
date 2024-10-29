@@ -1,6 +1,8 @@
 #pragma once
 #include "Over_IO.h"
 #include "Character.h"
+
+
 enum SESSION_STATE {
 	SESSION_WAIT,
 	SESSION_FULL
@@ -9,15 +11,16 @@ enum SESSION_STATE {
 class Character;
 class Player;
 class CatPlayer;
+class MousePlayer;
 
 class GameSession
 {
 public:
 
-	std::unordered_map<int, std::unique_ptr<Player>> players_;
-	std::mutex	mt_packet_buffer_;
+	std::unordered_map<int, std::unique_ptr<Player>> players_;			// [key] = player_index / [value] = player
 
 	SESSION_STATE state_;
+
 	std::mutex mt_session_state_;
 
 	int session_num_;
@@ -37,6 +40,9 @@ public:
 	// 업데이트 호출 횟수
 	int update_count_ = 0;
 
+	// Update Dirty Flag
+	std::atomic<bool> dirty_{ false };  
+
 	GameSession()
 	{
 		players_.clear();
@@ -54,10 +60,18 @@ public:
 
 	void InitUDPSocket();
 	void BroadcastPosition(int player);
-	void BroadcastPosition();
+	void BroadcastSync();
 	void BroadcastChangeCharacter(int player_num, int CHARACTER_NUM);
+	void BroadcastAddCharacter(int player_num, int recv_index);
 
-	void SetCharacter(int room_num, int client_id, bool is_cat);
+	void SetCharacter(int room_num, int client_index, bool is_cat);
+
+	int GetMouseNum();
+
+	// 업데이트 중복 체크
+	void MarkDirty();
+	bool IsDirty() const;
+	void ClearDirty();
 };
 
 extern std::unordered_map <int, GameSession> g_sessions;

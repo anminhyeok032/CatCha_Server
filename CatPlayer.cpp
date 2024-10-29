@@ -1,106 +1,59 @@
 #include "CatPlayer.h"
+#include "Player.h"
 
-void CatPlayer::InputKey()
+void CatPlayer::InputKey(Player* player, uint8_t key_)
 {
 	bool is_key_pressed = key_ & 0x01;
 	uint8_t key_stroke = key_ >> 1;
-	Action key = static_cast<Action>(key_stroke);
+	Action action = static_cast<Action>(key_stroke);
 
 	//std::cout << "key input : " << (int)key << " = " << (is_key_pressed ? "true" : "false") << std::endl;
 
 	// keyboard 업데이트
-	keyboard_input_[key] = is_key_pressed;
+	player->SetKeyState(action, is_key_pressed);
 
-
-	XMFLOAT3 input_vector = XMFLOAT3(0.f, 0.f, 0.f);
-
-	// Process keyboard input
-	for (const auto& entry : keyboard_input_)
-	{
-		Action key_char = entry.first;
-		bool is_pressed = entry.second;
-
-		if (is_pressed)
-		{
-			switch (key_char)
-			{
-				// Movement
-			case Action::MOVE_FORWARD:
-				Move_Forward();
-				break;
-			case Action::MOVE_BACK:
-				Move_Back();
-				break;
-			case Action::MOVE_LEFT:
-				Move_Left();
-				break;
-			case Action::MOVE_RIGHT:
-				Move_Right();
-				break;
-				// TODO : 클라이언트 점프 구현 후 추가 구현
-				//case ' ':
-				//	// Jump
-				//	if (false == is_jumping_)
-				//	{
-				//		input_vector = Vector3::Add(input_vector, { 0, 1, 0 });
-				//		is_jumping_ = true;
-				//	}
-				//	break;
-			default:
-				std::cout << "Invalid key input" << std::endl;
-				break;
-			}
-		}
-
-	}
-
-	// 키 입력에 따른 이동 업데이트
-	commandQueue.push(comp_key_.session_id);
+	// 세션 업데이트 요청
+	player->RequestSessionUpdate();
 }
 
-bool CatPlayer::UpdatePosition(float deltaTime)
+bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
 {
 	bool is_moving = false;
 
-	if (prev_player_pitch_ != player_pitch_)
+	// 각도 회전 체크
+	if (player->prev_player_pitch_ != player->player_pitch_)
 	{
 		is_moving = true;
-		prev_player_pitch_ = player_pitch_;
+		player->prev_player_pitch_ = player->player_pitch_;
 	}
 
-	float time_remaining = 0.0f;
-
-	// 남은 시간을 누적
-	time_remaining += deltaTime;
+	float time_remaining = (deltaTime < 1.0f) ? deltaTime : 1.0f;	// 최대 1초까지만 계산
+	const int MAX_ITERATIONS = 100;									// 무한 루프 방지
+	int iterations = 0;												// 루프 체크
 
 	while (time_remaining >= FIXED_TIME_STEP)
 	{
-		delta_position_ = DirectX::XMFLOAT3();
+		player->delta_position_ = DirectX::XMFLOAT3();
 
-		// 속도 계산 및 검사
-		if (UpdateVelocity(FIXED_TIME_STEP))
+		// 속도 계산 및 이동 여부 체크
+		if (player->UpdateVelocity(FIXED_TIME_STEP))
 		{
 			is_moving = true;
 		}
 
-		// 대기 상태일 때 감속 적용 및 검사
-		ApplyDecelerationIfStop(FIXED_TIME_STEP);
-
-		// 힘 적용
-		ApplyForces(FIXED_TIME_STEP);
-
-		// 마찰 적용
-		ApplyFriction(FIXED_TIME_STEP);
-
-		// 중력 적용
-		//ApplyGravity(FIXED_TIME_STEP);
+		// 기타 물리 처리
+		player->ApplyDecelerationIfStop(FIXED_TIME_STEP);
+		player->ApplyForces(FIXED_TIME_STEP);
+		player->ApplyFriction(FIXED_TIME_STEP);
 
 		// 위치 업데이트
-		position_ = MathHelper::Add(position_, delta_position_);
+		player->position_ = MathHelper::Add(player->position_, player->delta_position_);
 
-		time_remaining -= FIXED_TIME_STEP;  // 고정 시간 스텝만큼 누적된 시간을 감소시킴
+		// 고정 시간 스텝만큼 감소
+		time_remaining -= FIXED_TIME_STEP;
+
+		iterations++;
 	}
-
 
 	return is_moving;
 }

@@ -130,12 +130,15 @@
     <ClCompile Include="CatPlayer.cpp" />
     <ClCompile Include="GameSession.cpp" />
     <ClCompile Include="MainServer.cpp" />
+    <ClCompile Include="MousePlayer.cpp" />
     <ClCompile Include="Player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CatPlayer.h" />
     <ClInclude Include="Character.h" />
+    <ClInclude Include="CharacterState.h" />
     <ClInclude Include="global.h" />
+    <ClInclude Include="MousePlayer.h" />
     <ClInclude Include="Over_IO.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="protocol.h" />

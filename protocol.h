@@ -1,7 +1,7 @@
 #pragma once
 
 constexpr int PORT_NUM = 4000;
-constexpr int BUF_SIZE = 200;
+constexpr int BUF_SIZE = 2000;
 constexpr int NAME_SIZE = 25;
 constexpr int PASSWORD_SIZE = 25;
 
@@ -98,6 +98,8 @@ struct SC_ADD_PLAYER_PACKET {
 	char	type;
 	int 	id;
 	float 	x, y, z;
+	float	quat_x, quat_y, quat_z, quat_w;
+	uint8_t character_num;
 	char	nickname[NAME_SIZE];
 };
 

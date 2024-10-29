@@ -1,6 +1,7 @@
 #pragma once
 #include "Character.h"
 
+class CharacterState;
 
 class Player : public Character
 {
@@ -19,9 +20,11 @@ public:
 
 	DirectX::XMFLOAT3 delta_position_ = DirectX::XMFLOAT3();
 
+	std::unique_ptr<CharacterState> state_;  // 현재 상태 객체
+
 	Player()
 	{
-		id_ = 0;
+		id_ = NUM_GHOST;
 		max_hp_ = 100;
 		curr_hp_ = 100;
 		is_jumping_ = false;
@@ -38,11 +41,14 @@ public:
 	void SetAddr();
 	void SetID(int id) { id_ = id; }
 
+	// 상태 전환
+	void SetState(std::unique_ptr<CharacterState> new_state);
+
 	void DoReceive() override;
 	void DoSend(void* packet) override;
 	void SendLoginInfoPacket();								// 첫 로그인 패킷 전송
 
-	bool ProcessPacket(char* packet) override;
+	void ProcessPacket(char* packet) override;
 	void SetCompletionKey(CompletionKey& key) override { comp_key_ = key; }
 
 	SOCKET GetSocket() override { return socket_; }
@@ -51,7 +57,21 @@ public:
 	DirectX::XMFLOAT3 GetVelocity() { return velocity_vector_; }
 	DirectX::XMFLOAT3 GetForce() { return force_vector_; }
 
+	// 키보드 입력 상태 관리 함수
+	void SetKeyState(Action action, bool is_pressed) 
+	{
+		keyboard_input_[action] = is_pressed;
+	}
 
+	// 세션 업데이트
+	void RequestSessionUpdate() 
+	{
+		//if (false == g_sessions[comp_key_.session_id].IsDirty())
+		{
+			//g_sessions[comp_key_.session_id].MarkDirty();
+			commandQueue.push(comp_key_.session_id);
+		}
+	}
 
 	// 회전 업데이트
 	void UpdateRotation(float yaw);
@@ -70,12 +90,13 @@ public:
 
 	virtual void InputKey() {}
 	// 움직임 변화 감지를 위한 bool return
-	virtual bool UpdatePosition(float deltaTime) { return false; }
+	bool UpdatePosition(float deltaTime);
 
-	void Move_Forward();
-	void Move_Back();
-	void Move_Left();
-	void Move_Right();
+
+	void MoveForward();
+	void MoveBack();
+	void MoveLeft();
+	void MoveRight();
 
 	DirectX::XMFLOAT3 GetLook()		const { return m_look; }
 	DirectX::XMFLOAT3 GetUp()		const { return m_up; }

@@ -3,6 +3,7 @@
 #include "Over_IO.h"
 #include "GameSession.h"
 #include "Player.h"
+#include "CharacterState.h"
 
 // Global variables
 SOCKET g_server_socket, g_client_socket;
@@ -52,7 +53,6 @@ void Worker()
 		DWORD bytes;
 		ULONG_PTR key;
 		Over_IO* over = nullptr;
-		// TODO : key를 2가지 값으로 받게 구조체로 Create해주자
 		BOOL ret = GetQueuedCompletionStatus(g_h_iocp, &bytes, &key, (LPOVERLAPPED*)&over, INFINITE);
 		Over_IO* ex_over = reinterpret_cast<Over_IO*>(over);
 		// add logic
@@ -119,26 +119,39 @@ void Worker()
 				int room_num = GetSessionNumber();
 				int client_id = static_cast<int>(g_sessions[room_num].CheckCharacterNum());
 
-				// TODO : 세션에 플레이어가 다 찰때까지 대기 시키도록 분리할 것
+				// 새 소켓 생성 및 초기화
+				SOCKET new_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+				if (new_client_socket == INVALID_SOCKET) 
+				{
+					std::cout << "Error: Failed to create new_client_socket socket" << std::endl;
+					break;
+				}
 
 				// 플레이어 초기화
 				g_sessions[room_num].players_[client_id] = std::make_unique<Player>();
 				g_sessions[room_num].players_[client_id]->SetSocket(g_client_socket);
-				CompletionKey completion_key{ room_num, client_id };
-				g_sessions[room_num].players_[client_id]->SetCompletionKey(completion_key);
-				CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(&completion_key), 0);
+				// Completion Key 생성
+				CompletionKey* completion_key = new CompletionKey{room_num, client_id};
+				g_sessions[room_num].players_[client_id]->SetCompletionKey(*completion_key);
+				// IOCP 등록
+				CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(completion_key), 0);
+				// 수신 시작
 				g_sessions[room_num].players_[client_id]->DoReceive();
 
-
-
-				// 다른 플레이어 위해 소켓 초기화
+				// AcceptEx를 통한 다음 클라이언트 대기
 				g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 				ZeroMemory(&g_over.over_, sizeof(g_over.over_));
-				AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
+				int res = AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
+				if (res == SOCKET_ERROR)
+				{
+					std::cout << "Error: AcceptEx failed" << std::endl;
+					closesocket(g_client_socket);
+				}
 				break;
 			}
 			case IO_RECV:
 			{
+				std::lock_guard<std::mutex> lg{ g_sessions[sessionId].players_[playerIndex]->mt_packet_buffer_ };
 				auto& player = g_sessions[sessionId].players_[playerIndex];
 				char* p = ex_over->send_buf_;
 				size_t total_data = bytes + player->prev_packet_.size();
@@ -147,9 +160,6 @@ void Worker()
 				auto& buffer = player->prev_packet_;
 				buffer.insert(buffer.end(), p, p + bytes);
 
-				// 객체 이동으로 인한 기존 메모리 접근 여부 체크
-				bool check = true;
-
 				// 패킷 처리
 				while (buffer.size() > 0)
 				{
@@ -157,24 +167,19 @@ void Worker()
 
 					if (packet_size <= buffer.size())
 					{
-						if (false == player->ProcessPacket(buffer.data()))
-						{
-							// 
-							check = false;
-							break;
-						}
+						player->ProcessPacket(buffer.data());
 						buffer.erase(buffer.begin(), buffer.begin() + packet_size);
 					}
 					else
 					{
+						std::cout << "player num : " << playerIndex << " packet_size : " << packet_size << " buffer size : " << buffer.size() << std::endl;
 						std::cout << "패킷이 완전하지 않음\n";
 						break;
 					}
 				}
-				if (check == true)
-				{
-					player->DoReceive();
-				}
+				
+				player->DoReceive();
+				
 				break;
 			}
 			case IO_SEND:
@@ -199,8 +204,8 @@ void Worker()
 				if(g_sessions[sessionId].update_count_ >= 10)
 				{
 					g_sessions[sessionId].update_count_ = 0;
-					std::cout << "****Update Position****\n";
-					//g_sessions[sessionId].BroadcastPosition();
+					//std::cout << "****Update Position****\n";
+					//g_sessions[sessionId].BroadcastSync();
 				}
 				break;
 			}
@@ -222,8 +227,13 @@ void UpdateThread()
 		{
 			if(false == g_sessions[session_num].Update())
 			{
-				commandQueue.push(session_num);
+				//if (false == g_sessions[session_num].IsDirty())
+				{
+					//g_sessions[session_num].MarkDirty();
+					commandQueue.push(session_num);
+				}
 			}
+
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
@@ -286,7 +296,7 @@ int main()
 	AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
 
 	std::thread update_thread(UpdateThread);
-	std::thread update_thread2(UpdateThread);
+	//std::thread update_thread2(UpdateThread);
 	//std::thread timer_thread(TimeThread);
 	
 
@@ -303,7 +313,7 @@ int main()
 		w.join();
 	}
 	update_thread.join();
-	update_thread2.join();
+	//update_thread2.join();
 	//timer_thread.join();
 
 
