@@ -1,7 +1,7 @@
 #pragma once
 
 constexpr int PORT_NUM = 4000;
-constexpr int BUF_SIZE = 2000;
+constexpr int BUF_SIZE = 200;
 constexpr int NAME_SIZE = 25;
 constexpr int PASSWORD_SIZE = 25;
 
@@ -59,7 +59,7 @@ struct CS_SYNC_PLAYER_PACKET {
 	char	type;
 	int		id;				// 서버에 접속해 있는 캐릭터 번호
 	float 	x, y, z;		// 움직인 위치
-	float	look_x, look_y, look_z;	// rotate 정보	
+	float	quat_x, quat_y, quat_z, quat_w;	// 쿼터니언 정보	
 };
 
 struct CS_CHOOSE_CHARACTER_PACKET {
@@ -123,7 +123,7 @@ struct SC_SYNC_PLAYER_PACKET {
 	char	type;
 	int		id;				// 서버에 접속해 있는 캐릭터 번호
 	float 	x, y, z;		// 움직인 위치
-	float	look_x, look_y, look_z;	// rotate 정보	
+	float	quat_x, quat_y, quat_z, quat_w;	// 쿼터니언 정보	
 };
 
 struct SC_CHANGE_CHARACTER_PACKET {

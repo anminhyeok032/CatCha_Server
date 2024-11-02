@@ -121,14 +121,18 @@ void GameSession::BroadcastPosition(int player)
     p.x = players_[player]->position_.x;
     p.y = players_[player]->position_.y;
     p.z = players_[player]->position_.z;
+    // tick동안 쌓인 pitch 전송
     p.player_pitch = players_[player]->total_pitch_;
+    // 쌓인 pitch 초기화
     players_[player]->total_pitch_ = 0.0f;
     //std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
+
     for (auto& pl : players_)
     {
         pl.second->DoSend(&p);
     }
     
+    // TODO : UDP로 변경
     //for (auto& player : characters_) // 세션에 속한 클라이언트 목록
     //{
     //    int res = sendto(udp_socket_, (char*)&p, sizeof(p), 0,
@@ -151,12 +155,14 @@ void GameSession::BroadcastSync()
         p.x = players_[pl.first]->position_.x;
         p.y = players_[pl.first]->position_.y;
         p.z = players_[pl.first]->position_.z;
-        p.look_x = players_[pl.first]->m_look.x;
-        p.look_y = players_[pl.first]->m_look.y;
-        p.look_z = players_[pl.first]->m_look.z;
-        //std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
+        p.quat_x = players_[pl.first]->rotation_quat_.x;
+        p.quat_y = players_[pl.first]->rotation_quat_.y;
+        p.quat_z = players_[pl.first]->rotation_quat_.z;
+        p.quat_w = players_[pl.first]->rotation_quat_.w;
+
         for (auto& player : players_) // 세션에 속한 클라이언트 목록
         {
+            if(pl.first == player.first) continue; // 자기 자신 제외
             player.second->DoSend(&p);
         }
     }

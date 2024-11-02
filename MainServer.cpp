@@ -13,8 +13,7 @@ Over_IO g_over;
 std::unordered_map<int, GameSession> g_sessions;
 Concurrency::concurrent_queue<int> commandQueue;
 concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
-//std::queue<int> commandQueue;
-//std::mutex g_update_mutex;
+
 
 int GetSessionNumber()
 {
@@ -87,12 +86,14 @@ void Worker()
 		int sessionId = completionKey->session_id;
 		int playerIndex = completionKey->player_index;
 
+		// TODO : UDP 처리
+		/* 
 		// 소켓 타입에 따라 처리 분기
 		// UDP
-		/*if (ex_over->socket_type_ == SOCKET_TYPE::UDP_SOCKET)
+		if (ex_over->socket_type_ == SOCKET_TYPE::UDP_SOCKET)
 		{
 			std::cout << "udp 받음\n";
-		}*/
+		}
 		//{
 		//	// UDP 패킷 처리
 		//	Packet* packet = reinterpret_cast<Packet*>(ex_over->wsabuf_.buf);
@@ -111,7 +112,8 @@ void Worker()
 		//	WSARecvFrom((SOCKET)completionKey, &(ex_over->wsabuf_), 1, NULL, &flags,
 		//		reinterpret_cast<sockaddr*>(&ex_over->clientAddr_), &ex_over->clientAddrLen_, &(ex_over->over_), NULL);
 		//}
-		//else if (ex_over->socket_type_ == SOCKET_TYPE::TCP_SOCKET)
+		//else if (ex_over->socket_type_ == SOCKET_TYPE::TCP_SOCKET) */
+
 		{
 			switch (ex_over->io_key_) {
 			case IO_ACCEPT:
@@ -151,7 +153,6 @@ void Worker()
 			}
 			case IO_RECV:
 			{
-				std::lock_guard<std::mutex> lg{ g_sessions[sessionId].players_[playerIndex]->mt_packet_buffer_ };
 				auto& player = g_sessions[sessionId].players_[playerIndex];
 				char* p = ex_over->send_buf_;
 				size_t total_data = bytes + player->prev_packet_.size();
@@ -201,11 +202,11 @@ void Worker()
 
 				// 10번 이상 이동이 있을 때마다 보정을 위한 위치 브로드캐스팅
 				g_sessions[sessionId].update_count_++;
-				if(g_sessions[sessionId].update_count_ >= 10)
+				if(g_sessions[sessionId].update_count_ >= 50)
 				{
 					g_sessions[sessionId].update_count_ = 0;
-					//std::cout << "****Update Position****\n";
-					//g_sessions[sessionId].BroadcastSync();
+					std::cout << "****Sync Update Position ****\n";
+					g_sessions[sessionId].BroadcastSync();
 				}
 				break;
 			}

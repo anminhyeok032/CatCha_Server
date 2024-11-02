@@ -14,9 +14,9 @@ public:
 	DirectX::XMFLOAT4 rotation_quat_ = { 0, 0, 0, 1 };						// 초기 쿼터니언 (단위 쿼터니언)
 	DirectX::XMFLOAT4X4 rotation_matrix_ = MathHelper::Identity_4x4();		// 회전 행렬
 	
-	DirectX::XMFLOAT3 m_look = { 0.0f, 0.0f, 1.0f };
-	DirectX::XMFLOAT3 m_up = { 0.0f, 1.0f, 0.0f };
-	DirectX::XMFLOAT3 m_right = { 1.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 look_ = { 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT3 up_ = { 0.0f, 1.0f, 0.0f };
+	DirectX::XMFLOAT3 right_ = { 1.0f, 0.0f, 0.0f };
 
 	bool dirty_ = false;  // 회전 상태가 변경되었는지 확인
 
@@ -46,7 +46,6 @@ public:
 	// physics
 	bool is_jumping_ = false;
 
-	std::mutex	mt_packet_buffer_;
 
 public:
 	// Player 초기화를 위한 가상 함수

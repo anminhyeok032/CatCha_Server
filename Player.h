@@ -98,9 +98,9 @@ public:
 	void MoveLeft();
 	void MoveRight();
 
-	DirectX::XMFLOAT3 GetLook()		const { return m_look; }
-	DirectX::XMFLOAT3 GetUp()		const { return m_up; }
-	DirectX::XMFLOAT3 GetRight()	const { return m_right; }
+	DirectX::XMFLOAT3 GetLook()		const { return look_; }
+	DirectX::XMFLOAT3 GetUp()		const { return up_; }
+	DirectX::XMFLOAT3 GetRight()	const { return right_; }
 
 };
 

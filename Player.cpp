@@ -132,13 +132,7 @@ void Player::ProcessPacket(char* packet)
 	{
 		CS_SYNC_PLAYER_PACKET* p = reinterpret_cast<CS_SYNC_PLAYER_PACKET*>(packet);
 		position_ = DirectX::XMFLOAT3(p->x, p->y, p->z);
-		m_look = DirectX::XMFLOAT3(p->look_x, p->look_y, p->look_z);
-
-		//std::cout << "플레이어 위치 : " << position_.x << ", " << position_.y << ", " << position_.z << std::endl;
-		//std::cout << "플레이어 look : " << m_look.x << ", " << m_look.y << ", " << m_look.z << std::endl;
-
-		// TODO : 받은 look vector로 쿼터니언 업데이트 코드 구현
-
+		rotation_quat_ = DirectX::XMFLOAT4(p->quat_x, p->quat_y, p->quat_z, p->quat_w);
 
 		dirty_ = true;
 
@@ -207,9 +201,9 @@ void Player::UpdateLookUpRight()
 {
 	DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&rotation_quat_));
 
-	m_look = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
-	m_up = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), rotate_matrix));
-	m_right = MathHelper::Normalize(MathHelper::Cross(GetUp(), GetLook()));
+	look_ = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
+	up_ = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), rotate_matrix));
+	right_ = MathHelper::Normalize(MathHelper::Cross(GetUp(), GetLook()));
 }
 
 bool Player::UpdateVelocity(float time_step) 
