@@ -4,6 +4,7 @@
 #include "GameSession.h"
 #include "Player.h"
 #include "CharacterState.h"
+#include "MapData.h"
 
 // Global variables
 SOCKET g_server_socket, g_client_socket;
@@ -13,7 +14,7 @@ Over_IO g_over;
 std::unordered_map<int, GameSession> g_sessions;
 Concurrency::concurrent_queue<int> commandQueue;
 concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
-
+std::unordered_map<std::string, ObjectOBB> g_obbData;
 
 int GetSessionNumber()
 {
@@ -295,6 +296,21 @@ int main()
 	g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 	g_over.io_key_ = IO_ACCEPT;
 	AcceptEx(g_server_socket, g_client_socket, g_over.send_buf_, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, NULL, &g_over.over_);
+
+	//==================
+	// MapData Load
+	//==================
+	MapData* mapData = new MapData();
+	if (mapData->LoadMapData("Map.txt")) 
+	{
+		std::cout << "Map data loaded." << std::endl;
+		delete mapData;
+	}
+	else 
+	{
+		std::cout << "Failed to load map data." << std::endl;
+	}
+
 
 	std::thread update_thread(UpdateThread);
 	//std::thread update_thread2(UpdateThread);

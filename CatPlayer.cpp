@@ -1,5 +1,6 @@
 #include "CatPlayer.h"
 #include "Player.h"
+#include "MapData.h"
 
 void CatPlayer::InputKey(Player* player, uint8_t key_)
 {
@@ -15,6 +16,95 @@ void CatPlayer::InputKey(Player* player, uint8_t key_)
 	// 세션 업데이트 요청
 	player->RequestSessionUpdate();
 }
+
+void CatPlayer::CheckIntersects(Player* player, float deltaTime)
+{
+	// 1. 현재 velocity 를 이용하여 예상 위치 계산
+	// 2. 예상 위치에 대한 OBB 충돌 검사
+	// 3. 충돌 시, 충돌된 물체의 점을 이용해 삼각형 만들고 삼각형과 velocity vector의 교차 검사 및 깊이 검사
+	// 4. 찾은 삼각형의 노멀벡터를 이용해서 velocity 투영해서 캐릭터의 velocity 벡터를 조정
+
+	// 현재 위치와 속도를 바탕으로 예상 위치 계산
+	DirectX::XMVECTOR currentPos = DirectX::XMLoadFloat3(&player->position_);
+	DirectX::XMVECTOR velocity = DirectX::XMLoadFloat3(&player->velocity_vector_);
+
+	// 내적후 x값에 저장된 값을 float로 변환
+	float velocity_length = DirectX::XMVectorGetX(DirectX::XMVector3Length(velocity));		// velocity 벡터의 길이
+	if (velocity_length < 0.0001f)	// 속도가 0이면 충돌체크를 하지 않음
+	{
+		return;
+	}
+
+	// 예상 위치 업데이트 
+	DirectX::XMVECTOR newPos = DirectX::XMVectorAdd(currentPos, DirectX::XMVectorScale(velocity, deltaTime));
+	DirectX::XMFLOAT3 newPosFloat3; // 새 위치에 대한 OBB 생성을 위해 XMFLOAT3 로 변환
+	DirectX::XMStoreFloat3(&newPosFloat3, newPos);
+
+	// 예상 위치 OBB 생성
+	DirectX::BoundingOrientedBox newPositionOBB{ newPosFloat3, obb_.Extents, obb_.Orientation };
+
+	for (const auto& object : g_obbData)
+	{
+		// 해당 물체의 예상위치 OBB와 충돌 검사
+		if (false == object.second.obb.Intersects(newPositionOBB))
+		{
+			continue;
+		}
+		//std::cout << "충돌함 : " << object.first << std::endl;
+		// 충돌 시, 충돌된 물체의 충돌면 normal과 캐릭터의 velcity 벡터와의 충돌 각도 계산
+
+		float min_distance = FLT_MAX;								// 가장 거리가 짧은 충돌 지점까지의 거리
+		DirectX::XMVECTOR closest_normal = DirectX::XMVectorZero();	// 가장 각도가 작은 면의 normal 벡터
+
+		// velocity normal화
+		DirectX::XMVECTOR normalized_velocity = DirectX::XMVector3Normalize(velocity);																	
+
+		// OBB 꼭짓점 배열
+		DirectX::XMFLOAT3 corners[8];
+		object.second.obb.GetCorners(corners);
+
+		// OBB를 구성하는 각 면(삼각형으로 나눠서 면당 2번)에 대해 충돌 검사
+		for (const auto& indices : g_triangle_indices)
+		{
+			// 삼각형을 구성하는 각 점을 로드
+			DirectX::XMVECTOR p1 = DirectX::XMLoadFloat3(&corners[indices[0]]);
+			DirectX::XMVECTOR p2 = DirectX::XMLoadFloat3(&corners[indices[1]]);
+			DirectX::XMVECTOR p3 = DirectX::XMLoadFloat3(&corners[indices[2]]);
+
+			// 삼각형과 velocity 벡터의 충돌 검사
+			// t : 충돌 지점까지의 거리
+			float t;
+			// 삼각형과 velocity 벡터가 교차하는지 확인
+			bool intersects = DirectX::TriangleTests::Intersects(currentPos, normalized_velocity, p1, p2, p3, t);
+			// 교차하고, 가장 가까운 거리인지 확인
+			if (intersects && t < min_distance)
+			{
+				min_distance = t;
+				// 가장 가까운 면의 normal 벡터 계산
+				closest_normal = DirectX::XMVector3Normalize(
+					DirectX::XMVector3Cross(
+						DirectX::XMVectorSubtract(p2, p1), DirectX::XMVectorSubtract(p3, p1)
+					)
+				);
+			}
+		}
+
+		// 슬라이딩 벡터 계산
+		DirectX::XMVECTOR normalized_closest_normal = DirectX::XMVector3Normalize(closest_normal);
+
+		// velocity를 법선에 투영해 슬라이딩 벡터 계산
+		// S = V - (V . N) * N
+		DirectX::XMVECTOR P = DirectX::XMVectorScale(closest_normal,			
+			DirectX::XMVectorGetX(
+					DirectX::XMVector3Dot(velocity, normalized_closest_normal)));
+		DirectX::XMVECTOR slide_direction = DirectX::XMVectorSubtract(velocity, P);
+
+		// velocity 벡터 조정
+		DirectX::XMStoreFloat3(&player->velocity_vector_, slide_direction);
+	}
+}
+
+
 
 bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
 {
@@ -56,4 +146,11 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
 	}
 
 	return is_moving;
+}
+
+void CatPlayer::UpdateOBB(Player* player)
+{
+	// OBB 업데이트
+	obb_.Center = player->position_;
+	obb_.Orientation = player->rotation_quat_;
 }

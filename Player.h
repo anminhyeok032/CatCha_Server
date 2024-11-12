@@ -11,9 +11,9 @@ public:
 	float max_speed_ = 200.f;
 	float acceleration_ = 100.0f;
 	float deceleration_ = 1000.0f;
-	XMFLOAT3 direction_vector_ = DirectX::XMFLOAT3();
-	XMFLOAT3 velocity_vector_ = DirectX::XMFLOAT3();
-	XMFLOAT3 force_vector_ = DirectX::XMFLOAT3();
+	DirectX::XMFLOAT3 direction_vector_ = DirectX::XMFLOAT3();
+	DirectX::XMFLOAT3 velocity_vector_ = DirectX::XMFLOAT3();
+	DirectX::XMFLOAT3 force_vector_ = DirectX::XMFLOAT3();
 
 	float player_pitch_;
 	float prev_player_pitch_;

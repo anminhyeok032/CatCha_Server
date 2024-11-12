@@ -183,7 +183,16 @@ bool Player::UpdatePosition(float deltaTime)
 	// 拱府贸府 - 框流看促搁 true 馆券
 	if (state_)
 	{
-		return state_->CalculatePhysics(this, deltaTime);
+		// 面倒 贸府
+		state_->CheckIntersects(this, FIXED_TIME_STEP);
+		// 拱府 贸府
+		bool moved = state_->CalculatePhysics(this, FIXED_TIME_STEP);
+		// OBB 盎脚
+		if (moved)
+		{
+			state_->UpdateOBB(this);
+		}
+		return moved;
 	}
 	return false;
 }

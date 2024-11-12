@@ -36,6 +36,9 @@
     <ClCompile Include="MousePlayer.cpp">
       <Filter>Character</Filter>
     </ClCompile>
+    <ClCompile Include="MapData.cpp">
+      <Filter>Global</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Over_IO.h">
@@ -64,6 +67,9 @@
     </ClInclude>
     <ClInclude Include="CharacterState.h">
       <Filter>Character</Filter>
+    </ClInclude>
+    <ClInclude Include="MapData.h">
+      <Filter>Global</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

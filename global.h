@@ -20,6 +20,10 @@
 
 #include<cmath>
 
+#include <fstream>
+#include <sstream>
+#include <string>
+
 #pragma comment(lib, "WS2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
 
@@ -113,7 +117,6 @@ extern void print_error(const char* msg, int err_no);
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
 
-using namespace DirectX;
 
 #define EPSILON					1.0e-10f
 
@@ -122,7 +125,7 @@ inline bool IsEqual(float fA, float fB) { return(::IsZero(fA - fB)); }
 inline float InverseSqrt(float fValue) { return 1.0f / sqrtf(fValue); }
 inline void Swap(float* pfS, float* pfT) { float fTemp = *pfS; *pfS = *pfT; *pfT = fTemp; }
 
-inline bool IsZeroVector(const XMFLOAT3& vec)
+inline bool IsZeroVector(const DirectX::XMFLOAT3& vec)
 {
 	return vec.x == 0.0f && vec.y == 0.0f && vec.z == 0.0f;
 }

@@ -130,6 +130,7 @@
     <ClCompile Include="CatPlayer.cpp" />
     <ClCompile Include="GameSession.cpp" />
     <ClCompile Include="MainServer.cpp" />
+    <ClCompile Include="MapData.cpp" />
     <ClCompile Include="MousePlayer.cpp" />
     <ClCompile Include="Player.cpp" />
   </ItemGroup>
@@ -138,6 +139,7 @@
     <ClInclude Include="Character.h" />
     <ClInclude Include="CharacterState.h" />
     <ClInclude Include="global.h" />
+    <ClInclude Include="MapData.h" />
     <ClInclude Include="MousePlayer.h" />
     <ClInclude Include="Over_IO.h" />
     <ClInclude Include="Player.h" />

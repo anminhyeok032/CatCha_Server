@@ -40,7 +40,7 @@ bool GameSession::Update()
             //MarkDirty();
             commandQueue.push(session_num_);
             
-            std::cout << "re-update check" << std::endl;
+            //std::cout << "re-update check" << std::endl;
         }
         else
         {

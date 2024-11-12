@@ -6,7 +6,8 @@ class Character
 public:
 	// 캐릭터 정보
 	DirectX::XMFLOAT3 position_ = DirectX::XMFLOAT3();
-	int max_hp_, curr_hp_ = 0;	// 최대 체력, 현재 체력
+	int max_hp_ = 0;	// 최대 체력
+	int	curr_hp_ = 0;	// 현재 체력
 
 	// 받은 pitch 변화값 총량
 	float total_pitch_ = 0;
@@ -25,7 +26,7 @@ public:
 	bool is_cat_ = false;	// true : Cat, false : Mouse
 
 	// 세션 및 플레이어 번호
-	CompletionKey comp_key_;
+	CompletionKey comp_key_{};
 
 	// packet 재조립
 	std::vector<char> prev_packet_;
@@ -35,7 +36,7 @@ public:
 	SOCKET socket_ = INVALID_SOCKET;
 
 	// 클라이언트 주소
-	sockaddr_in client_addr_;
+	sockaddr_in client_addr_ = {};
 
 	// 닉네임 
 
