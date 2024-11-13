@@ -10,7 +10,7 @@ public:
 	CatPlayer()
 	{
 		DirectX::XMFLOAT3 position = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-		DirectX::XMFLOAT3 extents = DirectX::XMFLOAT3(10.5483342f, 15.622265f, 30.9288589f);
+		DirectX::XMFLOAT3 extents = DirectX::XMFLOAT3(5.5483342f, 6.622265f, 15.9288589f);
 		DirectX::XMFLOAT4 rotation = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 		obb_ = DirectX::BoundingOrientedBox(position, extents, rotation);
 	}

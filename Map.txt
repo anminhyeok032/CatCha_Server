@@ -1,0 +1,9 @@
+Object Name: plane
+Position: 0.504, -71.592, -17.501
+Rotation: 0, 0, 0, 1
+Extents: 1000.03311759, 10.0, 1000.01435594
+
+Object Name: object
+Position: 0.504, 0.039, 400.501
+Rotation: 0, 0, 0, 1
+Extents: 100.03311759, 100.03335043, 100.01435594

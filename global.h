@@ -103,7 +103,7 @@ extern HANDLE g_h_iocp;
 
 extern Concurrency::concurrent_queue<int> commandQueue;
 
-constexpr float GRAVITY = 9.8f;
+constexpr float GRAVITY = 980.0f;
 constexpr float FRICTION = 0.99f;
 constexpr float STOP_THRESHOLD = 0.9f;	// 속도가 이 값보다 작아지면 멈추는 것으로 간주
 

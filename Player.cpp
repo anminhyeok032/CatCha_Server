@@ -187,6 +187,7 @@ bool Player::UpdatePosition(float deltaTime)
 		state_->CheckIntersects(this, FIXED_TIME_STEP);
 		// 물리 처리
 		bool moved = state_->CalculatePhysics(this, FIXED_TIME_STEP);
+
 		// OBB 갱신
 		if (moved)
 		{
@@ -222,16 +223,16 @@ bool Player::UpdateVelocity(float time_step)
 	{
 		float scale_factor = max_speed_ / speed_;
 		velocity_vector_.x *= scale_factor;
-		velocity_vector_.y = 0.0f;  // Y축 제거
+		//velocity_vector_.y = 0.0f;  // Y축 제거
 		velocity_vector_.z *= scale_factor;
 		speed_ = max_speed_;
 	}
 	DirectX::XMFLOAT3 delta = MathHelper::Multiply(GetVelocity(), time_step);
-	delta.y = 0.0f;  // Y축 제거
+	//delta.y = 0.0f;  // Y축 제거
 	delta_position_ = MathHelper::Add(delta_position_, delta);
 
 	// 속도가 0인지 검사
-	return speed_ != 0.0f;
+	return speed_ != 0.0f || velocity_vector_.y != 0.0f;
 }
 
 void Player::ApplyDecelerationIfStop(float time_step)
@@ -244,6 +245,7 @@ void Player::ApplyDecelerationIfStop(float time_step)
 		{
 			float scale_factor = new_speed / speed_;
 			velocity_vector_.x *= scale_factor;
+			velocity_vector_.y *= scale_factor;
 			velocity_vector_.z *= scale_factor;
 		}
 		
@@ -255,7 +257,7 @@ void Player::ApplyForces(float time_step)
 	if (false == IsZeroVector(force_vector_))
 	{
 		DirectX::XMFLOAT3 delta_force = MathHelper::Multiply(GetForce(), time_step);
-		delta_force.y = 0.0f;  // Y축 제거
+		//delta_force.y = 0.0f;  // Y축 제거
 		delta_position_ = MathHelper::Add(delta_position_, delta_force);
 	}
 }
@@ -270,7 +272,10 @@ void Player::ApplyFriction(float time_step)
 		if (speed > 0) // 0으로 안나눠지게
 		{ 
 			float scale_factor = new_speed / speed;
-			force_vector_ = MathHelper::Multiply(GetForce(), scale_factor);
+			//force_vector_ = MathHelper::Multiply(GetForce(), scale_factor);
+			force_vector_.x *= scale_factor;
+			//force_vector_.y *= scale_factor;
+			force_vector_.z *= scale_factor;
 		}
 	}
 }

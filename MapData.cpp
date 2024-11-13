@@ -51,7 +51,7 @@ bool MapData::LoadMapData(const std::string& filePath)
             size_t pos = line.find(':');
             std::string values = line.substr(pos + 1);
             ParseVector3(values, position);
-            position = MathHelper::Multiply(position, 10.0f);
+            //position = MathHelper::Multiply(position, 50.0f);
         }
         // "Rotation" ÆÄ½Ì
         else if (line.find("Rotation:") != std::string::npos)
@@ -66,7 +66,7 @@ bool MapData::LoadMapData(const std::string& filePath)
             size_t pos = line.find(':');
             std::string values = line.substr(pos + 1);
             ParseVector3(values, extents);
-            extents = MathHelper::Multiply(extents, 10.0f);
+            //extents = MathHelper::Multiply(extents, 50.0f);
         }
     }
 

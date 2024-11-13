@@ -7,7 +7,7 @@ private:
 	DirectX::BoundingOrientedBox obb_;
 
 	DirectX::XMFLOAT3 position = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-	DirectX::XMFLOAT3 extents = DirectX::XMFLOAT3(0.2480489f, 0.8407925f, 0.3379889f);
+	DirectX::XMFLOAT3 extents = DirectX::XMFLOAT3(2.2480489f, 8.8407925f, 3.3379889f);
 	DirectX::XMFLOAT4 rotation = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
 public:
