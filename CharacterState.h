@@ -17,4 +17,6 @@ public:
 
     // OBB 업데이트
     virtual void UpdateOBB(Player* player) = 0;
+
+    virtual DirectX::BoundingOrientedBox GetOBB() = 0;
 };

@@ -198,11 +198,11 @@ bool Player::UpdatePosition(float deltaTime)
 	return false;
 }
 
-void Player::UpdateRotation(float yaw)
+void Player::UpdateRotation(float degree)
 {
 	DirectX::XMStoreFloat4(&rotation_quat_,
 		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&rotation_quat_),
-			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), yaw / 100.0f)));
+			DirectX::XMQuaternionRotationAxis(DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), degree)));
 
 	dirty_ = true;
 }
@@ -283,6 +283,12 @@ void Player::ApplyFriction(float time_step)
 void Player::ApplyGravity(float time_step)
 {
 	velocity_vector_.y -= GRAVITY * time_step;
+}
+
+void Player::Set_OBB(DirectX::BoundingOrientedBox obb)
+{
+	position_ = obb.Center;
+	rotation_quat_ = obb.Orientation;
 }
 
 

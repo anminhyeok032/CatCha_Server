@@ -5,7 +5,6 @@ struct ObjectOBB
 {
     std::string name;
     DirectX::BoundingOrientedBox obb;
-    std::array<DirectX::XMFLOAT3, 6> normals;
 };
 
 extern std::unordered_map<std::string, ObjectOBB> g_obbData;
@@ -22,8 +21,5 @@ public:
     void ParseVector4(const std::string& values, DirectX::XMFLOAT4& vector);
     // 공백 제거 함수
     std::string Trim(const std::string& str);
-
-    // 물체의 모든 면 노멀 벡터 계산
-    void CalculateNormals(const DirectX::XMFLOAT3& position, const DirectX::XMFLOAT3& extents, const DirectX::XMFLOAT4& rotation, ObjectOBB& curr);
 };
 

@@ -229,14 +229,22 @@ void GameSession::SetCharacter(int room_num, int client_index, bool is_cat)
     }
 
     // 고양이일 때
-    if (is_cat) {
+    if (is_cat) 
+    {
         player->SetState(std::make_unique<CatPlayer>());
         player->SetID(NUM_CAT);
     }
     // 쥐일 때
-    else {
+    else 
+    {
         player->SetState(std::make_unique<MousePlayer>());
         player->SetID(GetMouseNum());
+    }
+
+    // OBB에 대해 위치 맞춰주기
+    if (player->state_)
+    {
+        player->Set_OBB(player->state_->GetOBB());
     }
 
     // 캐릭터 교체 브로드캐스트

@@ -32,7 +32,6 @@ bool MapData::LoadMapData(const std::string& filePath)
         if (line.empty())
         {
             currentOBB.obb = DirectX::BoundingOrientedBox(position, extents, rotation);
-            CalculateNormals(position, extents, rotation, currentOBB);
             g_obbData.emplace(currentOBB.name, std::move(currentOBB));
             currentOBB = ObjectOBB();  // 다음 객체를 위해 초기화
             continue;
@@ -51,7 +50,6 @@ bool MapData::LoadMapData(const std::string& filePath)
             size_t pos = line.find(':');
             std::string values = line.substr(pos + 1);
             ParseVector3(values, position);
-            //position = MathHelper::Multiply(position, 50.0f);
         }
         // "Rotation" 파싱
         else if (line.find("Rotation:") != std::string::npos)
@@ -66,7 +64,7 @@ bool MapData::LoadMapData(const std::string& filePath)
             size_t pos = line.find(':');
             std::string values = line.substr(pos + 1);
             ParseVector3(values, extents);
-            //extents = MathHelper::Multiply(extents, 50.0f);
+            extents = DirectX::XMFLOAT3(extents.x / 2.0f, extents.y / 2.0f, extents.z / 2.0f);
         }
     }
 
@@ -74,7 +72,6 @@ bool MapData::LoadMapData(const std::string& filePath)
     if (!currentOBB.name.empty())
     {
         currentOBB.obb = DirectX::BoundingOrientedBox(position, extents, rotation);
-        CalculateNormals(position, extents, rotation, currentOBB);
         g_obbData.emplace(currentOBB.name, std::move(currentOBB));
     }
 
@@ -123,34 +120,4 @@ std::string MapData::Trim(const std::string& str)
     size_t start = str.find_first_not_of(whitespace);
     size_t end = str.find_last_not_of(whitespace);
     return start == std::string::npos ? "" : str.substr(start, end - start + 1);
-}
-
-// 물체의 모든 면 노멀 벡터 계산
-void MapData::CalculateNormals(const DirectX::XMFLOAT3& position, const DirectX::XMFLOAT3& extents, const DirectX::XMFLOAT4& rotation, ObjectOBB& curr)
-{
-    // 각 축의 벡터
-    DirectX::XMVECTOR extentX = DirectX::XMVectorSet(extents.x, 0.0f, 0.0f, 0.0f);
-    DirectX::XMVECTOR extentY = DirectX::XMVectorSet(0.0f, extents.y, 0.0f, 0.0f);
-    DirectX::XMVECTOR extentZ = DirectX::XMVectorSet(0.0f, 0.0f, extents.z, 0.0f);
-
-    // 회전 행렬 생성
-    DirectX::XMVECTOR quatRotation = DirectX::XMLoadFloat4(&rotation);
-    DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationQuaternion(quatRotation);
-
-    // 면 노멀 벡터 계산
-    DirectX::XMVECTOR normalX = DirectX::XMVector3Normalize(XMVector3TransformNormal(extentX, rotationMatrix));
-    DirectX::XMVECTOR normalY = DirectX::XMVector3Normalize(XMVector3TransformNormal(extentY, rotationMatrix));
-    DirectX::XMVECTOR normalZ = DirectX::XMVector3Normalize(XMVector3TransformNormal(extentZ, rotationMatrix));
-
-    // +X, -X 면의 노멀
-    DirectX::XMStoreFloat3(&curr.normals[0], normalX);                              // +X 면
-    DirectX::XMStoreFloat3(&curr.normals[1], DirectX::XMVectorNegate(normalX));     // -X 면
-
-    // +Y, -Y 면의 노멀
-    DirectX::XMStoreFloat3(&curr.normals[2], normalY);                              // +Y 면
-    DirectX::XMStoreFloat3(&curr.normals[3], DirectX::XMVectorNegate(normalY));     // -Y 면
-
-    // +Z, -Z 면의 노멀
-    DirectX::XMStoreFloat3(&curr.normals[4], normalZ);                              // +Z 면
-    DirectX::XMStoreFloat3(&curr.normals[5], DirectX::XMVectorNegate(normalZ));     // -Z 면
 }

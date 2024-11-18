@@ -59,7 +59,7 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 		{
 			continue;
 		}
-		//std::cout << "충돌함 : " << object.first << std::endl;
+		std::cout << "충돌함 : " << object.first << std::endl;
 
 		float min_distance = FLT_MAX;								// 가장 거리가 짧은 충돌 지점까지의 거리
 		DirectX::XMVECTOR closest_normal = DirectX::XMVectorZero();	// 가장 가까운 면 normal 벡터
@@ -147,6 +147,8 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
 		// 위치 업데이트
 		player->position_ = MathHelper::Add(player->position_, player->delta_position_);
 		//std::cout << "CalculatePhysics : 최종 속도: " << player->velocity_vector_.x << ", " << player->velocity_vector_.y << ", " << player->velocity_vector_.z << std::endl;
+		//std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
+
 		// 고정 시간 스텝만큼 감소
 		time_remaining -= FIXED_TIME_STEP;
 
@@ -161,5 +163,6 @@ void MousePlayer::UpdateOBB(Player* player)
 {
 	// OBB 업데이트
 	obb_.Center = player->position_;
+	// OBB의 회전 값 갱신
 	obb_.Orientation = player->rotation_quat_;
 }

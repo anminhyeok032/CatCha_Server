@@ -1,9 +1,510 @@
-Object Name: plane
-Position: 0.504, -71.592, -17.501
-Rotation: 0, 0, 0, 1
-Extents: 1000.03311759, 10.0, 1000.01435594
+Object Name: Washer-0_OBB
+Position: 135.7169, -21.93055, -501.9339
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 77.41651, 87.35837, 87.35838
 
-Object Name: object
-Position: 0.504, 0.039, 400.501
+Object Name: Tv_Unit-0_OBB
+Position: -571.6537, -33.38423, -293.7009
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 204.7246, 56.43575, 56.47955
+
+Object Name: Towel-0_OBB
+Position: 136.1876, 14.23975, -271.6385
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 51.41511, 30.38168, 14.11083
+
+Object Name: Television-0_OBB
+Position: -571.6539, -2.017839, -293.7167
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 68.7105, 7.751559, 5.772273
+
+Object Name: Television-1_OBB
+Position: -571.6539, 39.94991, -293.701
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 133.8308, 75.6803, 5.772273
+
+Object Name: Sink-0_OBB
+Position: 100.7977, 78.67042, -349.9723
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 7.617834, 95.34883, 75.73689
+
+Object Name: Sink-1_OBB
+Position: 126.1345, -37.16565, -351.2259
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 20.37669, 63.61448, 22.70482
+
+Object Name: Sink-2_OBB
+Position: 105.9036, 19.89198, -351.4748
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 17.70879, 13.26682, 8.556828
+
+Object Name: Sink-3_OBB
+Position: 100.5766, 6.617888, -351.469
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 7.054847, 21.0026, 75.38038
+
+Object Name: Sink-4_OBB
+Position: 150.4686, 6.617888, -351.469
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 8.437863, 21.0026, 75.38038
+
+Object Name: Sink-5_OBB
+Position: 125.8382, 6.617895, -318.2484
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 57.69878, 21.0026, 8.939279
+
+Object Name: Sink-6_OBB
+Position: 125.8382, 6.617881, -384.4538
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 57.69878, 21.0026, 9.25734
+
+Object Name: Sink-7_OBB
+Position: 125.8382, -0.5950635, -351.4302
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 57.69878, 6.576691, 75.30446
+
+Object Name: Sink-8_OBB
+Position: 108.2864, 83.77177, -291.9599
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 22.59522, 85.14612, 31.44728
+
+Object Name: Sink-9_OBB
+Position: 108.4594, 83.79001, -411.126
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 22.94113, 85.10958, 30.97159
+
+Object Name: Coffee_Table-0_OBB
+Position: -404.501, -37.90636, -301.8797
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 82.53373, 39.65354, 78.43041
+
+Object Name: Closet-0_OBB
+Position: 299.0403, -22.80689, -545.7551
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 26.39783, 23.54261, 20.15825
+
+Object Name: Closet-1_OBB
+Position: 251.7025, -44.72342, -525.3176
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 32.85033, 45.76582, 61.03314
+
+Object Name: Closet-2_OBB
+Position: 249.7924, 10.10906, -543.5405
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 50.03871, 51.48026, 24.58739
+
+Object Name: Closet-3_OBB
+Position: 250.8508, -17.6757, -519.3738
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 41.26098, 8.095543, 72.92091
+
+Object Name: Chess_1-0_OBB
+Position: -411.4651, -13.19225, -184.8666
+Rotation: -5.371645E-08, -0.7114959, 1.675344E-07, 0.7026903
+Extents: 43.53835, 9.280134, 43.53835
+
+Object Name: Box_003-0_OBB
+Position: 21.26954, -44.98789, -258.4666
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 40.75795, 33.40013, 40.75795
+
+Object Name: Box_002-0_OBB
+Position: 34.42875, -44.98792, -322.7184
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 38.92092, 33.40013, 38.92092
+
+Object Name: Box_001-0_OBB
+Position: -9.687852, -44.9879, -293.9655
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 45.6637, 33.40013, 45.6637
+
+Object Name: Bed-0_OBB
+Position: -533.4489, -7.10132, 337.0081
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 75.14545, 52.83259, 176.9643
+
+Object Name: Bed-1_OBB
+Position: -471.6538, -12.28707, 337.0081
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 245.1607, 42.46108, 176.9643
+
+Object Name: Bed-2_OBB
+Position: -352.6457, -47.10248, 419.3936
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 8.05919, 28.75624, 11.90379
+
+Object Name: Bed-3_OBB
+Position: -352.6457, -47.10253, 254.3815
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 8.05919, 28.75624, 11.7113
+
+Object Name: Bed-4_OBB
+Position: -586.0018, -47.10248, 419.7608
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 16.46467, 28.75624, 12.85861
+
+Object Name: Bed-5_OBB
+Position: -589.932, -47.10253, 254.3815
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 8.604287, 28.75624, 11.71129
+
+Object Name: Bed-6_OBB
+Position: -590.823, 12.11492, 337.0081
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 6.822454, 89.58918, 176.9643
+
+Object Name: Bath-0_OBB
+Position: 429.1186, -49.25016, -417.4158
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 124.5757, 35.06361, 268.5314
+
+Object Name: Basket-0_OBB
+Position: 123.2184, -29.00935, -421.7115
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 46.93373, 65.24709, 54.74335
+
+Object Name: Sofa-0_OBB
+Position: -137.1706, -2.19342, -284.5263
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 225.5346, 31.71279, 35.8756
+
+Object Name: Sofa-1_OBB
+Position: -168.504, -32.43071, -285.0396
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 272.8162, 29.90267, 98.53905
+
+Object Name: Sofa-2_OBB
+Position: -168.5466, -10.56485, -409.2893
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 24.12192, 13.31296, 98.45414
+
+Object Name: Sofa-3_OBB
+Position: -168.5465, -10.56485, -160.1227
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 22.98858, 13.31296, 98.45412
+
+Object Name: Sofa-4_OBB
+Position: -133.5025, -54.48917, -170.5448
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 13.65654, 13.78623, 13.94709
+
+Object Name: Sofa-5_OBB
+Position: -133.5033, -54.48917, -400.8987
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 12.77492, 13.78623, 13.94698
+
+Object Name: Sofa-6_OBB
+Position: -204.9695, -54.48918, -411.2489
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 13.8191, 13.78622, 13.54837
+
+Object Name: Sofa-7_OBB
+Position: -204.9686, -54.48918, -158.6063
+Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
+Extents: 14.48195, 13.78622, 13.54815
+
+Object Name: Kitchen_Stuff-0_OBB
+Position: 228.8249, 12.92615, 209.1989
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 7.440428, 9.375956, 7.841638
+
+Object Name: Kitchen_Stuff-1_OBB
+Position: 228.8249, 12.92617, 291.2368
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 7.440428, 9.375956, 7.11434
+
+Object Name: Kitchen_Stuff-2_OBB
+Position: 197.0764, 12.92618, 332.8601
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 6.62965, 9.375956, 7.144254
+
+Object Name: Kitchen_Stuff-3_OBB
+Position: 197.0764, 12.92616, 250.8905
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 6.62965, 9.375956, 8.621634
+
+Object Name: Kitchen_Stuff-4_OBB
+Position: 255.0419, 9.25005, 311.0478
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 25.78353, 2.023696, 25.85627
+
+Object Name: Kitchen_Stuff-5_OBB
+Position: 255.0419, 9.250026, 230.4706
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 25.78353, 2.023696, 26.60976
+
+Object Name: Kitchen_Stuff-6_OBB
+Position: 169.3096, 9.250026, 230.4706
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 25.85909, 2.023696, 26.60976
+
+Object Name: Kitchen_Stuff-7_OBB
+Position: 170.1784, 9.25005, 311.6186
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 27.59679, 2.023696, 26.16513
+
+Object Name: Glass_1-0_OBB
+Position: 482.1944, 24.9136, 173.5493
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 9.536768, 15.75216, 9.53677
+
+Object Name: Glass_001-0_OBB
+Position: 456.3925, 21.62124, 150.4865
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 9.536768, 9.167449, 9.53677
+
+Object Name: Wardrobe-0_OBB
+Position: -99.92133, 44.70629, 403.9373
+Rotation: 1.545431E-08, 0.7071067, -1.545431E-08, 0.7071068
+Extents: 198.4009, 214.0849, 67.54156
+
+Object Name: Walls-0_OBB
+Position: -49.09338, 50.3986, 255.6657
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 30.23705, 277.8589, 502.5652
+
+Object Name: Walls-1_OBB
+Position: -413.6825, 53.47827, 19.48352
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 363.8015, 271.6996, 30.2004
+
+Object Name: Walls-2_OBB
+Position: 235.1496, 169.165, -250.8636
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 104.1996, 40.32571, 29.64299
+
+Object Name: Walls-3_OBB
+Position: 140.8492, 54.21078, -250.8635
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 84.29464, 270.2343, 29.64299
+
+Object Name: Walls-4_OBB
+Position: 395.0261, 60.90237, -250.8635
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 215.1896, 256.8512, 29.64299
+
+Object Name: Walls-5_OBB
+Position: 84.18065, 169.3957, -121.1076
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 29.69728, 39.86488, 112.0275
+
+Object Name: Walls-6_OBB
+Position: 84.18065, 53.96864, -364.3592
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 29.69728, 270.7186, 374.7895
+
+Object Name: Walls-7_OBB
+Position: 84.18065, 53.18234, -32.69588
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 29.69728, 272.2914, 63.70889
+
+Object Name: Walls-8_OBB
+Position: 285.7882, 49.86851, 13.2662
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 433.9566, 278.9191, 28.73156
+
+Object Name: Walls-9_OBB
+Position: 517.9487, 170.266, -121.4434
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 30.31574, 38.12446, 113.141
+
+Object Name: Walls-10_OBB
+Position: 517.9487, 49.66692, 221.7645
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 30.31574, 279.3224, 572.7978
+
+Object Name: Walls-11_OBB
+Position: 517.9487, 57.39386, -364.6415
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 30.31574, 263.8682, 373.3282
+
+Object Name: Walls-12_OBB
+Position: -45.7848, 54.09103, -566.2247
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 1157.783, 270.4737, 29.28908
+
+Object Name: Walls-13_OBB
+Position: -610.0411, 53.29241, -22.35376
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 29.27256, 272.0714, 1059.917
+
+Object Name: Walls-14_OBB
+Position: -45.7848, 49.6074, 522.4858
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 1157.783, 279.4416, 28.87172
+
+Object Name: Walls-15_OBB
+Position: -178.0314, 168.4911, 19.48348
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 107.4856, 41.67365, 30.2004
+
+Object Name: Walls-16_OBB
+Position: -94.37476, 50.78027, 19.48352
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 60.01213, 277.0956, 30.2004
+
+Object Name: Kitchen-0_OBB
+Position: 479.9579, 124.1567, 308.7546
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 53.9059, 78.14607, 397.3951
+
+Object Name: Kitchen-1_OBB
+Position: 500.5844, 6.450723, 221.1135
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 12.67889, 19.68956, 57.54676
+
+Object Name: Kitchen-2_OBB
+Position: 425.6372, 6.450723, 221.1135
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 17.95943, 19.68956, 57.54676
+
+Object Name: Kitchen-3_OBB
+Position: 461.7841, 6.450695, 151.0647
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 90.25338, 19.68956, 82.26414
+
+Object Name: Kitchen-4_OBB
+Position: 461.7646, 6.450775, 378.7304
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 90.2925, 19.68956, 257.4437
+
+Object Name: Kitchen-5_OBB
+Position: 461.7484, -33.05445, 308.7546
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 90.32494, 59.04719, 397.3951
+
+Object Name: Cooker-0_OBB
+Position: 478.652, 32.02495, 408.192
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 23.03121, 12.78432, 27.3975
+
+Object Name: Cooker-1_OBB
+Position: 463.443, 16.94402, 390.802
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 64.55719, 6.201335, 76.82208
+
+Object Name: Sofa (1)-0_OBB
+Position: -355.3925, -2.193486, -524.2471
 Rotation: 0, 0, 0, 1
-Extents: 100.03311759, 100.03335043, 100.01435594
+Extents: 225.5346, 31.71279, 35.87561
+
+Object Name: Sofa (1)-1_OBB
+Position: -355.9057, -32.43077, -492.9136
+Rotation: 0, 0, 0, 1
+Extents: 272.8163, 29.90267, 98.53907
+
+Object Name: Sofa (1)-2_OBB
+Position: -229.4725, -54.48923, -456.449
+Rotation: 0, 0, 0, 1
+Extents: 14.48195, 13.78622, 13.54815
+
+Object Name: Sofa (1)-3_OBB
+Position: -482.1151, -54.48923, -456.4482
+Rotation: 0, 0, 0, 1
+Extents: 13.8191, 13.78622, 13.54837
+
+Object Name: Sofa (1)-4_OBB
+Position: -471.7649, -54.48923, -527.9144
+Rotation: 0, 0, 0, 1
+Extents: 12.77493, 13.78623, 13.94698
+
+Object Name: Sofa (1)-5_OBB
+Position: -241.4109, -54.48923, -527.9151
+Rotation: 0, 0, 0, 1
+Extents: 13.65654, 13.78623, 13.94709
+
+Object Name: Sofa (1)-6_OBB
+Position: -230.9889, -10.56491, -492.8712
+Rotation: 0, 0, 0, 1
+Extents: 22.98858, 13.31296, 98.45414
+
+Object Name: Sofa (1)-7_OBB
+Position: -480.1555, -10.56491, -492.8712
+Rotation: 0, 0, 0, 1
+Extents: 24.12192, 13.31296, 98.45415
+
+Object Name: Fridge-0_OBB
+Position: 452.886, 27.61014, 67.66046
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 74.45274, 176.3832, 78.18577
+
+Object Name: mouse_mesh_edit-0_OBB
+Position: 0.00781226, 2.38999, 0.004617309
+Rotation: 0, 0, 0, 1
+Extents: 3.864098, 5.104148, 10.92712
+
+Object Name: Dishes-0_OBB
+Position: 460.9018, 19.98654, 172.1952
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 20.34744, 5.914821, 19.81425
+
+Object Name: Glass_003-0_OBB
+Position: 482.1944, 21.62124, 150.4865
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 9.536768, 9.167449, 9.53677
+
+Object Name: Glass_002-0_OBB
+Position: 469.4241, 21.62124, 150.4865
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 9.536768, 9.167449, 9.53677
+
+Object Name: Dinner_Table-0_OBB
+Position: 267.5104, -31.56016, 347.2201
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 11.7599, 60.95624, 12.94152
+
+Object Name: Dinner_Table-1_OBB
+Position: 156.6699, -31.56016, 347.2201
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 11.5595, 60.95624, 12.94153
+
+Object Name: Dinner_Table-2_OBB
+Position: 267.5018, -31.56021, 194.0224
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 11.86905, 60.95624, 11.78848
+
+Object Name: Dinner_Table-3_OBB
+Position: 156.6699, -31.56021, 194.0224
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 11.5595, 60.95624, 11.78848
+
+Object Name: Dinner_Table-4_OBB
+Position: 212.1705, 3.78256, 270.7781
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 134.0138, 9.015493, 179.1144
+
+Object Name: Vase-0_OBB
+Position: 212.1706, 38.72646, 277.0308
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 16.24231, 62.56716, 16.24231
+
+Object Name: Ground-0_OBB
+Position: -45.78715, -78.64875, -21.97372
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 1157.78, 34.1126, 1117.791
+
+Object Name: Shelving-0_OBB
+Position: -558.2702, -35.3844, 207.8362
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 59.48819, 52.66289, 52.66289
+
+Object Name: Cat.L-0_OBB
+Position: -6.570594E-05, 19.85514, 1.016994
+Rotation: -0.7071068, 0, 0, 0.7071068
+Extents: 26.47168, 53.77291, 39.95445
+
+Object Name: Microwave-0_OBB
+Position: 476.2829, 30.19508, 467.9727
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 34.61236, 29.33595, 51.98777
+
+Object Name: Shelving_001-0_OBB
+Position: -558.2702, -35.38431, 467.167
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 59.48819, 52.66289, 52.66289
+
+Object Name: Glass_004-0_OBB
+Position: 482.1944, 24.9136, 161.7245
+Rotation: -1.569582E-07, 0, 0, 1
+Extents: 9.536768, 15.75216, 9.53677
+

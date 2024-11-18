@@ -6,15 +6,18 @@ class MousePlayer : public CharacterState
 private:
 	DirectX::BoundingOrientedBox obb_;
 
-	DirectX::XMFLOAT3 position = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-	DirectX::XMFLOAT3 extents = DirectX::XMFLOAT3(2.2480489f, 8.8407925f, 3.3379889f);
-	DirectX::XMFLOAT4 rotation = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	DirectX::XMFLOAT3 position_ = DirectX::XMFLOAT3(0.00781226f, 2.38999f, 0.004617309f);
+	DirectX::XMVECTOR center_ = DirectX::XMLoadFloat3(&position_);
+	DirectX::XMFLOAT3 extents_ = DirectX::XMFLOAT3(3.864098f/2.0f, 5.104148f/2.0f, 10.92712f/2.0f);
+	//DirectX::XMFLOAT3 extents_ = DirectX::XMFLOAT3(0.00781226f, 2.38999f, 0.004617309f);
+	DirectX::XMFLOAT4 rotation_ = DirectX::XMFLOAT4(0, 0, 0, 1);
 
 public:
 	// 생성자
 	MousePlayer() 
 	{
-		obb_ = DirectX::BoundingOrientedBox(position, extents, rotation);
+		//extents = MathHelper::Multiply(extents, 100.0f);
+		obb_ = DirectX::BoundingOrientedBox(position_, extents_, rotation_);
 	}
 
 	// KeyInput
@@ -28,4 +31,6 @@ public:
 
 	// OBB 업데이트
 	void UpdateOBB(Player* player) override;
+
+	DirectX::BoundingOrientedBox GetOBB() override { return obb_; }
 };

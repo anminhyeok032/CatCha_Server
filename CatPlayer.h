@@ -5,14 +5,18 @@ class CatPlayer : public CharacterState
 {
 private:
 	DirectX::BoundingOrientedBox obb_;
+
+	DirectX::XMFLOAT3 position_ = DirectX::XMFLOAT3(-6.570594E-05f, 19.85514f, 1.016994f);
+	DirectX::XMVECTOR center_ = DirectX::XMLoadFloat3(&position_);
+	DirectX::XMFLOAT3 extents_ = DirectX::XMFLOAT3(26.47168f / 2.0f, 53.77291f / 2.0f, 39.95445f / 2.0f);
+	//DirectX::XMFLOAT4 rotation_ = DirectX::XMFLOAT4(-0.7071068f, 0, 0, 0.7071068f);
+	DirectX::XMFLOAT4 rotation_ = DirectX::XMFLOAT4(0, 0, 0, 1);
 public:
 	// 생성자
 	CatPlayer()
 	{
-		DirectX::XMFLOAT3 position = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-		DirectX::XMFLOAT3 extents = DirectX::XMFLOAT3(5.5483342f, 6.622265f, 15.9288589f);
-		DirectX::XMFLOAT4 rotation = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-		obb_ = DirectX::BoundingOrientedBox(position, extents, rotation);
+		//extents = MathHelper::Multiply(extents, 100.0f);
+		obb_ = DirectX::BoundingOrientedBox(position_, extents_, rotation_);
 	}
 
 	// KeyInput
@@ -26,4 +30,6 @@ public:
 
 	// OBB 업데이트
 	void UpdateOBB(Player* player) override;
+
+	DirectX::BoundingOrientedBox GetOBB() override { return obb_; }
 };

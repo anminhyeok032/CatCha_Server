@@ -74,7 +74,7 @@ public:
 	}
 
 	// 회전 업데이트
-	void UpdateRotation(float yaw);
+	void UpdateRotation(float degree);
 	// Look, Up, Right 업데이트
 	void UpdateLookUpRight();
 	// 속도 업데이트
@@ -87,6 +87,8 @@ public:
 	void ApplyFriction(float time_step);
 	// 중력 적용
 	void ApplyGravity(float time_step);
+
+	void Set_OBB(DirectX::BoundingOrientedBox obb);
 
 	virtual void InputKey() {}
 	// 움직임 변화 감지를 위한 bool return
