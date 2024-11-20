@@ -233,18 +233,16 @@ void GameSession::SetCharacter(int room_num, int client_index, bool is_cat)
     {
         player->SetState(std::make_unique<CatPlayer>());
         player->SetID(NUM_CAT);
+        player->Set_OBB(player->state_->GetOBB());
+        //player->position_.y = -58.4f;
     }
     // 쥐일 때
     else 
     {
         player->SetState(std::make_unique<MousePlayer>());
         player->SetID(GetMouseNum());
-    }
-
-    // OBB에 대해 위치 맞춰주기
-    if (player->state_)
-    {
         player->Set_OBB(player->state_->GetOBB());
+        //player->position_.y = -59.53f;
     }
 
     // 캐릭터 교체 브로드캐스트

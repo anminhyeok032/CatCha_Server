@@ -288,6 +288,7 @@ void Player::ApplyGravity(float time_step)
 void Player::Set_OBB(DirectX::BoundingOrientedBox obb)
 {
 	position_ = obb.Center;
+	position_.y -= obb.Extents.y;
 	rotation_quat_ = obb.Orientation;
 }
 
