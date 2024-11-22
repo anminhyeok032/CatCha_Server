@@ -114,18 +114,29 @@ void GameSession::InitUDPSocket()
 
 void GameSession::BroadcastPosition(int player)
 {
+    Player* pl = players_[player].get();
     SC_MOVE_PLAYER_PACKET p;
     p.size = sizeof(p);
     p.type = SC_MOVE_PLAYER;
     p.id = player;
-    p.x = players_[player]->position_.x;
-    p.y = players_[player]->position_.y;
-    p.z = players_[player]->position_.z;
+    p.x = pl->position_.x;
+    p.y = pl->position_.y;
+    p.z = pl->position_.z;
     // tick동안 쌓인 pitch 전송
-    p.player_pitch = players_[player]->total_pitch_;
+    p.player_pitch = pl->total_pitch_;
     // 쌓인 pitch 초기화
-    players_[player]->total_pitch_ = 0.0f;
-    //std::cout << "Player Position : " << p.x << ", " << p.y << ", " << p.z << std::endl;
+    pl->total_pitch_ = 0.0f;
+    
+    // state와 on_ground_를 파싱해서 unsigned char로 변환
+    unsigned char state_value = static_cast<unsigned char>(pl->obj_state_);
+    // on_ground을 최하위 비트에 저장
+    p.state = (state_value << 1) | (pl->on_ground_ ? 1 : 0);
+
+    // 점프시작을 전송후, 점프 idle로 변경
+    if (pl->obj_state_ == Object_State::STATE_JUMP_START)
+    {
+        players_[player]->obj_state_ = Object_State::STATE_JUMP_IDLE;
+    }
 
     for (auto& pl : players_)
     {

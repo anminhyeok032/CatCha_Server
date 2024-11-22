@@ -11,6 +11,12 @@ public:
 	float max_speed_ = 200.f;
 	float acceleration_ = 100.0f;
 	float deceleration_ = 1000.0f;
+
+	float jump_power_ = 500.0f;
+
+	bool on_ground_ = false;
+	Object_State obj_state_ = Object_State::STATE_IDLE;
+
 	DirectX::XMFLOAT3 direction_vector_ = DirectX::XMFLOAT3();
 	DirectX::XMFLOAT3 velocity_vector_ = DirectX::XMFLOAT3();
 	DirectX::XMFLOAT3 force_vector_ = DirectX::XMFLOAT3();
@@ -99,6 +105,7 @@ public:
 	void MoveBack();
 	void MoveLeft();
 	void MoveRight();
+	void Jump();
 
 	DirectX::XMFLOAT3 GetLook()		const { return look_; }
 	DirectX::XMFLOAT3 GetUp()		const { return up_; }

@@ -42,11 +42,6 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
 
     DirectX::XMVECTOR slide_vector = velocity;
 
-    DirectX::XMVECTOR new_pos = DirectX::XMVectorAdd(currentPos, DirectX::XMVectorScale(slide_vector, deltaTime));
-    DirectX::XMFLOAT3 new_pos_f3;
-    DirectX::XMStoreFloat3(&new_pos_f3, new_pos);
-    DirectX::BoundingOrientedBox new_obb = DirectX::BoundingOrientedBox(new_pos_f3, obb_.Extents, obb_.Orientation);
-
     // 모든 오브젝트 충돌체크
     for (const auto& object : g_obbData)
     {
@@ -151,12 +146,16 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
         // Y축 슬라이딩 보정 (위아래 충돌 감지)
         if (fabsf(DirectX::XMVectorGetY(normalized_closest_normal)) > 0.9f)
         {
+            player->on_ground_ = true;
             slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
+            
+            // 점프 중 땅에 닿으면 점프 종료로 변환
+            if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
+            {
+                player->obj_state_ = Object_State::STATE_JUMP_END;
+            }
         }
 
-        new_pos = DirectX::XMVectorAdd(currentPos, DirectX::XMVectorScale(slide_vector, deltaTime));
-        DirectX::XMStoreFloat3(&new_pos_f3, new_pos);
-        new_obb.Center = new_pos_f3;
     }
 
     DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
@@ -165,18 +164,16 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
 
 bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
 {
-	bool is_moving = false;
+    bool need_update = false;
 
 	// 각도 회전 체크
 	if (player->prev_player_pitch_ != player->player_pitch_)
 	{
-		is_moving = true;
+        need_update = true;
 		player->prev_player_pitch_ = player->player_pitch_;
 	}
 
 	float time_remaining = (deltaTime < 1.0f) ? deltaTime : 1.0f;	// 최대 1초까지만 계산
-	const int MAX_ITERATIONS = 100;									// 무한 루프 방지
-	int iterations = 0;												// 루프 체크
 
 	while (time_remaining >= FIXED_TIME_STEP)
 	{
@@ -185,27 +182,45 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
 		// 속도 계산 및 이동 여부 체크
 		if (player->UpdateVelocity(FIXED_TIME_STEP))
 		{
-			is_moving = true;
+            need_update = true;
+
+            // 땅에 붙어있을때, 속도에따라 걷거나 멈춤
+            if (player->on_ground_ == true)
+            {
+                if (player->speed_ > 0.05f)
+                {
+                    player->obj_state_ = Object_State::STATE_MOVE;
+                }
+                else
+                {
+                    player->obj_state_ = Object_State::STATE_IDLE;
+                }
+            }
 		}
-
-		// 기타 물리 처리
-		player->ApplyDecelerationIfStop(FIXED_TIME_STEP);
+        
+        // 정지시 감속
+        player->ApplyDecelerationIfStop(FIXED_TIME_STEP);
+        // 힘 적용
 		player->ApplyForces(FIXED_TIME_STEP);
+        // 마찰력 적용
 		player->ApplyFriction(FIXED_TIME_STEP);
-		
-
 		// 위치 업데이트
 		player->position_ = MathHelper::Add(player->position_, player->delta_position_);
+
+        // TODO : 임시로 바닥을 뚫는 현상 제거
+        // 깊이 충돌 업데이트시 제거할것
+        if (player->position_.y < -61.5f)
+        {
+            player->position_.y = -61.5f;
+        }
 
 		std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
 
 		// 고정 시간 스텝만큼 감소
 		time_remaining -= FIXED_TIME_STEP;
-
-		iterations++;
 	}
 
-	return is_moving;
+	return need_update;
 }
 
 void CatPlayer::UpdateOBB(Player* player)

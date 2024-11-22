@@ -111,11 +111,12 @@ struct SC_REMOVE_PLAYER_PACKET {
 };
 
 struct SC_MOVE_PLAYER_PACKET {
-	unsigned char size;
-	char	type;
-	int		id;				// 서버에 접속해 있는 캐릭터 번호
-	float 	x, y, z;		// 움직인 위치
-	float	player_pitch;	// rotate 정보	
+	unsigned char	size;
+	char			type;
+	int				id;				// 서버에 접속해 있는 캐릭터 번호
+	float 			x, y, z;		// 움직인 위치
+	float			player_pitch;	// rotate 정보	
+	unsigned char	state;			// Object_State와 on_ground_를 합친 값
 };
 
 struct SC_SYNC_PLAYER_PACKET {

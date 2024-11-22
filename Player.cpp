@@ -176,7 +176,11 @@ bool Player::UpdatePosition(float deltaTime)
 			case Action::MOVE_RIGHT:
 				MoveRight();
 				break;
-			
+			case Action::ACTION_JUMP:
+				Jump();
+				break;
+			default:
+				break;
 			}
 		}
 	}
@@ -231,6 +235,16 @@ bool Player::UpdateVelocity(float time_step)
 	//delta.y = 0.0f;  // Y축 제거
 	delta_position_ = MathHelper::Add(delta_position_, delta);
 
+	// 떨어질때, 점프 idle로 변환
+	// y의 변화가 있다 && 점프시작이 아니다 && 현재 idle||move 상태라면
+	if (velocity_vector_.y != 0.0f && obj_state_ != Object_State::STATE_JUMP_START 
+		&& (obj_state_ == Object_State::STATE_IDLE || obj_state_ == Object_State::STATE_MOVE))
+	{
+		// 공중에 뜬 상태 && 애니메이션 jump_idle로 변경
+		on_ground_= false;
+		obj_state_ = Object_State::STATE_JUMP_IDLE;
+	}
+
 	// 속도가 0인지 검사
 	return speed_ != 0.0f || velocity_vector_.y != 0.0f;
 }
@@ -241,11 +255,11 @@ void Player::ApplyDecelerationIfStop(float time_step)
 	{
 		float dec = deceleration_ * time_step;
 		float new_speed = MathHelper::Max(speed_ - dec, 0.0f);
-		if (speed_ > 0) // 0으로 안나눠지게
+		if (speed_ > 0.0f) // 0으로 안나눠지게
 		{
 			float scale_factor = new_speed / speed_;
 			velocity_vector_.x *= scale_factor;
-			velocity_vector_.y *= scale_factor;
+			//velocity_vector_.y *= scale_factor;
 			velocity_vector_.z *= scale_factor;
 		}
 		
@@ -264,18 +278,19 @@ void Player::ApplyForces(float time_step)
 
 void Player::ApplyFriction(float time_step) 
 {
-	float speed = MathHelper::Length(delta_position_);
+	float speed = MathHelper::Length(MathHelper::Multiply(GetForce(), time_step));
 	if (speed > 0.0f) 
 	{
 		float dec = deceleration_ * time_step;
-		float new_speed = MathHelper::Max(speed - dec, 0.0f);
-		if (speed > 0) // 0으로 안나눠지게
-		{ 
+		
+		if (speed > 0.0f) // 0으로 안나눠지게
+		{
+			float new_speed = MathHelper::Max(speed - dec, 0.0f);
 			float scale_factor = new_speed / speed;
-			//force_vector_ = MathHelper::Multiply(GetForce(), scale_factor);
-			force_vector_.x *= scale_factor;
+			force_vector_ = MathHelper::Multiply(GetForce(), scale_factor);
+			//force_vector_.x *= scale_factor;
 			//force_vector_.y *= scale_factor;
-			force_vector_.z *= scale_factor;
+			//force_vector_.z *= scale_factor;
 		}
 	}
 }
@@ -311,4 +326,17 @@ void Player::MoveLeft()
 void Player::MoveRight() 
 {
 	velocity_vector_ = MathHelper::Add(GetVelocity(), GetRight(), acceleration_);
+}
+
+void Player::Jump()
+{
+	std::cout << "점프!!!" << std::endl;
+	// 점프 시작으로 변경
+	obj_state_ = Object_State::STATE_JUMP_START;
+	// 점프 파워로 적용
+	velocity_vector_.y = jump_power_;
+	// 점프는 한번만 적용되게 키 인풋 map에서 삭제
+	keyboard_input_[Action::ACTION_JUMP] = false;
+	// 점프시 땅에서 떨어진걸로 판정
+	on_ground_ = false;
 }
