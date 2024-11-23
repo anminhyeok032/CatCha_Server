@@ -129,15 +129,33 @@ void GameSession::BroadcastPosition(int player)
     
     // state와 on_ground_를 파싱해서 unsigned char로 변환
     unsigned char state_value = static_cast<unsigned char>(pl->obj_state_);
-    // on_ground을 최하위 비트에 저장
-    p.state = (state_value << 1) | (pl->on_ground_ ? 1 : 0);
+    // on_ground<<1 need_blending을 최하위 비트에 저장
+    p.state = (state_value << 2) | (pl->on_ground_ ? 1 : 0) << 1 | (pl->need_blending_ ? 1 : 0);
+
+    // 블렌딩 요청 변수 초기화
+    players_[player]->need_blending_ = false;
 
     // 점프시작을 전송후, 점프 idle로 변경
     if (pl->obj_state_ == Object_State::STATE_JUMP_START)
     {
         players_[player]->obj_state_ = Object_State::STATE_JUMP_IDLE;
     }
+    // 점프 end 전송후, 다음 스테이트 (idle||MOVE)지정
+    else if (pl->obj_state_ == Object_State::STATE_JUMP_END)
+    {
+        if (pl->speed_ > 0.05f)
+        {
+            players_[player]->obj_state_ = Object_State::STATE_MOVE;
+            players_[player]->need_blending_ = true;
+        }
+        else
+        {
+            players_[player]->obj_state_ = Object_State::STATE_IDLE;
+        }
+    }
 
+
+    // 모든 클라이언트에게 브로드캐스팅
     for (auto& pl : players_)
     {
         pl.second->DoSend(&p);

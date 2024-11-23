@@ -243,6 +243,7 @@ bool Player::UpdateVelocity(float time_step)
 		// 공중에 뜬 상태 && 애니메이션 jump_idle로 변경
 		on_ground_= false;
 		obj_state_ = Object_State::STATE_JUMP_IDLE;
+		need_blending_ = true;
 	}
 
 	// 속도가 0인지 검사
@@ -333,6 +334,8 @@ void Player::Jump()
 	std::cout << "점프!!!" << std::endl;
 	// 점프 시작으로 변경
 	obj_state_ = Object_State::STATE_JUMP_START;
+	// 점프 스타트 애니메이션 블랜딩 요청
+	need_blending_ = true;
 	// 점프 파워로 적용
 	velocity_vector_.y = jump_power_;
 	// 점프는 한번만 적용되게 키 인풋 map에서 삭제

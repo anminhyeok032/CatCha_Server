@@ -14,8 +14,10 @@ public:
 
 	float jump_power_ = 500.0f;
 
+	// 애니메이션 동기화 관련 변수들
 	bool on_ground_ = false;
 	Object_State obj_state_ = Object_State::STATE_IDLE;
+	bool need_blending_ = false;
 
 	DirectX::XMFLOAT3 direction_vector_ = DirectX::XMFLOAT3();
 	DirectX::XMFLOAT3 velocity_vector_ = DirectX::XMFLOAT3();

@@ -153,6 +153,7 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
             if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
             {
                 player->obj_state_ = Object_State::STATE_JUMP_END;
+                player->need_blending_ = true;
             }
         }
 
@@ -184,17 +185,20 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
 		{
             need_update = true;
 
-            // ¶¥¿¡ ºÙ¾îÀÖÀ»¶§, ¼Óµµ¿¡µû¶ó °È°Å³ª ¸ØÃã
-            if (player->on_ground_ == true)
+            // ¶¥¿¡ ºÙ¾îÀÖÀ»¶§ && Á¡ÇÁ³¡ÀÌ ¾Æ´Ò¶§, ¼Óµµ¿¡µû¶ó °È°Å³ª ¸ØÃã
+            if (player->on_ground_ == true && player->obj_state_ != Object_State::STATE_JUMP_END)
             {
-                if (player->speed_ > 0.05f)
+                if (player->speed_ > 0.05f && player->obj_state_ == Object_State::STATE_IDLE)
                 {
                     player->obj_state_ = Object_State::STATE_MOVE;
+                    player->need_blending_ = true;
                 }
-                else
+                else if ( player->speed_ <= 0.05f && player->obj_state_ == Object_State::STATE_MOVE)
                 {
                     player->obj_state_ = Object_State::STATE_IDLE;
+                    player->need_blending_ = true;
                 }
+                //player->need_blending_ = true;
             }
 		}
         

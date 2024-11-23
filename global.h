@@ -32,10 +32,9 @@ constexpr short UDPPORT = 8000;
 constexpr int BUFSIZE = 256;
 constexpr int MAX_USER = 4;
 constexpr int MAX_NPC = 4;
-constexpr int FLOOR = 20;
 
 // 고정 시간 스텝 설정 (1/60초)
-constexpr float FIXED_TIME_STEP = 1.0f / 60.0f;
+constexpr float FIXED_TIME_STEP = 1.0f / 100.0f;
 
 struct CompletionKey
 {
@@ -63,7 +62,7 @@ enum class Action
 };
 
 // 애니메이션 상태
-// *127개가 넘어가면 Update시 State에 파싱 자료형 변경필요
+// *65개가 넘어가면 Update시 State에 파싱 자료형 변경필요
 enum class Object_State {
 	STATE_IDLE, STATE_MOVE,
 	STATE_JUMP_START, STATE_JUMP_IDLE, STATE_JUMP_END,
