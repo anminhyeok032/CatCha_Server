@@ -19,6 +19,10 @@ public:
 	Object_State obj_state_ = Object_State::STATE_IDLE;
 	bool need_blending_ = false;
 
+	// 스킬 사용시 움직이지 않도록
+	bool moveable_ = true;
+	float stop_skill_time_ = 0.0f;
+
 	DirectX::XMFLOAT3 direction_vector_ = DirectX::XMFLOAT3();
 	DirectX::XMFLOAT3 velocity_vector_ = DirectX::XMFLOAT3();
 	DirectX::XMFLOAT3 force_vector_ = DirectX::XMFLOAT3();

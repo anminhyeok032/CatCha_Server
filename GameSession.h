@@ -43,11 +43,18 @@ public:
 	// Update Dirty Flag
 	std::atomic<bool> dirty_{ false };  
 
+	// 고양이의 공격 OBB
+	DirectX::BoundingOrientedBox cat_attack_obb_;
+	DirectX::XMFLOAT3 cat_attack_direction_;
+	bool cat_attack_ = false;
+	std::unordered_map<int, bool> cat_attacked_player_;
+
 	GameSession()
 	{
 		players_.clear();
 		lastupdatetime_ = GetServerTime();
 		remaining_time_ = 300;	// 5분
+		cat_attack_obb_.Center = DirectX::XMFLOAT3(0, -9999.0f, 0);
 	}
 	~GameSession() {}
 

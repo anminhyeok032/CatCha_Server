@@ -156,31 +156,38 @@ void Player::ProcessPacket(char* packet)
 
 bool Player::UpdatePosition(float deltaTime)
 {
-	// TODO : 고양이와 쥐의 처리를 나눠서 구현
-	// 첫 다운된 키에 따른 이동 처리
-	for(const auto& key : keyboard_input_)
+	// 스킬 사용중이 아니면
+	if (moveable_ == true)
 	{
-		if (key.second)
+		// TODO : 고양이와 쥐의 처리를 나눠서 구현
+		// 첫 다운된 키에 따른 이동 처리
+		for (const auto& key : keyboard_input_)
 		{
-			switch (key.first)
+			if (key.second)
 			{
-			case Action::MOVE_FORWARD:
-				MoveForward();
-				break;
-			case Action::MOVE_BACK:
-				MoveBack();
-				break;
-			case Action::MOVE_LEFT:
-				MoveLeft();
-				break;
-			case Action::MOVE_RIGHT:
-				MoveRight();
-				break;
-			case Action::ACTION_JUMP:
-				Jump();
-				break;
-			default:
-				break;
+				switch (key.first)
+				{
+				case Action::MOVE_FORWARD:
+					MoveForward();
+					break;
+				case Action::MOVE_BACK:
+					MoveBack();
+					break;
+				case Action::MOVE_LEFT:
+					MoveLeft();
+					break;
+				case Action::MOVE_RIGHT:
+					MoveRight();
+					break;
+				case Action::ACTION_JUMP:
+					Jump();
+					break;
+				case Action::ACTION_ONE:
+					keyboard_input_[Action::ACTION_ONE] = false;
+					break;
+				default:
+					break;
+				}
 			}
 		}
 	}

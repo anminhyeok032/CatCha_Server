@@ -8,6 +8,19 @@ void CatPlayer::InputKey(Player* player, uint8_t key_)
 	uint8_t key_stroke = key_ >> 1;
 	Action action = static_cast<Action>(key_stroke);
 
+    // 스킬 시전중이 아닌 경우에만 스킬 키 이벤트 처리
+    if (player->moveable_ == true)
+    {
+        switch (action)
+        {
+        case Action::ACTION_ONE:
+            ActionOne(player);
+            break;
+        default:
+            break;
+        }
+    }
+
 	//std::cout << "key input : " << (int)key << " = " << (is_key_pressed ? "true" : "false") << std::endl;
 
 	// keyboard 업데이트
@@ -56,7 +69,7 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
             continue;
         }
 
-        std::cout << "충돌함 : " << object.first << std::endl;
+        //std::cout << "충돌함 : " << object.first << std::endl;
 
         // 가장 거리가 짧은 충돌 지점까지의 거리
         float min_distance = FLT_MAX;
@@ -185,8 +198,10 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
 		{
             need_update = true;
 
-            // 땅에 붙어있을때 && 점프끝이 아닐때, 속도에따라 걷거나 멈춤
-            if (player->on_ground_ == true && player->obj_state_ != Object_State::STATE_JUMP_END)
+            // 땅에 붙어있을때 && 점프끝 && Action 이 아닐때, 속도에따라 걷거나 멈춤
+            if (player->on_ground_ == true 
+                && player->obj_state_ != Object_State::STATE_JUMP_END
+                && player->obj_state_ != Object_State::STATE_ACTION_ONE)
             {
                 if (player->speed_ > 0.05f && player->obj_state_ == Object_State::STATE_IDLE)
                 {
@@ -218,10 +233,26 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
             player->position_.y = -61.5f;
         }
 
-		std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
+		//std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
 
 		// 고정 시간 스텝만큼 감소
 		time_remaining -= FIXED_TIME_STEP;
+
+        // 스킬 시간이 다 갈때까지 state 유지
+        if (player->stop_skill_time_ > 0.0f)
+        {
+            player->stop_skill_time_ -= FIXED_TIME_STEP;
+        }
+        // 움직이지 못하고, 스킬 시전중에만
+        else if(player->stop_skill_time_ <= 0.0f && player->moveable_ == false)
+        {
+            player->stop_skill_time_ = 0.0f;
+            player->moveable_ = true;
+            player->obj_state_ = Object_State::STATE_IDLE;
+            player->need_blending_ = true;
+            InitAttackOBB(player, g_sessions[player->comp_key_.session_id].cat_attack_obb_);
+        }
+        
 	}
 
 	return need_update;
@@ -235,4 +266,53 @@ void CatPlayer::UpdateOBB(Player* player)
     obb_.Center.y += obb_.Extents.y - 2.0f;
 	// OBB의 회전 값 갱신
 	obb_.Orientation = player->rotation_quat_;
+}
+
+void CatPlayer::ActionOne(Player* player)
+{
+    player->moveable_ = false;
+    player->stop_skill_time_ = 1.33333337f / 2.0f;
+    player->obj_state_ = Object_State::STATE_ACTION_ONE;
+    player->need_blending_ = true;
+    
+    // 박스 생성
+    CreateAttackOBB(player, g_sessions[player->comp_key_.session_id].cat_attack_obb_);
+    g_sessions[player->comp_key_.session_id].cat_attack_ = true;
+}
+
+
+void CatPlayer::CreateAttackOBB(Player* player, DirectX::BoundingOrientedBox& box)
+{
+    // 캐릭터의 위치 및 방향 벡터
+    DirectX::XMVECTOR player_position = XMLoadFloat3(&obb_.Center);
+    DirectX::XMVECTOR look = DirectX::XMVector3Normalize(XMLoadFloat3(&player->look_));
+
+    g_sessions[player->comp_key_.session_id].cat_attack_direction_ = player->look_;
+
+    // 공격 OBB의 중심점 설정
+    // 캐릭터 앞 공격 범위의 절반만큼 이동
+    DirectX::XMVECTOR center_offset = DirectX::XMVectorScale(look, attack_range);
+    DirectX::XMVECTOR attack_center = DirectX::XMVectorAdd(player_position, center_offset);
+    DirectX::XMStoreFloat3(&box.Center, attack_center);
+
+    // 고양이가 길어서 z축은 절반만 사용
+    DirectX::XMFLOAT3 extents = DirectX::XMFLOAT3(attack_width * 2.0f, attack_height * 2.0f, attack_range);
+    box.Extents = extents;
+
+    // 쿼터니언은 그대로 사용
+    box.Orientation = obb_.Orientation;
+}
+
+void CatPlayer::InitAttackOBB(Player* player, DirectX::BoundingOrientedBox& box)
+{
+    // 공격 OBB 초기화
+	box.Center = DirectX::XMFLOAT3(0.0f, -9999.0f, 0.0f);
+	box.Extents = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	box.Orientation = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+
+    // 해당 공격에 맞은 쥐들 초기화
+    for (auto& mouse_attched : g_sessions[player->comp_key_.session_id].cat_attacked_player_)
+    {
+        mouse_attched.second = false;
+    }
 }

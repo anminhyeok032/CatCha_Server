@@ -12,6 +12,7 @@ private:
 	//DirectX::XMFLOAT3 extents_ = DirectX::XMFLOAT3(0.00781226f, 2.38999f, 0.004617309f);
 	DirectX::XMFLOAT4 rotation_ = DirectX::XMFLOAT4(0, 0, 0, 1);
 
+
 public:
 	// 생성자
 	MousePlayer() 
@@ -22,6 +23,9 @@ public:
 
 	// KeyInput
 	void InputKey(Player* player, uint8_t key) override;
+
+	// 고양이 공격 박스와 충돌 체크
+	void CheckAttack(Player* player);
 
 	// 충돌 처리
 	void CheckIntersects(Player* player, float deltaTime) override;

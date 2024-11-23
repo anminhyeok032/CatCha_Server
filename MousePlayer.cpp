@@ -10,6 +10,18 @@ void MousePlayer::InputKey(Player* player, uint8_t key_)
 
 	//std::cout << "key input : " << (int)key << " = " << (is_key_pressed ? "true" : "false") << std::endl;
 
+    // 스킬 시전중이 아닌 경우에만 스킬 키 이벤트 처리
+    if (player->moveable_ == true)
+    {
+        switch (action)
+        {
+        case Action::ACTION_ONE:
+            break;
+        default:
+            break;
+        }
+    }
+
 	// keyboard 업데이트
 	player->SetKeyState(action, is_key_pressed);
 
@@ -17,8 +29,34 @@ void MousePlayer::InputKey(Player* player, uint8_t key_)
 	player->RequestSessionUpdate();
 }
 
+void MousePlayer::CheckAttack(Player* player)
+{
+    for (const auto& mouse_attacked : g_sessions[player->comp_key_.session_id].cat_attacked_player_)
+    {
+        if (mouse_attacked.second == true)
+        {
+            if (player->id_ == mouse_attacked.first)
+            {
+                return;
+            }
+        }
+    }
+
+    if (true == g_sessions[player->comp_key_.session_id].cat_attack_obb_.Intersects(obb_))
+    {
+        player->velocity_vector_.x = g_sessions[player->comp_key_.session_id].cat_attack_direction_.x * 2000.0f;
+        player->velocity_vector_.y = 250.0f;
+        player->velocity_vector_.z = g_sessions[player->comp_key_.session_id].cat_attack_direction_.z * 2000.0f;
+        std::cout << "Cat Attack Success : mouse - " << player->id_ << std::endl;
+        g_sessions[player->comp_key_.session_id].cat_attacked_player_[player->id_] = true;
+    }
+}
+
 void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 {
+    // 고양이 공격 체크
+    CheckAttack(player);
+
     // 1. 현재 위치에 대한 OBB 충돌 검사 (xz축, y축 분리 검사)
     // 2. 충돌 시, 충돌된 물체의 점을 이용해 삼각형 만들고 삼각형과 velocity vector의 교차 검사 및 깊이 검사
     // 3. 찾은 삼각형의 노멀벡터를 이용해서 velocity 투영해서 캐릭터의 velocity 벡터를 조정
@@ -56,7 +94,7 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
             continue;
         }
 
-        std::cout << "충돌함 : " << object.first << std::endl;
+        //std::cout << "충돌함 : " << object.first << std::endl;
 
         // 가장 거리가 짧은 충돌 지점까지의 거리
         float min_distance = FLT_MAX;
@@ -219,7 +257,7 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
             player->position_.y = -61.5f;
         }
 
-        std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
+        //std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
 
         // 고정 시간 스텝만큼 감소
         time_remaining -= FIXED_TIME_STEP;
