@@ -129,8 +129,11 @@ void GameSession::BroadcastPosition(int player)
     
     // state와 on_ground_를 파싱해서 unsigned char로 변환
     unsigned char state_value = static_cast<unsigned char>(pl->obj_state_);
-    // on_ground<<1 need_blending을 최하위 비트에 저장
-    p.state = (state_value << 2) | (pl->on_ground_ ? 1 : 0) << 1 | (pl->need_blending_ ? 1 : 0);
+    // on_ground << 2 need_blending << 1 , cat_attacked을 최하위 비트에 저장
+    p.state = (state_value << 3) 
+        | (pl->on_ground_ ? 1 : 0) << 2 
+        | (pl->need_blending_ ? 1 : 0) << 1
+        | (cat_attacked_player_[pl->id_] ? 1 : 0);
 
     // 블렌딩 요청 변수 초기화
     players_[player]->need_blending_ = false;
