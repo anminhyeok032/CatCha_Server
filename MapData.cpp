@@ -2,24 +2,44 @@
 
 std::array<std::array<int, 3>, 12> g_triangle_indices =
 {
-    //std::array<int, 3>{0, 1, 2}, std::array<int, 3>{0, 2, 3},		// 아래면
-    //std::array<int, 3>{4, 5, 6}, std::array<int, 3>{4, 6, 7},		// 위면
-    //std::array<int, 3>{0, 1, 5}, std::array<int, 3>{0, 5, 4},		// 앞면
-    //std::array<int, 3>{2, 3, 7}, std::array<int, 3>{2, 7, 6},		// 뒷면
-    //std::array<int, 3>{0, 3, 7}, std::array<int, 3>{0, 7, 4},		// 왼쪽면
-    //std::array<int, 3>{1, 2, 6}, std::array<int, 3>{1, 6, 5}		// 오른쪽면
-
-    // 아래면
-    std::array<int, 3>{0, 1, 5}, std::array<int, 3>{0, 5, 4},
     // 윗면
-    std::array<int, 3>{2, 3, 7}, std::array<int, 3>{2, 7, 6},
-    // 옆면 (수정된 순서)
-    std::array<int, 3>{0, 3, 7}, std::array<int, 3>{0, 7, 4}, // 왼쪽면
-    std::array<int, 3>{1, 2, 6}, std::array<int, 3>{1, 6, 5}, // 오른쪽면
-    // 앞면
-    std::array<int, 3>{0, 1, 2}, std::array<int, 3>{0, 2, 3},
-    // 뒷면
-    std::array<int, 3>{4, 5, 6}, std::array<int, 3>{4, 6, 7}
+    //std::array<int, 3>{0, 1, 5}, std::array<int, 3>{0, 5, 4},
+    //// 아래면
+    //std::array<int, 3>{2, 3, 7}, std::array<int, 3>{2, 7, 6},
+    //// 왼쪽면
+    //std::array<int, 3>{0, 3, 7}, std::array<int, 3>{0, 7, 4},
+    //// 오른쪽면
+    //std::array<int, 3>{1, 2, 6}, std::array<int, 3>{1, 6, 5},
+    //// 앞면
+    //std::array<int, 3>{0, 1, 2}, std::array<int, 3>{0, 2, 3},
+    //// 뒷면
+    //std::array<int, 3>{4, 5, 6}, std::array<int, 3>{4, 6, 7}
+
+    // 윗면
+    //std::array<int, 3>{0, 1, 2}, std::array<int, 3>{0, 2, 3},
+    //// 아래면
+    //std::array<int, 3>{4, 6, 5}, std::array<int, 3>{4, 7, 6},
+    //// 왼쪽면
+    //std::array<int, 3>{0, 7, 4}, std::array<int, 3>{0, 3, 7},
+    //// 오른쪽면
+    //std::array<int, 3>{1, 5, 6}, std::array<int, 3>{1, 6, 2},
+    //// 앞면
+    //std::array<int, 3>{3, 2, 7}, std::array<int, 3>{3, 6, 7},
+    //// 뒷면
+    //std::array<int, 3>{0, 4, 1}, std::array<int, 3>{1, 4, 5}
+
+// 윗면
+std::array<int, 3>{7, 3, 2}, std::array<int, 3>{7, 2, 6},
+// 아래면
+std::array<int, 3>{1, 4, 5}, std::array<int, 3>{1, 4, 0},
+// 왼쪽면
+std::array<int, 3>{3, 4, 0}, std::array<int, 3>{3, 7, 4},
+// 오른쪽면
+std::array<int, 3>{2, 1, 5}, std::array<int, 3>{2, 5, 6},
+// 앞면
+std::array<int, 3>{3, 1, 2}, std::array<int, 3>{3, 0, 1},
+// 뒷면
+std::array<int, 3>{7, 6, 5}, std::array<int, 3>{7, 5, 4}
 };
 
 

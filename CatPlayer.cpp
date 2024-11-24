@@ -146,22 +146,35 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
                 }
             }
         }
+
         // 슬라이딩 벡터 계산
         DirectX::XMVECTOR normalized_closest_normal = DirectX::XMVector3Normalize(closest_normal);
 
         // velocity를 법선에 투영해 슬라이딩 벡터 계산
         // S = V - (V . N) * N
-        DirectX::XMVECTOR P = DirectX::XMVectorScale(closest_normal,
+        DirectX::XMVECTOR P = DirectX::XMVectorScale(normalized_closest_normal,
             DirectX::XMVectorGetX(
                 DirectX::XMVector3Dot(slide_vector, normalized_closest_normal)));
         slide_vector = DirectX::XMVectorSubtract(slide_vector, P);
 
-        // Y축 슬라이딩 보정 (위아래 충돌 감지)
-        if (fabsf(DirectX::XMVectorGetY(normalized_closest_normal)) > 0.9f)
+        // 충돌후 관통된 깊이를 구해 깊이만큼 벡터로 튀어나오게 계산        
+        // 충돌 깊이 보정 벡터 계산
+        float depth = CalculatePenetrationDepth(object.second.obb, normalized_closest_normal);
+
+        if (depth > 0.00001f) {
+            // 깊이 벡터 계산
+            DirectX::XMVECTOR depth_vector = DirectX::XMVectorScale(normalized_closest_normal, depth);
+            depth_vector = DirectX::XMVectorSubtract(depth_vector, DirectX::XMVectorScale(normalized_closest_normal, 0.001f));
+            DirectX::XMStoreFloat3(&player->depth_vector_, depth_vector);
+            //depth_vector = DirectX::XMVectorDivide(depth_vector, DirectX::XMVectorReplicate(deltaTime));
+            //slide_vector = DirectX::XMVectorAdd(slide_vector, depth_vector);
+        }
+
+        // Y축(윗면) 충돌시 애니메이션 스테이트 설정
+        if (DirectX::XMVectorGetY(normalized_closest_normal) > 0.9f)
         {
             player->on_ground_ = true;
             slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
-            
             // 점프 중 땅에 닿으면 점프 종료로 변환
             if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
             {
@@ -171,10 +184,61 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
         }
 
     }
-
+    
     DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
 }
 
+float CatPlayer::CalculatePenetrationDepth(const DirectX::BoundingOrientedBox& obj_obb, DirectX::XMVECTOR normal)
+{
+    // 1. obb의 중심점끼리의 거리를 부딪힌 면의 노멀벡터에 투영하면 두 obb 사이의 현재 거리를 알 수 있다.
+    // 2. 플레이어의 obb 축을 다 투영해 더하고, 부딪힌 물체의 중심에서부터 부딪힌 면의 extend 길이를 합하면 관통을 안했을때의 길이를 알수 있다.
+    // 3. 2 - 1을 해서 0.0f보다 크면 관통된 길이값을 구할 수 있다.
+
+    DirectX::XMVECTOR player_center = DirectX::XMLoadFloat3(&obb_.Center);
+    DirectX::XMVECTOR obj_center = DirectX::XMLoadFloat3(&obj_obb.Center);
+    
+    // 두 obb의 중심점 사이의 거리
+    DirectX::XMVECTOR center_distance = DirectX::XMVectorSubtract(player_center, obj_center);
+    float curr_distance = DirectX::XMVectorGetX(DirectX::XMVector3Dot(center_distance, normal));
+
+    // 플레이어의 obb 축을 다 투영해 더함
+    float player_axis_proj_distance = CalculateOBBAxisProj(normal, obb_);
+    // 부딪힌 물체의 중심에서부터 부딪힌 면의 extend 길이를 합함
+    float obj_axis_proj_distance = CalculateOBBAxisProj(normal, obj_obb);
+
+    // 2 - 1 관통된 길이값
+    float penetration_depth = std::fabs(obj_axis_proj_distance + player_axis_proj_distance) - std::fabs(curr_distance);
+
+    // 깊이가 0 이하면 관통하지 않음
+    return penetration_depth > 0.0f ? penetration_depth : 0.0f;
+    
+}
+
+float CatPlayer::CalculateOBBAxisProj(DirectX::XMVECTOR axis, const DirectX::BoundingOrientedBox& obb)
+{
+	// OBB의 축(로컬 X, Y, Z축)
+	DirectX::XMVECTOR localAxes[3] = {
+		DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f),  // 로컬 X축
+		DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f),  // 로컬 Y축
+		DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f)   // 로컬 Z축
+	};
+
+	// 쿼터니언을 이용해 로컬 축을 회전해 투영할 축을 구해줌
+	DirectX::XMVECTOR quaternion = DirectX::XMLoadFloat4(&obb.Orientation);
+	DirectX::XMVECTOR worldAxes[3];
+	for (int i = 0; i < 3; ++i)
+	{
+		worldAxes[i] = DirectX::XMVector3Rotate(localAxes[i], quaternion);
+	}
+
+	// 각 OBB의 축을 충돌면 법선에 투영한 값에 Extents를 곱해 합산해서 길이 구함
+	float radius =
+		fabsf(DirectX::XMVectorGetX(DirectX::XMVector3Dot(worldAxes[0], axis))) * obb.Extents.x +
+		fabsf(DirectX::XMVectorGetX(DirectX::XMVector3Dot(worldAxes[1], axis))) * obb.Extents.y +
+		fabsf(DirectX::XMVectorGetX(DirectX::XMVector3Dot(worldAxes[2], axis))) * obb.Extents.z;
+
+	return radius;
+}
 
 bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
 {
@@ -225,13 +289,9 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
 		player->ApplyFriction(FIXED_TIME_STEP);
 		// 위치 업데이트
 		player->position_ = MathHelper::Add(player->position_, player->delta_position_);
+        player->position_ = MathHelper::Add(player->position_, player->depth_vector_);
+        player->depth_vector_ = DirectX::XMFLOAT3();
 
-        // TODO : 임시로 바닥을 뚫는 현상 제거
-        // 깊이 충돌 업데이트시 제거할것
-        if (player->position_.y < -61.5f)
-        {
-            player->position_.y = -61.5f;
-        }
 
 		//std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
 
@@ -263,7 +323,7 @@ void CatPlayer::UpdateOBB(Player* player)
 	// OBB 업데이트
 	obb_.Center = player->position_;
     // pivot이 아래 기준이라 조정
-    obb_.Center.y += obb_.Extents.y - 2.0f;
+    obb_.Center.y += obb_.Extents.y;
 	// OBB의 회전 값 갱신
 	obb_.Orientation = player->rotation_quat_;
 }

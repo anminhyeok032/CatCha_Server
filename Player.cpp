@@ -241,10 +241,11 @@ bool Player::UpdateVelocity(float time_step)
 	DirectX::XMFLOAT3 delta = MathHelper::Multiply(GetVelocity(), time_step);
 	//delta.y = 0.0f;  // Y축 제거
 	delta_position_ = MathHelper::Add(delta_position_, delta);
+	//delta_position_ = MathHelper::Add(delta_position_, GetVelocity());
 
 	// 떨어질때, 점프 idle로 변환
-	// y의 변화가 있다 && 점프시작이 아니다 && 현재 idle||move 상태라면
-	if (velocity_vector_.y != 0.0f && obj_state_ != Object_State::STATE_JUMP_START 
+	// y가 아래로 향할때 && 점프시작이 아니다 && 현재 idle||move 상태라면
+	if (velocity_vector_.y < 0.0f && obj_state_ != Object_State::STATE_JUMP_START 
 		&& (obj_state_ == Object_State::STATE_IDLE || obj_state_ == Object_State::STATE_MOVE))
 	{
 		// 공중에 뜬 상태 && 애니메이션 jump_idle로 변경
@@ -305,7 +306,7 @@ void Player::ApplyFriction(float time_step)
 
 void Player::ApplyGravity(float time_step)
 {
-	velocity_vector_.y -= GRAVITY * time_step;
+	velocity_vector_.y -= GRAVITY *time_step;
 }
 
 void Player::Set_OBB(DirectX::BoundingOrientedBox obb)
@@ -338,15 +339,23 @@ void Player::MoveRight()
 
 void Player::Jump()
 {
-	std::cout << "점프!!!" << std::endl;
-	// 점프 시작으로 변경
-	obj_state_ = Object_State::STATE_JUMP_START;
-	// 점프 스타트 애니메이션 블랜딩 요청
-	need_blending_ = true;
-	// 점프 파워로 적용
-	velocity_vector_.y = jump_power_;
-	// 점프는 한번만 적용되게 키 인풋 map에서 삭제
-	keyboard_input_[Action::ACTION_JUMP] = false;
-	// 점프시 땅에서 떨어진걸로 판정
-	on_ground_ = false;
+	if (obj_state_ == Object_State::STATE_IDLE || obj_state_ == Object_State::STATE_MOVE)
+	{
+		//std::cout << "점프!!!" << std::endl;
+		// 점프 시작으로 변경
+		obj_state_ = Object_State::STATE_JUMP_START;
+		// 점프 스타트 애니메이션 블랜딩 요청
+		need_blending_ = true;
+		// 점프 파워로 적용
+		velocity_vector_.y = jump_power_;
+		// 점프는 한번만 적용되게 키 인풋 map에서 삭제
+		keyboard_input_[Action::ACTION_JUMP] = false;
+		// 점프시 땅에서 떨어진걸로 판정
+		on_ground_ = false;
+	}
+	else
+	{
+		// 점프는 한번만 적용되게 키 인풋 map에서 삭제
+		keyboard_input_[Action::ACTION_JUMP] = false;
+	}
 }

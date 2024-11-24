@@ -31,6 +31,11 @@ public:
 	// 충돌 처리
 	void CheckIntersects(Player* player, float deltaTime);
 
+	// 충돌시 depth 계산
+	float CalculatePenetrationDepth(const DirectX::BoundingOrientedBox& obj_obb, DirectX::XMVECTOR normal);
+
+	float CalculateOBBAxisProj(DirectX::XMVECTOR axis, const DirectX::BoundingOrientedBox& obj_obb);
+
 	// 움직임 변화 감지를 위한 bool return
 	bool CalculatePhysics(Player* player, float deltaTime) override;
 

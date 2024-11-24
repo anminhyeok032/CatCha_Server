@@ -26,6 +26,7 @@ public:
 	DirectX::XMFLOAT3 direction_vector_ = DirectX::XMFLOAT3();
 	DirectX::XMFLOAT3 velocity_vector_ = DirectX::XMFLOAT3();
 	DirectX::XMFLOAT3 force_vector_ = DirectX::XMFLOAT3();
+	DirectX::XMFLOAT3 depth_vector_ = DirectX::XMFLOAT3();
 
 	float player_pitch_;
 	float prev_player_pitch_;
