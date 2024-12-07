@@ -207,7 +207,7 @@ void Worker()
 				{
 					g_sessions[sessionId].update_count_ = 0;
 					std::cout << "****Sync Update Position ****\n";
-					//g_sessions[sessionId].BroadcastSync();
+					g_sessions[sessionId].BroadcastSync();
 				}
 				break;
 			}

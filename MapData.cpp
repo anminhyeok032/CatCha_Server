@@ -3,43 +3,17 @@
 std::array<std::array<int, 3>, 12> g_triangle_indices =
 {
     // 윗면
-    //std::array<int, 3>{0, 1, 5}, std::array<int, 3>{0, 5, 4},
-    //// 아래면
-    //std::array<int, 3>{2, 3, 7}, std::array<int, 3>{2, 7, 6},
-    //// 왼쪽면
-    //std::array<int, 3>{0, 3, 7}, std::array<int, 3>{0, 7, 4},
-    //// 오른쪽면
-    //std::array<int, 3>{1, 2, 6}, std::array<int, 3>{1, 6, 5},
-    //// 앞면
-    //std::array<int, 3>{0, 1, 2}, std::array<int, 3>{0, 2, 3},
-    //// 뒷면
-    //std::array<int, 3>{4, 5, 6}, std::array<int, 3>{4, 6, 7}
-
-    // 윗면
-    //std::array<int, 3>{0, 1, 2}, std::array<int, 3>{0, 2, 3},
-    //// 아래면
-    //std::array<int, 3>{4, 6, 5}, std::array<int, 3>{4, 7, 6},
-    //// 왼쪽면
-    //std::array<int, 3>{0, 7, 4}, std::array<int, 3>{0, 3, 7},
-    //// 오른쪽면
-    //std::array<int, 3>{1, 5, 6}, std::array<int, 3>{1, 6, 2},
-    //// 앞면
-    //std::array<int, 3>{3, 2, 7}, std::array<int, 3>{3, 6, 7},
-    //// 뒷면
-    //std::array<int, 3>{0, 4, 1}, std::array<int, 3>{1, 4, 5}
-
-// 윗면
-std::array<int, 3>{7, 3, 2}, std::array<int, 3>{7, 2, 6},
-// 아래면
-std::array<int, 3>{1, 4, 5}, std::array<int, 3>{1, 4, 0},
-// 왼쪽면
-std::array<int, 3>{3, 4, 0}, std::array<int, 3>{3, 7, 4},
-// 오른쪽면
-std::array<int, 3>{2, 1, 5}, std::array<int, 3>{2, 5, 6},
-// 앞면
-std::array<int, 3>{3, 1, 2}, std::array<int, 3>{3, 0, 1},
-// 뒷면
-std::array<int, 3>{7, 6, 5}, std::array<int, 3>{7, 5, 4}
+    std::array<int, 3>{7, 3, 2}, std::array<int, 3>{7, 2, 6},
+    // 아래면
+    std::array<int, 3>{1, 4, 5}, std::array<int, 3>{1, 4, 0},
+    // 왼쪽면
+    std::array<int, 3>{3, 4, 0}, std::array<int, 3>{3, 7, 4},
+    // 오른쪽면
+    std::array<int, 3>{2, 1, 5}, std::array<int, 3>{2, 5, 6},
+    // 앞면
+    std::array<int, 3>{3, 1, 2}, std::array<int, 3>{3, 0, 1},
+    // 뒷면
+    std::array<int, 3>{7, 6, 5}, std::array<int, 3>{7, 5, 4}
 };
 
 
@@ -64,6 +38,7 @@ bool MapData::LoadMapData(const std::string& filePath)
         if (line.empty())
         {
             currentOBB.obb = DirectX::BoundingOrientedBox(position, extents, rotation);
+            CalculateWorldAxes(currentOBB.obb, currentOBB.worldAxes);
             g_obbData.emplace(currentOBB.name, std::move(currentOBB));
             currentOBB = ObjectOBB();  // 다음 객체를 위해 초기화
             continue;
@@ -104,6 +79,7 @@ bool MapData::LoadMapData(const std::string& filePath)
     if (!currentOBB.name.empty())
     {
         currentOBB.obb = DirectX::BoundingOrientedBox(position, extents, rotation);
+        CalculateWorldAxes(currentOBB.obb, currentOBB.worldAxes);
         g_obbData.emplace(currentOBB.name, std::move(currentOBB));
     }
 
@@ -152,4 +128,22 @@ std::string MapData::Trim(const std::string& str)
     size_t start = str.find_first_not_of(whitespace);
     size_t end = str.find_last_not_of(whitespace);
     return start == std::string::npos ? "" : str.substr(start, end - start + 1);
+}
+
+void MapData::CalculateWorldAxes(DirectX::BoundingOrientedBox& obb, DirectX::XMVECTOR worldAxes[3])
+{
+    DirectX::XMVECTOR static localAxes[3] = {
+        DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f),  // 로컬 X축
+        DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f),  // 로컬 Y축
+        DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f)   // 로컬 Z축
+    };
+
+    // 쿼터니언을 이용해 로컬 축을 회전해 투영할 축을 구해줌
+    DirectX::XMVECTOR quaternion = DirectX::XMLoadFloat4(&obb.Orientation);
+    // 로컬 축 회전시켜 월드 축구해 저장
+    for (int i = 0; i < 3; ++i)
+    {
+        worldAxes[i] = DirectX::XMVector3Rotate(localAxes[i], quaternion);
+    }
+
 }

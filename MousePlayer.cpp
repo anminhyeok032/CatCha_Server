@@ -190,7 +190,7 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 
         // 충돌후 관통된 깊이를 구해 깊이만큼 벡터로 튀어나오게 계산        
         // 충돌 깊이 보정 벡터 계산
-        float depth = CalculatePenetrationDepth(object.second.obb, normalized_closest_normal);
+        float depth = CalculatePenetrationDepth(object.second, normalized_closest_normal);
 
         if (depth > 0.00001f) {
             // 깊이 벡터 계산
@@ -223,14 +223,14 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
     DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
 }
 
-float MousePlayer::CalculatePenetrationDepth(const DirectX::BoundingOrientedBox& obj_obb, DirectX::XMVECTOR normal)
+float MousePlayer::CalculatePenetrationDepth(const ObjectOBB& obj, DirectX::XMVECTOR normal)
 {
     // 1. obb의 중심점끼리의 거리를 부딪힌 면의 노멀벡터에 투영하면 두 obb 사이의 현재 거리를 알 수 있다.
     // 2. 플레이어의 obb 축을 다 투영해 더하고, 부딪힌 물체의 중심에서부터 부딪힌 면의 extend 길이를 합하면 관통을 안했을때의 길이를 알수 있다.
     // 3. 2 - 1을 해서 0.0f보다 크면 관통된 길이값을 구할 수 있다.
 
     DirectX::XMVECTOR player_center = DirectX::XMLoadFloat3(&obb_.Center);
-    DirectX::XMVECTOR obj_center = DirectX::XMLoadFloat3(&obj_obb.Center);
+    DirectX::XMVECTOR obj_center = DirectX::XMLoadFloat3(&obj.obb.Center);
 
     // 두 obb의 중심점 사이의 거리
     DirectX::XMVECTOR center_distance = DirectX::XMVectorSubtract(player_center, obj_center);
@@ -239,7 +239,10 @@ float MousePlayer::CalculatePenetrationDepth(const DirectX::BoundingOrientedBox&
     // 플레이어의 obb 축을 다 투영해 더함
     float player_axis_proj_distance = CalculateOBBAxisProj(normal, obb_);
     // 부딪힌 물체의 중심에서부터 부딪힌 면의 extend 길이를 합함
-    float obj_axis_proj_distance = CalculateOBBAxisProj(normal, obj_obb);
+    float obj_axis_proj_distance =
+        fabsf(DirectX::XMVectorGetX(DirectX::XMVector3Dot(obj.worldAxes[0], normal))) * obj.obb.Extents.x +
+        fabsf(DirectX::XMVectorGetX(DirectX::XMVector3Dot(obj.worldAxes[1], normal))) * obj.obb.Extents.y +
+        fabsf(DirectX::XMVectorGetX(DirectX::XMVector3Dot(obj.worldAxes[2], normal))) * obj.obb.Extents.z;
 
     // 2 - 1 관통된 길이값
     float penetration_depth = std::fabs(obj_axis_proj_distance + player_axis_proj_distance) - std::fabs(curr_distance);

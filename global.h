@@ -130,6 +130,14 @@ extern void print_error(const char* msg, int err_no);
 #include <DirectXCollision.h>
 
 
+struct ObjectOBB
+{
+	std::string name;
+	DirectX::BoundingOrientedBox obb;
+	DirectX::XMVECTOR worldAxes[3];         // 충돌 계산을 위한 월드좌표계에서의 축
+};
+
+
 #define EPSILON					1.0e-10f
 
 inline bool IsZero(float fValue) { return((fabsf(fValue) < EPSILON)); }
