@@ -13,7 +13,7 @@ bool GameSession::Update()
         float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
 
         // 이전 updateTime이 FIXED_TIME_STEP보다 적으면 false
-        if (deltaTime < FIXED_TIME_STEP)
+        if (deltaTime < UPDATE_PERIOD)
         {
             return false;
         }
@@ -127,34 +127,30 @@ void GameSession::BroadcastPosition(int player)
     // 쌓인 pitch 초기화
     pl->total_pitch_ = 0.0f;
     
-    // state와 on_ground_를 파싱해서 unsigned char로 변환
+    // state와 cat_attacked를 파싱해서 unsigned char로 변환
     unsigned char state_value = static_cast<unsigned char>(pl->obj_state_);
-    // on_ground << 2 need_blending << 1 , cat_attacked을 최하위 비트에 저장
-    p.state = (state_value << 3) 
-        | (pl->on_ground_ ? 1 : 0) << 2 
-        | (pl->need_blending_ ? 1 : 0) << 1
+    // cat_attacked을 최하위 비트에 저장
+    p.state = (state_value << 1) 
         | (cat_attacked_player_[pl->id_] ? 1 : 0);
 
-    // 블렌딩 요청 변수 초기화
-    players_[player]->need_blending_ = false;
 
     // 점프시작을 전송후, 점프 idle로 변경
     if (pl->obj_state_ == Object_State::STATE_JUMP_START)
     {
         players_[player]->obj_state_ = Object_State::STATE_JUMP_IDLE;
     }
-    // 점프 end 전송후, 다음 스테이트 (idle||MOVE)지정
-    else if (pl->obj_state_ == Object_State::STATE_JUMP_END)
+    // 점프 end 전송후, 다음 스테이트 (idle||MOVE)지정 && 움직일수 있는 상황일때
+    else if (pl->obj_state_ == Object_State::STATE_JUMP_END && pl->moveable_ == true)
     {
         if (pl->speed_ > 0.05f)
         {
             players_[player]->obj_state_ = Object_State::STATE_MOVE;
-            players_[player]->need_blending_ = true;
         }
         else
         {
             players_[player]->obj_state_ = Object_State::STATE_IDLE;
         }
+        players_[player]->moveable_ = true;
     }
 
 

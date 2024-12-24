@@ -5,7 +5,7 @@ std::array<std::array<int, 3>, 12> g_triangle_indices =
     // 윗면
     std::array<int, 3>{7, 3, 2}, std::array<int, 3>{7, 2, 6},
     // 아래면
-    std::array<int, 3>{1, 4, 5}, std::array<int, 3>{1, 4, 0},
+    std::array<int, 3>{1, 4, 5}, std::array<int, 3>{1, 0, 4},
     // 왼쪽면
     std::array<int, 3>{3, 4, 0}, std::array<int, 3>{3, 7, 4},
     // 오른쪽면

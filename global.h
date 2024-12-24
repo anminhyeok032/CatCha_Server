@@ -34,7 +34,10 @@ constexpr int MAX_USER = 4;
 constexpr int MAX_NPC = 4;
 
 // 고정 시간 스텝 설정 (1/60초)
-constexpr float FIXED_TIME_STEP = 1.0f / 100.0f;
+constexpr float FIXED_TIME_STEP = 1.0f / 20.0f;
+constexpr float UPDATE_PERIOD = 1.0f / 60.0f;
+constexpr float JUMP_END_TIME = 0.3f;
+constexpr float CAT_ATTACK_TIME = 1.33333337f;
 
 struct CompletionKey
 {

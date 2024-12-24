@@ -57,55 +57,53 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
     // 고양이 공격 체크
     CheckAttack(player);
 
-    // 1. 현재 위치에 대한 OBB 충돌 검사 (xz축, y축 분리 검사)
-    // 2. 충돌 시, 충돌된 물체의 점을 이용해 삼각형 만들고 삼각형과 velocity vector의 교차 검사 및 깊이 검사
-    // 3. 찾은 삼각형의 노멀벡터를 이용해서 velocity 투영해서 캐릭터의 velocity 벡터를 조정
+    // 1. bounding sphere를 이용해 검사 범위 축소
+    // 2. 현재 위치에 대한 OBB 충돌 검사 (xz축, y축 분리 검사)
+    // 3. 충돌 시, 충돌된 물체의 점을 이용해 삼각형 만들고 삼각형과 각 중점사이의 벡터의 교차 검사 및 깊이 검사
+    // 4. 찾은 삼각형의 노멀벡터를 이용해서 velocity 투영해서 캐릭터의 velocity 벡터를 조정
+    // 5. 얻은 깊이값을 이용해 물체를 뚫지 않도록 위치 조정
 
-    player->ApplyGravity(FIXED_TIME_STEP);
+    player->ApplyGravity(deltaTime);
 
-    // 현재 위치와 속도를 바탕으로 예상 위치 계산
-    //DirectX::XMVECTOR currentPos = DirectX::XMLoadFloat3(&player->position_);
-
-    // TODO : 현재 피봇이 아래에 있어서 중간으로 velocity 시작점을 조정함. 이를 해결하기 위해 고양이는 로직 수정 필요
     DirectX::XMVECTOR currentPos = DirectX::XMLoadFloat3(&obb_.Center);
-
-    DirectX::XMVECTOR velocity = DirectX::XMLoadFloat3(&player->velocity_vector_);
-
-    float velocity_length = DirectX::XMVectorGetX(DirectX::XMVector3Length(velocity));
-    // 속도가 0이면 충돌체크 x
-    if (velocity_length < 0.0001f)
-    {
-        return;
-    }
-
-    DirectX::XMVECTOR slide_vector = velocity;
+    DirectX::XMVECTOR slide_vector = DirectX::XMLoadFloat3(&player->velocity_vector_);
 
     // 예측 OBB
-    DirectX::XMVECTOR new_pos = DirectX::XMVectorAdd(currentPos, DirectX::XMVectorScale(slide_vector, deltaTime));
-    DirectX::XMFLOAT3 new_pos_f3;
-    DirectX::XMStoreFloat3(&new_pos_f3, new_pos);
-    DirectX::BoundingOrientedBox new_obb = DirectX::BoundingOrientedBox(new_pos_f3, obb_.Extents, obb_.Orientation);
+    DirectX::XMVECTOR pred_pos = DirectX::XMVectorAdd(currentPos, DirectX::XMVectorScale(slide_vector, deltaTime));
+    DirectX::XMFLOAT3 pred_pos_f3;
+    DirectX::XMStoreFloat3(&pred_pos_f3, pred_pos);
+    DirectX::BoundingOrientedBox pred_obb = DirectX::BoundingOrientedBox(pred_pos_f3, obb_.Extents, obb_.Orientation);
 
     // 모든 오브젝트 충돌체크
     for (const auto& object : g_obbData)
     {
-        if (DirectX::XMVectorGetX(DirectX::XMVector3Length(slide_vector)) < 0.0001f)
+        // slidevector가 0이면 충돌체크 불필요
+        if(DirectX::XMVectorGetX(DirectX::XMVector3Length(slide_vector)) < 0.0001f)
+		{
+			break;
+		}
+
+        // 충돌 체크 횟수를 줄이기 위한 BoundingSphere로 먼저 체크
+        if (false == player_sphere_.Intersects(object.second.obb))
         {
-            break;
+            continue;
         }
 
-        // 해당 물체의 예상 위치 OBB와 충돌 검사
-        if (false == object.second.obb.Intersects(new_obb))
+        // 가장 거리가 짧은 충돌 지점까지의 거리
+        float depth_ = FLT_MIN;
+        // 가장 가까운 면 normal 벡터
+        DirectX::XMVECTOR closest_normal = DirectX::XMVectorZero();
+
+        if (false == object.second.obb.Intersects(pred_obb))
         {
             continue;
         }
 
         //std::cout << "충돌함 : " << object.first << std::endl;
 
-        // 가장 거리가 짧은 충돌 지점까지의 거리
+        //가장 거리가 짧은 충돌 지점까지의 거리
         float min_distance = FLT_MAX;
-        // 가장 가까운 면 normal 벡터
-        DirectX::XMVECTOR closest_normal = DirectX::XMVectorZero();
+
 
         // 부딪힌 물체 OBB 꼭짓점 배열
         DirectX::XMFLOAT3 corners[8];
@@ -113,10 +111,11 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 
         // **1. 위/아래 면 검사**
         // velocity의 y축만 사용
-        DirectX::XMVECTOR check_velocity = DirectX::XMVectorSet(0.0f, DirectX::XMVectorGetY(slide_vector), 0.0f, 0.0f);
-        if (DirectX::XMVectorGetX(DirectX::XMVector3Length(check_velocity)) > 0.0001f)
+        DirectX::XMVECTOR d = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&object.second.obb.Center), currentPos);
+        DirectX::XMVECTOR check_d = DirectX::XMVectorSet(0.0f, DirectX::XMVectorGetY(d), 0.0f, 0.0f);
+        if (DirectX::XMVectorGetX(DirectX::XMVector3Length(check_d)) > 0.0001f)
         {
-            DirectX::XMVECTOR normalized_velocity = DirectX::XMVector3Normalize(check_velocity);
+            DirectX::XMVECTOR normalized_d = DirectX::XMVector3Normalize(check_d);
             // OBB를 구성하는 각 면(삼각형으로 나눠서 면당 2번)에 대해 충돌 검사
             for (int i = 0; i < 4; ++i) // 위(4~7)와 아래(0~3) 면만 검사
             {
@@ -129,7 +128,7 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
                 // 삼각형과 velocity의 교차 여부 확인
                 float t;    // 충돌 지점까지의 거리
                 // 삼각형과 velocity 벡터가 교차하는지 확인
-                bool intersects = DirectX::TriangleTests::Intersects(currentPos, normalized_velocity, p1, p2, p3, t);
+                bool intersects = DirectX::TriangleTests::Intersects(currentPos, normalized_d, p1, p2, p3, t);
 
                 // 교차 && 가장 가까운 거리인지 확인
                 if (intersects && t < min_distance)
@@ -147,14 +146,14 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 
         // **2. 옆면 검사 (앞, 뒤, 좌, 우)**
         // velocity의 xz만 사용
-        check_velocity = DirectX::XMVectorSet(
-            DirectX::XMVectorGetX(slide_vector),
+        check_d = DirectX::XMVectorSet(
+            DirectX::XMVectorGetX(d),
             0.0f,
-            DirectX::XMVectorGetZ(slide_vector),
+            DirectX::XMVectorGetZ(d),
             0.0f);
-        if (DirectX::XMVectorGetX(DirectX::XMVector3Length(check_velocity)) > 0.0001f)
+        if (DirectX::XMVectorGetX(DirectX::XMVector3Length(check_d)) > 0.0001f)
         {
-            DirectX::XMVECTOR normalized_velocity = DirectX::XMVector3Normalize(check_velocity);
+            DirectX::XMVECTOR normalized_d = DirectX::XMVector3Normalize(check_d);
             for (int i = 4; i < 12; ++i)
             {
                 const auto& indices = g_triangle_indices[i];
@@ -164,7 +163,7 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 
                 // 삼각형과 velocity의 교차 여부 확인
                 float t;
-                bool intersects = DirectX::TriangleTests::Intersects(currentPos, normalized_velocity, p1, p2, p3, t);
+                bool intersects = DirectX::TriangleTests::Intersects(currentPos, normalized_d, p1, p2, p3, t);
 
                 if (intersects && t < min_distance)
                 {
@@ -178,46 +177,60 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
             }
         }
 
+        // 스치는 경우 충돌이 안된 판정이 되어버림
+        if (DirectX::XMVectorGetX(DirectX::XMVector3Length(closest_normal)) < 0.0001f)
+        {
+            continue;
+        }
+
         // 슬라이딩 벡터 계산
         DirectX::XMVECTOR normalized_closest_normal = DirectX::XMVector3Normalize(closest_normal);
-
-        // velocity를 법선에 투영해 슬라이딩 벡터 계산
-        // S = V - (V . N) * N
-        DirectX::XMVECTOR P = DirectX::XMVectorScale(normalized_closest_normal,
-            DirectX::XMVectorGetX(
-                DirectX::XMVector3Dot(slide_vector, normalized_closest_normal)));
-        slide_vector = DirectX::XMVectorSubtract(slide_vector, P);
 
         // 충돌후 관통된 깊이를 구해 깊이만큼 벡터로 튀어나오게 계산        
         // 충돌 깊이 보정 벡터 계산
         float depth = CalculatePenetrationDepth(object.second, normalized_closest_normal);
-
-        if (depth > 0.00001f) {
+        DirectX::XMVECTOR depth_delta = DirectX::XMVectorZero();
+        if (depth > 0.00001f)
+        {
             // 깊이 벡터 계산
-            DirectX::XMVECTOR depth_vector = DirectX::XMVectorScale(normalized_closest_normal, depth);
-            depth_vector = DirectX::XMVectorSubtract(depth_vector, DirectX::XMVectorScale(normalized_closest_normal, 0.00001f));
-            DirectX::XMStoreFloat3(&player->depth_vector_, depth_vector);
-            //depth_vector = DirectX::XMVectorDivide(depth_vector, DirectX::XMVectorReplicate(deltaTime));
-            //slide_vector = DirectX::XMVectorAdd(slide_vector, depth_vector);
+            depth_delta = DirectX::XMVectorScale(normalized_closest_normal, depth);
         }
 
         // Y축(윗면) 충돌시 애니메이션 스테이트 설정
         if (DirectX::XMVectorGetY(normalized_closest_normal) > 0.9f)
         {
+            // 점프 시작시에는 적용 x
+            if (player->obj_state_ == Object_State::STATE_JUMP_START)
+            {
+                continue;
+            }
+
             player->on_ground_ = true;
             slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
+
+            // y축에서 공중에 뜨는것 방지 살짝 눌러줌
+            //depth_delta = DirectX::XMVectorAdd(depth_delta, DirectX::XMVectorNegate(normalized_closest_normal));
+
             // 점프 중 땅에 닿으면 점프 종료로 변환
             if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
             {
                 player->obj_state_ = Object_State::STATE_JUMP_END;
-                player->need_blending_ = true;
             }
         }
+        else
+        {
+            // velocity를 법선에 투영해 슬라이딩 벡터 계산
+            // S = V - (V . N) * N
+            DirectX::XMVECTOR P = DirectX::XMVectorScale(normalized_closest_normal,
+                DirectX::XMVectorGetX(
+                    DirectX::XMVector3Dot(slide_vector, normalized_closest_normal)));
+            slide_vector = DirectX::XMVectorSubtract(slide_vector, P);
+        }
 
-        new_pos = DirectX::XMVectorAdd(currentPos, DirectX::XMVectorScale(slide_vector, deltaTime));
-        DirectX::XMStoreFloat3(&new_pos_f3, new_pos);
-        new_obb.Center = new_pos_f3;
-
+        DirectX::XMStoreFloat3(&player->depth_delta_, depth_delta);
+        player->position_ = MathHelper::Add(player->position_, player->depth_delta_);
+        player->depth_delta_ = DirectX::XMFLOAT3();
+        UpdateOBB(player);
     }
 
     DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
@@ -290,50 +303,41 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
         player->prev_player_pitch_ = player->player_pitch_;
     }
 
-    float time_remaining = (deltaTime < 1.0f) ? deltaTime : 1.0f;	// 최대 1초까지만 계산
 
-    while (time_remaining >= FIXED_TIME_STEP)
+    player->delta_position_ = DirectX::XMFLOAT3();
+
+    // 속도 계산 및 이동 여부 체크
+    if (player->UpdateVelocity(deltaTime))
     {
-        player->delta_position_ = DirectX::XMFLOAT3();
-
-        // 속도 계산 및 이동 여부 체크
-        if (player->UpdateVelocity(FIXED_TIME_STEP))
-        {
-            need_update = true;
-
-            // 땅에 붙어있을때 && 점프끝이 아닐때, 속도에따라 걷거나 멈춤
-            if (player->on_ground_ == true && player->obj_state_ != Object_State::STATE_JUMP_END)
-            {
-                if (player->speed_ > 0.05f && player->obj_state_ == Object_State::STATE_IDLE)
-                {
-                    player->obj_state_ = Object_State::STATE_MOVE;
-                    player->need_blending_ = true;
-                }
-                else if (player->speed_ <= 0.05f && player->obj_state_ == Object_State::STATE_MOVE)
-                {
-                    player->obj_state_ = Object_State::STATE_IDLE;
-                    player->need_blending_ = true;
-                }
-                //player->need_blending_ = true;
-            }
-        }
-
-        // 정지시 감속
-        player->ApplyDecelerationIfStop(FIXED_TIME_STEP);
-        // 힘 적용
-        player->ApplyForces(FIXED_TIME_STEP);
-        // 마찰력 적용
-        player->ApplyFriction(FIXED_TIME_STEP);
-        // 위치 업데이트
-        player->position_ = MathHelper::Add(player->position_, player->delta_position_);
-        player->position_ = MathHelper::Add(player->position_, player->depth_vector_);
-        player->depth_vector_ = DirectX::XMFLOAT3();
-
-        //std::cout << "현재 위치 : " << player->position_.y << std::endl;
-
-        // 고정 시간 스텝만큼 감소
-        time_remaining -= FIXED_TIME_STEP;
+        need_update = true;
     }
+
+    // 정지시 감속
+    player->ApplyDecelerationIfStop(deltaTime);
+    // 힘 적용
+    player->ApplyForces(deltaTime);
+    // 마찰력 적용
+    player->ApplyFriction(deltaTime);
+    // 위치 업데이트
+    player->position_ = MathHelper::Add(player->position_, player->delta_position_);
+
+    //std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
+
+
+    if (player->on_ground_ == true)
+    {
+        if (player->speed_ > 0.05f && player->obj_state_ == Object_State::STATE_IDLE)
+        {
+            player->obj_state_ = Object_State::STATE_MOVE;
+            need_update = true;
+        }
+        else if (player->speed_ <= 0.05f && player->obj_state_ == Object_State::STATE_MOVE)
+        {
+            player->obj_state_ = Object_State::STATE_IDLE;
+            need_update = true;
+        }
+    }
+    
 
     return need_update;
 }
@@ -347,4 +351,7 @@ void MousePlayer::UpdateOBB(Player* player)
     obb_.Center.y += obb_.Extents.y;
 	// OBB의 회전 값 갱신
 	obb_.Orientation = player->rotation_quat_;
+
+    // OBB의 중심점을 기준으로 한 BoundingSphere 업데이트
+    player_sphere_.Center = obb_.Center;
 }

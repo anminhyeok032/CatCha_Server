@@ -17,7 +17,6 @@ public:
 	// 애니메이션 동기화 관련 변수들
 	bool on_ground_ = false;
 	Object_State obj_state_ = Object_State::STATE_IDLE;
-	bool need_blending_ = false;
 
 	// 스킬 사용시 움직이지 않도록
 	bool moveable_ = true;
@@ -26,7 +25,7 @@ public:
 	DirectX::XMFLOAT3 direction_vector_ = DirectX::XMFLOAT3();
 	DirectX::XMFLOAT3 velocity_vector_ = DirectX::XMFLOAT3();
 	DirectX::XMFLOAT3 force_vector_ = DirectX::XMFLOAT3();
-	DirectX::XMFLOAT3 depth_vector_ = DirectX::XMFLOAT3();
+	DirectX::XMFLOAT3 depth_delta_ = DirectX::XMFLOAT3();
 
 	float player_pitch_;
 	float prev_player_pitch_;

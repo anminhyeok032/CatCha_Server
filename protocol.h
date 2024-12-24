@@ -116,7 +116,7 @@ struct SC_MOVE_PLAYER_PACKET {
 	int				id;				// 서버에 접속해 있는 캐릭터 번호
 	float 			x, y, z;		// 움직인 위치
 	float			player_pitch;	// rotate 정보	
-	unsigned char	state;			// Object_State와 on_ground_와 need_blending_, is_attacked를 합친 값
+	unsigned char	state;			// Object_State와 is_attacked를 합친 값
 };
 
 struct SC_SYNC_PLAYER_PACKET {

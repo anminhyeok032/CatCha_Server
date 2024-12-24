@@ -194,10 +194,16 @@ bool Player::UpdatePosition(float deltaTime)
 	// 물리처리 - 움직였다면 true 반환
 	if (state_)
 	{
+		// 너무 큰 시간차는 고정 프레임으로 보정
+		if(deltaTime > FIXED_TIME_STEP)
+		{
+			deltaTime = FIXED_TIME_STEP;
+		}
+
 		// 충돌 처리
-		state_->CheckIntersects(this, FIXED_TIME_STEP);
+		state_->CheckIntersects(this, deltaTime);
 		// 물리 처리
-		bool moved = state_->CalculatePhysics(this, FIXED_TIME_STEP);
+		bool moved = state_->CalculatePhysics(this, deltaTime);
 
 		// OBB 갱신
 		if (moved)
@@ -245,13 +251,18 @@ bool Player::UpdateVelocity(float time_step)
 
 	// 떨어질때, 점프 idle로 변환
 	// y가 아래로 향할때 && 점프시작이 아니다 && 현재 idle||move 상태라면
-	if (velocity_vector_.y < 0.0f && obj_state_ != Object_State::STATE_JUMP_START 
+	if (velocity_vector_.y < -0.0001f && obj_state_ != Object_State::STATE_JUMP_START 
 		&& (obj_state_ == Object_State::STATE_IDLE || obj_state_ == Object_State::STATE_MOVE))
 	{
 		// 공중에 뜬 상태 && 애니메이션 jump_idle로 변경
 		on_ground_= false;
 		obj_state_ = Object_State::STATE_JUMP_IDLE;
-		need_blending_ = true;
+	}
+
+	// 제자리 점프시 업데이트를 위해 추가
+	if (obj_state_ == Object_State::STATE_JUMP_END)
+	{
+		return true;
 	}
 
 	// 속도가 0인지 검사
@@ -344,8 +355,6 @@ void Player::Jump()
 		//std::cout << "점프!!!" << std::endl;
 		// 점프 시작으로 변경
 		obj_state_ = Object_State::STATE_JUMP_START;
-		// 점프 스타트 애니메이션 블랜딩 요청
-		need_blending_ = true;
 		// 점프 파워로 적용
 		velocity_vector_.y = jump_power_;
 		// 점프는 한번만 적용되게 키 인풋 map에서 삭제
