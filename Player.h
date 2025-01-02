@@ -34,6 +34,9 @@ public:
 
 	std::unique_ptr<CharacterState> state_;  // 현재 상태 객체
 
+	// 플레이어 업데이트 여부
+	std::atomic<bool> needs_update_{ false };
+
 	Player()
 	{
 		id_ = NUM_GHOST;
@@ -75,15 +78,16 @@ public:
 		keyboard_input_[action] = is_pressed;
 	}
 
-	// 세션 업데이트
-	void RequestSessionUpdate() 
+	void RequestUpdate() 
 	{
-		//if (false == g_sessions[comp_key_.session_id].IsDirty())
+		if (false == needs_update_.load())
 		{
-			//g_sessions[comp_key_.session_id].MarkDirty();
-			commandQueue.push(comp_key_.session_id);
+			TIMER_EVENT ev{ std::chrono::system_clock::now(), comp_key_.session_id };
+			commandQueue.push(ev);
+			needs_update_.store(true);
 		}
 	}
+
 
 	// 회전 업데이트
 	void UpdateRotation(float degree);

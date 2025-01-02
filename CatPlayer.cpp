@@ -27,7 +27,7 @@ void CatPlayer::InputKey(Player* player, uint8_t key_)
 	player->SetKeyState(action, is_key_pressed);
 
 	// 技记 诀单捞飘 夸没
-	player->RequestSessionUpdate();
+	player->RequestUpdate();
 }
 
 

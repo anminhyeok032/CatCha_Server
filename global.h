@@ -36,6 +36,7 @@ constexpr int MAX_NPC = 4;
 // 고정 시간 스텝 설정 (1/60초)
 constexpr float FIXED_TIME_STEP = 1.0f / 20.0f;
 constexpr float UPDATE_PERIOD = 1.0f / 60.0f;
+constexpr int	UPDATE_PERIOD_INT = static_cast<int>(UPDATE_PERIOD * 1000);
 constexpr float JUMP_END_TIME = 0.3f;
 constexpr float CAT_ATTACK_TIME = 1.33333337f;
 
@@ -110,13 +111,14 @@ struct Packet {
 };
 
 
-extern concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
+
 
 
 extern SOCKET g_server_socket, g_client_socket;
 extern HANDLE g_h_iocp;
 
-extern Concurrency::concurrent_queue<int> commandQueue;
+extern concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
+extern Concurrency::concurrent_priority_queue<TIMER_EVENT> commandQueue;
 
 constexpr float GRAVITY = 980.0f;
 constexpr float FRICTION = 0.99f;

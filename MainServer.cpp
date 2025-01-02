@@ -12,7 +12,7 @@ HANDLE g_h_iocp;
 Over_IO g_over;
 
 std::unordered_map<int, GameSession> g_sessions;
-Concurrency::concurrent_queue<int> commandQueue;
+concurrency::concurrent_priority_queue<TIMER_EVENT> commandQueue;
 concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
 std::unordered_map<std::string, ObjectOBB> g_obbData;
 
@@ -222,22 +222,27 @@ void UpdateThread()
 {
 	while (true)
 	{
-		auto startTime = std::chrono::steady_clock::now();
-		int session_num;
-		
-		if (true == commandQueue.try_pop(session_num))
+		TIMER_EVENT ev;
+		if (true == commandQueue.try_pop(ev))
 		{
-			if(false == g_sessions[session_num].Update())
+			// 아직 시간이 지나지 않았으면 다시 삽입
+			if (ev.wakeup_time > std::chrono::system_clock::now()) 
 			{
-				//if (false == g_sessions[session_num].IsDirty())
-				{
-					//g_sessions[session_num].MarkDirty();
-					commandQueue.push(session_num);
-				}
+				commandQueue.push(ev);
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				continue;
 			}
-
+			else
+			{
+				// 세션 업데이트
+				g_sessions[ev.session_id].Update();
+			}
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		else
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			continue;
+		}
 	}
 }
 
@@ -313,7 +318,7 @@ int main()
 
 
 	std::thread update_thread(UpdateThread);
-	//std::thread update_thread2(UpdateThread);
+	std::thread update_thread2(UpdateThread);
 	//std::thread timer_thread(TimeThread);
 	
 
@@ -330,7 +335,7 @@ int main()
 		w.join();
 	}
 	update_thread.join();
-	//update_thread2.join();
+	update_thread2.join();
 	//timer_thread.join();
 
 

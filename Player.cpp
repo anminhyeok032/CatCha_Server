@@ -119,11 +119,7 @@ void Player::ProcessPacket(char* packet)
 			dirty_ = false;
 
 			// 플레이어 업데이트
-			//if (false == g_sessions[comp_key_.session_id].IsDirty())
-			{
-				//g_sessions[comp_key_.session_id].MarkDirty();
-				commandQueue.push(comp_key_.session_id);
-			}
+			RequestUpdate();
 			
 		}
 		break;

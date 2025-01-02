@@ -16,6 +16,7 @@ void MousePlayer::InputKey(Player* player, uint8_t key_)
         switch (action)
         {
         case Action::ACTION_ONE:
+            ActionOne(player);
             break;
         default:
             break;
@@ -26,7 +27,7 @@ void MousePlayer::InputKey(Player* player, uint8_t key_)
 	player->SetKeyState(action, is_key_pressed);
 
 	// 세션 업데이트 요청
-	player->RequestSessionUpdate();
+	player->RequestUpdate();
 }
 
 void MousePlayer::CheckAttack(Player* player)
@@ -354,4 +355,10 @@ void MousePlayer::UpdateOBB(Player* player)
 
     // OBB의 중심점을 기준으로 한 BoundingSphere 업데이트
     player_sphere_.Center = obb_.Center;
+}
+
+void MousePlayer::ActionOne(Player* player)
+{
+    std::cout << "Action One : Mouse - " << player->id_ << std::endl;
+    player->obj_state_ = Object_State::STATE_ACTION_ONE;
 }

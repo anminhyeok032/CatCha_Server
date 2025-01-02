@@ -45,8 +45,11 @@ public:
 
 	// 고양이의 공격 OBB
 	DirectX::BoundingOrientedBox cat_attack_obb_;
+	// 공격한 방향
 	DirectX::XMFLOAT3 cat_attack_direction_;
+	// 현재 공격중인지
 	bool cat_attack_ = false;
+	// 공격당한 쥐 판별
 	std::unordered_map<int, bool> cat_attacked_player_;
 
 	GameSession()
@@ -60,7 +63,7 @@ public:
 
 	size_t CheckCharacterNum() const { return players_.size(); }
 
-	bool Update();
+	void Update();
 	uint64_t GetServerTime();
 	void SendPlayerUpdate(int move_players);
 	void SendTimeUpdate();

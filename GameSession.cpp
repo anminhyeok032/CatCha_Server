@@ -3,7 +3,7 @@
 #include "CatPlayer.h"
 #include "MousePlayer.h"
 
-bool GameSession::Update()
+void GameSession::Update()
 {
     bool need_update = false;
     uint64_t current_time = GetServerTime();
@@ -12,20 +12,21 @@ bool GameSession::Update()
         std::lock_guard<std::mutex> lock(mt_session_state_);
         float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
 
-        // 이전 updateTime이 FIXED_TIME_STEP보다 적으면 false
-        if (deltaTime < UPDATE_PERIOD)
-        {
-            return false;
-        }
-
-
         // 움직인 플레이어의 Postion만 업데이트 하도록 int 8마리의 움직임 여부를 파싱해서 담음
         for (auto& pl : players_)
         {
+            // 업데이트 요청이 없으면
+            if(pl.second->needs_update_.load() == false) continue;
+
             if (true == pl.second->UpdatePosition(deltaTime))
             {
                 need_update = true;
                 move_players |= (1 << pl.second->comp_key_.player_index);
+            }
+            else
+            {
+                // 움직임이 없을시, 플레이어 업데이트 요청 초기화
+                pl.second->needs_update_.store(false);
             }
         }
 
@@ -37,20 +38,14 @@ bool GameSession::Update()
         {
             SendPlayerUpdate(move_players);
             
-            //MarkDirty();
-            commandQueue.push(session_num_);
+            TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(UPDATE_PERIOD_INT), session_num_ };
+            commandQueue.push(ev);
             
-            //std::cout << "re-update check" << std::endl;
-        }
-        else
-        {
-            // 업데이트 할게 없으면
-            ClearDirty();
         }
 
     }
    
-    return true;
+
     
 }
 

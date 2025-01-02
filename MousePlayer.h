@@ -43,5 +43,7 @@ public:
 	// OBB 업데이트
 	void UpdateOBB(Player* player) override;
 
+	void ActionOne(Player* player);
+
 	DirectX::BoundingOrientedBox GetOBB() override { return obb_; }
 };
