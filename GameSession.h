@@ -1,6 +1,7 @@
 #pragma once
 #include "Over_IO.h"
 #include "Character.h"
+#include "Octree.h"
 
 
 enum SESSION_STATE {
@@ -12,6 +13,7 @@ class Character;
 class Player;
 class CatPlayer;
 class MousePlayer;
+class OctreeNode;
 
 class GameSession
 {
@@ -40,9 +42,6 @@ public:
 	// 업데이트 호출 횟수
 	int update_count_ = 0;
 
-	// Update Dirty Flag
-	std::atomic<bool> dirty_{ false };  
-
 	// 고양이의 공격 OBB
 	DirectX::BoundingOrientedBox cat_attack_obb_;
 	// 공격한 방향
@@ -52,12 +51,17 @@ public:
 	// 공격당한 쥐 판별
 	std::unordered_map<int, bool> cat_attacked_player_;
 
+	// 치즈 옥트리
+	OctreeNode cheese_octree_;
+
+public:
 	GameSession()
 	{
 		players_.clear();
 		lastupdatetime_ = GetServerTime();
 		remaining_time_ = 300;	// 5분
 		cat_attack_obb_.Center = DirectX::XMFLOAT3(0, -9999.0f, 0);
+		Crt_Voxel_Cheese_Octree(cheese_octree_, DirectX::XMFLOAT3(0, -59.53f, 0), 1.0f, 0);
 	}
 	~GameSession() {}
 
@@ -77,11 +81,8 @@ public:
 	void SetCharacter(int room_num, int client_index, bool is_cat);
 
 	int GetMouseNum();
-
-	// 업데이트 중복 체크
-	void MarkDirty();
-	bool IsDirty() const;
-	void ClearDirty();
+	void Crt_Voxel_Cheese_Octree(OctreeNode& root, DirectX::XMFLOAT3 position, float scale, UINT detail_level);
+	void SubdivideVoxel(OctreeNode& node, DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 };
 
 extern std::unordered_map <int, GameSession> g_sessions;

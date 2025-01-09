@@ -13,6 +13,7 @@
 #include "protocol.h"
 
 #include <chrono>
+#include <random>
 
 #include <concurrent_queue.h>
 #include <concurrent_priority_queue.h>

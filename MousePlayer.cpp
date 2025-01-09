@@ -50,6 +50,7 @@ void MousePlayer::CheckAttack(Player* player)
         player->velocity_vector_.z = g_sessions[player->comp_key_.session_id].cat_attack_direction_.z * 2000.0f;
         std::cout << "Cat Attack Success : mouse - " << player->id_ << std::endl;
         g_sessions[player->comp_key_.session_id].cat_attacked_player_[player->id_] = true;
+        player->RequestUpdate();
     }
 }
 

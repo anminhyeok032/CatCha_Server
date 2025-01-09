@@ -42,11 +42,7 @@ void GameSession::Update()
             commandQueue.push(ev);
             
         }
-
     }
-   
-
-    
 }
 
 void GameSession::SendPlayerUpdate(int move_players)
@@ -302,20 +298,87 @@ int GameSession::GetMouseNum()
     return -1;
 }
 
-// Dirty Flag 설정
-void GameSession::MarkDirty() 
+void GameSession::Crt_Voxel_Cheese_Octree(OctreeNode& root, DirectX::XMFLOAT3 position, float scale, UINT detail_level)
 {
-    dirty_.store(true);
+    int m_random_value = 10;
+    int y_value = 8;
+    int z_value = 21;
+    int x_value = z_value / 2;
+
+    std::random_device rd;
+    std::uniform_int_distribution<int> uid(1, m_random_value);
+
+    DirectX::XMFLOAT3 pivot_position = position;
+    position.y += scale / 2.0f;
+
+    // 치즈 옥트리 기준 정하기
+    root.halfSize = scale / 2.0f;
+    root.center = DirectX::XMFLOAT3(
+        pivot_position.x,                               // x축 중심은 시작 x 좌표
+        pivot_position.y + y_value * scale / 2.0f,      // y축 중심은 높이의 중간
+        pivot_position.z                                // z축 중심은 시작 z 좌표
+    );
+
+    for (int i = 0; i < y_value; ++i) 
+    {
+        position.z = pivot_position.z - scale * (float)(z_value / 2);
+
+        for (int j = 1; j <= z_value; ++j) 
+        {
+            position.x = pivot_position.x - scale * (float)(x_value / 2);
+
+            for (int k = 0; k <= j / 2; ++k) 
+            {
+                /*if ((i == y_value - 1 || j == z_value || k == 0 || k == j / 2) &&
+                    !(uid(rd) % m_random_value)) {
+                    position.x += scale;
+                    continue;
+                }*/
+
+                // 옥트리에 삽입
+                SubdivideVoxel(root, position, scale, detail_level);
+                position.x += scale;
+            }
+
+            position.z += scale;
+        }
+
+        position.y += scale;
+    }
+    root.PrintNode();
 }
 
-// Dirty Flag 확인
-bool GameSession::IsDirty() const 
+// 복셀 분할 함수
+void GameSession::SubdivideVoxel(OctreeNode& node, DirectX::XMFLOAT3 position, float scale, UINT detail_level) 
 {
-    return dirty_.load();
-}
+    if (detail_level == 0) 
+    {
+        // 더 이상 분할하지 않고 복셀 삽입
+        node.InsertVoxel(position, detail_level + MAX_DEPTH, 0);
+        return;
+    }
 
-// Dirty Flag 초기화
-void GameSession::ClearDirty() 
-{
-    dirty_.store(false);
+    // 현재 스케일을 절반으로 줄이고, detail_level 만큼 새로운 중심점을 계산하여 8개의 하위 복셀 생성
+    // 8 ^ detail_level
+    float half = scale / 2.0f;
+    float quarter = scale / 4.0f;
+
+    for (int dx = -1; dx <= 1; dx += 2) 
+    {
+        for (int dy = -1; dy <= 1; dy += 2) 
+        {
+            for (int dz = -1; dz <= 1; dz += 2) 
+            {
+                // 각 방향으로 분할된 복셀의 중심점 계산
+                DirectX::XMFLOAT3 new_position = {
+                    position.x + quarter * dx,
+                    position.y + quarter * dy,
+                    position.z + quarter * dz
+                };
+
+                // 재귀적으로 하위 복셀 분할
+                SubdivideVoxel(node, new_position, half, detail_level - 1);
+            }
+        }
+    }
 }
