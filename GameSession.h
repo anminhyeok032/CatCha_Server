@@ -19,7 +19,7 @@ class GameSession
 {
 public:
 
-	std::unordered_map<int, std::unique_ptr<Player>> players_;			// [key] = player_index / [value] = player
+	std::unordered_map<int, std::unique_ptr<Player>> players_;			// [key] = player_index <주의* CHARACTER_NUMBER 아님> / [value] = player
 
 	SESSION_STATE state_;
 
@@ -49,7 +49,7 @@ public:
 	// 현재 공격중인지
 	bool cat_attack_ = false;
 	// 공격당한 쥐 판별
-	std::unordered_map<int, bool> cat_attacked_player_;
+	std::unordered_map<int, bool> cat_attacked_player_;			// [key] = CHARACTER_NUMBER / [value] = is_attacked
 
 	// 치즈 옥트리
 	OctreeNode cheese_octree_;
@@ -81,6 +81,7 @@ public:
 	void SetCharacter(int room_num, int client_index, bool is_cat);
 
 	int GetMouseNum();
+	void CheckAttackedMice();
 	void CrtVoxelCheeseOctree(OctreeNode& root, DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 	void SubdivideVoxel(OctreeNode& node, DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 	void DeleteCheeseVoxel(const DirectX::XMFLOAT3& center);

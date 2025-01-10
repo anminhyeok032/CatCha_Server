@@ -30,35 +30,9 @@ void MousePlayer::InputKey(Player* player, uint8_t key_)
 	player->RequestUpdate();
 }
 
-void MousePlayer::CheckAttack(Player* player)
-{
-    for (const auto& mouse_attacked : g_sessions[player->comp_key_.session_id].cat_attacked_player_)
-    {
-        if (mouse_attacked.second == true)
-        {
-            if (player->id_ == mouse_attacked.first)
-            {
-                return;
-            }
-        }
-    }
-
-    if (true == g_sessions[player->comp_key_.session_id].cat_attack_obb_.Intersects(obb_))
-    {
-        player->velocity_vector_.x = g_sessions[player->comp_key_.session_id].cat_attack_direction_.x * 2000.0f;
-        player->velocity_vector_.y = 250.0f;
-        player->velocity_vector_.z = g_sessions[player->comp_key_.session_id].cat_attack_direction_.z * 2000.0f;
-        std::cout << "Cat Attack Success : mouse - " << player->id_ << std::endl;
-        g_sessions[player->comp_key_.session_id].cat_attacked_player_[player->id_] = true;
-        player->RequestUpdate();
-    }
-}
 
 void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 {
-    // 고양이 공격 체크
-    CheckAttack(player);
-
     // 1. bounding sphere를 이용해 검사 범위 축소
     // 2. 현재 위치에 대한 OBB 충돌 검사 (xz축, y축 분리 검사)
     // 3. 충돌 시, 충돌된 물체의 점을 이용해 삼각형 만들고 삼각형과 각 중점사이의 벡터의 교차 검사 및 깊이 검사

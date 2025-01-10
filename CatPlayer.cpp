@@ -363,9 +363,14 @@ void CatPlayer::ActionOne(Player* player)
     player->stop_skill_time_ = CAT_ATTACK_TIME;
     player->obj_state_ = Object_State::STATE_ACTION_ONE;
     
+    int session_id = player->comp_key_.session_id;
+
     // 박스 생성
-    CreateAttackOBB(player, g_sessions[player->comp_key_.session_id].cat_attack_obb_);
-    g_sessions[player->comp_key_.session_id].cat_attack_ = true;
+    CreateAttackOBB(player, g_sessions[session_id].cat_attack_obb_);
+    g_sessions[session_id].cat_attack_ = true;
+    
+    // 해당 공격에 맞은 쥐
+    g_sessions[session_id].CheckAttackedMice();
 }
 
 

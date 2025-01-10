@@ -5,7 +5,7 @@
 
 void GameSession::Update()
 {
-    bool need_update = false;
+    bool need_update_send = false;
     uint64_t current_time = GetServerTime();
     int move_players = 0;
     {
@@ -20,7 +20,7 @@ void GameSession::Update()
 
             if (true == pl.second->UpdatePosition(deltaTime))
             {
-                need_update = true;
+                need_update_send = true;
                 move_players |= (1 << pl.second->comp_key_.player_index);
             }
             else
@@ -34,7 +34,7 @@ void GameSession::Update()
         lastupdatetime_ = current_time;
 
         // 업데이트가 필요할때만, 클라이언트에게 브로드캐스팅
-        if (true == need_update)
+        if (true == need_update_send)
         {
             SendPlayerUpdate(move_players);
             
@@ -297,6 +297,44 @@ int GameSession::GetMouseNum()
     std::cout << session_num_ << "번 세션 : 모든 마우스 ID가 사용 중!!" << std::endl;
     return -1;
 }
+
+
+void GameSession::CheckAttackedMice()
+{
+    // 모든 쥐 검사
+    for (auto& mouse : players_)
+    {
+        if(mouse.second->id_ == NUM_CAT) continue; // 고양이는 제외
+
+        for (const auto& mouse_attacked : cat_attacked_player_)
+        {
+            // 공격 받은 쥐
+            if (mouse_attacked.second == true)
+            {
+                // 자기 자신이면 중복 공격 방지
+                if (mouse.second->id_ == mouse_attacked.first)
+                {
+                    return;
+                }
+            }
+        }
+
+        // 고양이의 공격 OBB와 쥐의 OBB 충돌 검사
+        if (state_)
+        {
+            if (true == cat_attack_obb_.Intersects(mouse.second->state_->GetOBB()))
+            {
+                mouse.second->velocity_vector_.x = cat_attack_direction_.x * CAT_PUNCH_POWER * 10.0f;
+                mouse.second->velocity_vector_.y = CAT_PUNCH_POWER;
+                mouse.second->velocity_vector_.z = cat_attack_direction_.z * CAT_PUNCH_POWER * 10.0f;
+                std::cout << "Cat Attack Success : mouse - " << mouse.second->id_ << std::endl;
+                cat_attacked_player_[mouse.second->id_] = true;
+                mouse.second->RequestUpdate();
+            }
+        }
+    }
+}
+
 
 void GameSession::CrtVoxelCheeseOctree(OctreeNode& root, DirectX::XMFLOAT3 position, float scale, UINT detail_level)
 {

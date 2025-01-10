@@ -24,9 +24,6 @@ public:
 	// KeyInput
 	void InputKey(Player* player, uint8_t key) override;
 
-	// 고양이 공격 박스와 충돌 체크
-	void CheckAttack(Player* player);
-
 	// 충돌 처리
 	void CheckIntersects(Player* player, float deltaTime) override;
 

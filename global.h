@@ -40,7 +40,9 @@ constexpr float UPDATE_PERIOD = 1.0f / 60.0f;
 constexpr int	UPDATE_PERIOD_INT = static_cast<int>(UPDATE_PERIOD * 1000);
 constexpr float JUMP_END_TIME = 0.3f;
 constexpr float CAT_ATTACK_TIME = 1.33333337f;
+constexpr float CAT_PUNCH_POWER = 250.0f;
 constexpr float MOUSE_BITE_TIME = 0.416666657f;
+
 
 struct CompletionKey
 {

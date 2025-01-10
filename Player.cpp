@@ -130,6 +130,11 @@ void Player::ProcessPacket(char* packet)
 
 		if (state_)
 		{
+			if(false == moveable_)
+			{
+				return;
+			}
+
 			int sessionId = comp_key_.session_id;
 
 			// look 정보를 통해 해당 위치의 voxel 삭제
