@@ -15,6 +15,8 @@ public:
     // 물리 및 위치 업데이트
     virtual bool CalculatePhysics(Player* player, float deltaTime) = 0;
 
+    virtual void ActionOne(Player* player) =0;
+
     // OBB 업데이트
     virtual void UpdateOBB(Player* player) = 0;
 

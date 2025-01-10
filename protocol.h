@@ -18,6 +18,7 @@ constexpr char CS_TIME = 2;
 constexpr char CS_ROTATE = 3;
 constexpr char CS_SYNC_PLAYER = 4;
 constexpr char CS_CHOOSE_CHARACTER = 5;
+constexpr char CS_VOXEL_LOOK = 6;
 
 // Server -> Client
 constexpr char SC_LOGIN_INFO = 11;
@@ -72,6 +73,12 @@ struct CS_TIME_PACKET {
 	unsigned char size;
 	char type;
 	unsigned short time;
+};
+
+struct CS_VOXEL_LOOK_PACKET {
+	unsigned char size;
+	char type;
+	float look_x, look_y, look_z;		// voxel 삭제시 필요한 look 정보
 };
 
 ///////////////////////////////////////////////

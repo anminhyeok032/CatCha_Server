@@ -124,6 +124,34 @@ void Player::ProcessPacket(char* packet)
 		}
 		break;
 	}
+	case CS_VOXEL_LOOK:
+	{
+		CS_VOXEL_LOOK_PACKET* p = reinterpret_cast<CS_VOXEL_LOOK_PACKET*>(packet);
+
+		if (state_)
+		{
+			int sessionId = comp_key_.session_id;
+
+			// look 정보를 통해 해당 위치의 voxel 삭제
+			// 캐릭터의 위치 및 방향 벡터
+			DirectX::XMFLOAT3 look{ p->look_x, p->look_y, p->look_z };
+			DirectX::XMFLOAT3 position = state_.get()->GetOBB().Center;
+
+			DirectX::XMVECTOR player_position = XMLoadFloat3(&position);
+			DirectX::XMVECTOR normal_look = DirectX::XMVector3Normalize(XMLoadFloat3(&look));
+
+			// 공격 OBB의 중심점 설정
+			// 캐릭터 앞 공격 범위의 절반만큼 이동
+			DirectX::XMVECTOR center_offset = DirectX::XMVectorScale(normal_look, 5.0f);
+			DirectX::XMVECTOR attack_center = DirectX::XMVectorAdd(player_position, center_offset);
+			DirectX::XMStoreFloat3(&position, attack_center);
+
+			g_sessions[sessionId].DeleteCheeseVoxel(position);
+			state_->ActionOne(this);
+		}
+
+		break;
+	}
 	case CS_SYNC_PLAYER:
 	{
 		CS_SYNC_PLAYER_PACKET* p = reinterpret_cast<CS_SYNC_PLAYER_PACKET*>(packet);

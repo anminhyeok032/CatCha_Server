@@ -325,21 +325,36 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
 
     //std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
 
-
-    if (player->on_ground_ == true)
+    // 스킬 시간이 다 갈때까지 state 유지
+    if (player->stop_skill_time_ > 0.001f)
     {
-        if (player->speed_ > 0.05f && player->obj_state_ == Object_State::STATE_IDLE)
+        player->stop_skill_time_ -= deltaTime;
+        need_update = true;
+    }
+    // 움직이지 못하고, 스킬 시전중에만
+    else if (player->stop_skill_time_ < 0.001f && player->moveable_ == false)
+    {
+        player->stop_skill_time_ = 0.0f;
+        player->moveable_ = true;
+        player->obj_state_ = Object_State::STATE_IDLE;
+        need_update = true;
+    }
+    else if (player->stop_skill_time_ < 0.001f && player->moveable_ == true)
+    {
+        if (player->on_ground_ == true)
         {
-            player->obj_state_ = Object_State::STATE_MOVE;
-            need_update = true;
-        }
-        else if (player->speed_ <= 0.05f && player->obj_state_ == Object_State::STATE_MOVE)
-        {
-            player->obj_state_ = Object_State::STATE_IDLE;
-            need_update = true;
+            if (player->speed_ > 0.05f && player->obj_state_ == Object_State::STATE_IDLE)
+            {
+                player->obj_state_ = Object_State::STATE_MOVE;
+                need_update = true;
+            }
+            else if (player->speed_ <= 0.05f && player->obj_state_ == Object_State::STATE_MOVE)
+            {
+                player->obj_state_ = Object_State::STATE_IDLE;
+                need_update = true;
+            }
         }
     }
-    
 
     return need_update;
 }
@@ -360,6 +375,13 @@ void MousePlayer::UpdateOBB(Player* player)
 
 void MousePlayer::ActionOne(Player* player)
 {
-    std::cout << "Action One : Mouse - " << player->id_ << std::endl;
+    if (player->moveable_ == false)
+    {
+        return;
+    }
+    std::cout << "치즈 먹기 : Mouse - " << player->id_ << std::endl;
+    player->moveable_ = false;
+    player->stop_skill_time_ = MOUSE_BITE_TIME;
     player->obj_state_ = Object_State::STATE_ACTION_ONE;
+    player->RequestUpdate();
 }

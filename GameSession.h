@@ -61,7 +61,7 @@ public:
 		lastupdatetime_ = GetServerTime();
 		remaining_time_ = 300;	// 5Ка
 		cat_attack_obb_.Center = DirectX::XMFLOAT3(0, -9999.0f, 0);
-		Crt_Voxel_Cheese_Octree(cheese_octree_, DirectX::XMFLOAT3(0, -59.53f, 0), 1.0f, 0);
+		CrtVoxelCheeseOctree(cheese_octree_, DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 0);
 	}
 	~GameSession() {}
 
@@ -81,8 +81,9 @@ public:
 	void SetCharacter(int room_num, int client_index, bool is_cat);
 
 	int GetMouseNum();
-	void Crt_Voxel_Cheese_Octree(OctreeNode& root, DirectX::XMFLOAT3 position, float scale, UINT detail_level);
+	void CrtVoxelCheeseOctree(OctreeNode& root, DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 	void SubdivideVoxel(OctreeNode& node, DirectX::XMFLOAT3 position, float scale, UINT detail_level);
+	void DeleteCheeseVoxel(const DirectX::XMFLOAT3& center);
 };
 
 extern std::unordered_map <int, GameSession> g_sessions;

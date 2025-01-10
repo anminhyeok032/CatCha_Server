@@ -44,7 +44,7 @@ public:
 	void UpdateOBB(Player* player) override;
 
 	// 공격
-	void ActionOne(Player* player);
+	void ActionOne(Player* player) override;
 	// 공격 바운딩 박스 생성
 	void CreateAttackOBB(Player* player, DirectX::BoundingOrientedBox& box);
 	// 공격 바운딩 박스 초기화

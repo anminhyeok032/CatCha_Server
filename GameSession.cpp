@@ -266,7 +266,7 @@ void GameSession::SetCharacter(int room_num, int client_index, bool is_cat)
 
     // 캐릭터 교체 브로드캐스트
     BroadcastChangeCharacter(client_index, players_[client_index]->id_);
-    
+    player->RequestUpdate();
 }
 
 int GameSession::GetMouseNum()
@@ -294,11 +294,11 @@ int GameSession::GetMouseNum()
     }
 
     // 모든 마우스 ID가 사용 중이라면 -1 반환 (에러)
-    std::cout << "모든 마우스 ID가 사용 중!!" << std::endl;
+    std::cout << session_num_ << "번 세션 : 모든 마우스 ID가 사용 중!!" << std::endl;
     return -1;
 }
 
-void GameSession::Crt_Voxel_Cheese_Octree(OctreeNode& root, DirectX::XMFLOAT3 position, float scale, UINT detail_level)
+void GameSession::CrtVoxelCheeseOctree(OctreeNode& root, DirectX::XMFLOAT3 position, float scale, UINT detail_level)
 {
     int m_random_value = 10;
     int y_value = 8;
@@ -311,13 +311,14 @@ void GameSession::Crt_Voxel_Cheese_Octree(OctreeNode& root, DirectX::XMFLOAT3 po
     DirectX::XMFLOAT3 pivot_position = position;
     position.y += scale / 2.0f;
 
-    // 치즈 옥트리 기준 정하기
-    root.halfSize = scale / 2.0f;
+    // 치즈 옥트리 초기 기준 정하기
+    root.halfSize = z_value * scale / 2.0f;             // 가장 긴축을 기준으로 옥트리 크기 설정
     root.center = DirectX::XMFLOAT3(
         pivot_position.x,                               // x축 중심은 시작 x 좌표
         pivot_position.y + y_value * scale / 2.0f,      // y축 중심은 높이의 중간
         pivot_position.z                                // z축 중심은 시작 z 좌표
     );
+    root.boundingBox = DirectX::BoundingBox(root.center, { root.halfSize, root.halfSize, root.halfSize });
 
     for (int i = 0; i < y_value; ++i) 
     {
@@ -381,4 +382,19 @@ void GameSession::SubdivideVoxel(OctreeNode& node, DirectX::XMFLOAT3 position, f
             }
         }
     }
+}
+
+void GameSession::DeleteCheeseVoxel(const DirectX::XMFLOAT3& center)
+{
+    DirectX::BoundingSphere sphere{ center, 5.0f };
+    if(true == cheese_octree_.RemoveVoxel(sphere))
+	{
+		std::cout << "치즈 삭제 성공" << std::endl;
+        cheese_octree_.PrintNode();
+	}
+	else
+	{
+		std::cout << "치즈 삭제 실패" << std::endl;
+	}
+
 }

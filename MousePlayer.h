@@ -12,7 +12,6 @@ private:
 	DirectX::XMFLOAT3 extents_ = DirectX::XMFLOAT3(3.864098f/2.0f, 5.104148f/2.0f, 10.92712f/2.0f);
 	DirectX::XMFLOAT4 rotation_ = DirectX::XMFLOAT4(0, 0, 0, 1);
 
-
 public:
 	// 생성자
 	MousePlayer() 
@@ -43,7 +42,7 @@ public:
 	// OBB 업데이트
 	void UpdateOBB(Player* player) override;
 
-	void ActionOne(Player* player);
+	void ActionOne(Player* player) override;
 
 	DirectX::BoundingOrientedBox GetOBB() override { return obb_; }
 };
