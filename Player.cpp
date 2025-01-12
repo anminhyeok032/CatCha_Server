@@ -231,6 +231,10 @@ bool Player::UpdatePosition(float deltaTime)
 
 		// 面倒 贸府
 		state_->CheckIntersects(this, deltaTime);
+
+		// 摹令客狼 面倒 贸府
+		state_->CheckCheeseIntersects(this, deltaTime);
+
 		// 拱府 贸府
 		bool moved = state_->CalculatePhysics(this, deltaTime);
 

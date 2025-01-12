@@ -212,6 +212,10 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
     DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
 }
 
+void CatPlayer::CheckCheeseIntersects(Player* player, float deltaTime)
+{
+}
+
 
 float CatPlayer::CalculatePenetrationDepth(const ObjectOBB& obj, DirectX::XMVECTOR normal)
 {

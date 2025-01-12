@@ -12,6 +12,9 @@ public:
     // 충돌 처리
     virtual void CheckIntersects(Player* player, float deltaTime) = 0;
 
+    // 치즈와의 충돌 처리
+    virtual void CheckCheeseIntersects(Player* player, float deltaTime) = 0;
+
     // 물리 및 위치 업데이트
     virtual bool CalculatePhysics(Player* player, float deltaTime) = 0;
 

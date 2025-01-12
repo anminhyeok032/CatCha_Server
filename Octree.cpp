@@ -72,7 +72,7 @@ bool OctreeNode::RemoveVoxel(const DirectX::BoundingSphere& sphere)
             }
             else
             {
-                ++it; // 조건이 충족되지 않으면 다음으로 이동
+                ++it;
             }
         }
         return removed; // 복셀 삭제 여부 반환
@@ -102,6 +102,76 @@ bool OctreeNode::RemoveVoxel(const DirectX::BoundingSphere& sphere)
     }
 
     return is_child_changed;
+}
+
+DirectX::BoundingBox OctreeNode::IntersectCheck(const DirectX::BoundingSphere& sphere) const
+{
+    std::vector<DirectX::BoundingBox> intersectedAABBs;
+
+    // 충돌한 AABB를 탐색하는 재귀 함수 호출
+    DiscoverAABB(sphere, intersectedAABBs);
+
+    // 충돌한 AABB가 없으면 빈 AABB 반환
+    if (intersectedAABBs.empty()) 
+    {
+        return DirectX::BoundingBox();
+    }
+
+    // 최소 점 및 최대 점 초기화
+    DirectX::XMVECTOR minPoint = DirectX::XMVectorSet(FLT_MAX, FLT_MAX, FLT_MAX, 0.0f);
+    DirectX::XMVECTOR maxPoint = DirectX::XMVectorSet(-FLT_MAX, -FLT_MAX, -FLT_MAX, 0.0f);
+
+    // 충돌한 AABB 병합
+    for (const auto& aabb : intersectedAABBs)
+    {
+        // AABB의 최소 및 최대 점 계산
+        DirectX::XMVECTOR center = DirectX::XMLoadFloat3(&aabb.Center);
+        DirectX::XMVECTOR extents = DirectX::XMLoadFloat3(&aabb.Extents);
+
+        DirectX::XMVECTOR aabbMin = DirectX::XMVectorSubtract(center, extents);
+        DirectX::XMVECTOR aabbMax = DirectX::XMVectorAdd(center, extents);
+
+        // 최소 및 최대 점 갱신
+        minPoint = DirectX::XMVectorMin(minPoint, aabbMin);
+        maxPoint = DirectX::XMVectorMax(maxPoint, aabbMax);
+    }
+
+    // 병합된 AABB 계산
+    DirectX::XMVECTOR mergedCenter = DirectX::XMVectorScale(DirectX::XMVectorAdd(minPoint, maxPoint), 0.5f);
+    DirectX::XMVECTOR mergedExtents = DirectX::XMVectorScale(DirectX::XMVectorSubtract(maxPoint, minPoint), 0.5f);
+
+    // 병합된 AABB를 반환
+    DirectX::BoundingBox mergedAABB;
+    DirectX::XMStoreFloat3(&mergedAABB.Center, mergedCenter);
+    DirectX::XMStoreFloat3(&mergedAABB.Extents, mergedExtents);
+
+    return mergedAABB;
+}
+
+void OctreeNode::DiscoverAABB(const DirectX::BoundingSphere& sphere, std::vector<DirectX::BoundingBox>& result) const 
+{
+    // 현재 노드와 구의 충돌 확인
+    if (false == boundingBox.Intersects(sphere)) 
+    {
+        return;
+    }
+
+    // 리프 노드인지 확인
+    if (false == voxelData.empty()) 
+    {
+        // 리프 노드일 경우 충돌한 AABB 추가
+        result.push_back(boundingBox);
+        return;
+    }
+
+    // 자식 노드 탐색
+    for (const auto& child : children) 
+    {
+        if (child) 
+        {
+            child->DiscoverAABB(sphere, result);
+        }
+    }
 }
 
 bool OctreeNode::IsEmpty() const

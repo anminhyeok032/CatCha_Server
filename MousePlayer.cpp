@@ -212,6 +212,21 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
     DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
 }
 
+void MousePlayer::CheckCheeseIntersects(Player* player, float deltaTime)
+{
+    DirectX::BoundingSphere player_sphere{ obb_.Center, obb_.Extents.z };
+
+    // TODO : 치즈 여러개 생성시 루프문으로 변경
+    // 충돌한 AABB 받아서 AABB 가지고 velocity 슬라이딩 시키기
+    DirectX::BoundingBox intersectedAABB = g_sessions[player->id_].cheese_octree_.IntersectCheck(player_sphere);
+
+    if(intersectedAABB.Center.x != 0.0f && intersectedAABB.Center.y != 0.0f && intersectedAABB.Center.z != 0.0f)
+	{
+		std::cout << "치즈와 충돌함" << std::endl;
+        std::cout << "치즈 크기 : " << intersectedAABB.Center.x << ", " << intersectedAABB.Center.y << ", " << intersectedAABB.Center.z << std::endl;
+	}
+}
+
 float MousePlayer::CalculatePenetrationDepth(const ObjectOBB& obj, DirectX::XMVECTOR normal)
 {
     // 1. obb의 중심점끼리의 거리를 부딪힌 면의 노멀벡터에 투영하면 두 obb 사이의 현재 거리를 알 수 있다.

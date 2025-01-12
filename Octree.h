@@ -24,6 +24,11 @@ public:
     void InsertVoxel(DirectX::XMFLOAT3 voxelPosition, int maxDepth, int currentDepth);
     // 복셀 데이터 충돌 검사 후 삭제
     bool RemoveVoxel(const DirectX::BoundingSphere& sphere);
+
+    // 구와 AABB의 교차 여부 확인
+    DirectX::BoundingBox IntersectCheck(const DirectX::BoundingSphere& sphere) const;
+
+    void DiscoverAABB(const DirectX::BoundingSphere& sphere, std::vector<DirectX::BoundingBox>& result) const;
     
     bool IsEmpty() const;
 

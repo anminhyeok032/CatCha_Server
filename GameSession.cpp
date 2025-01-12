@@ -253,7 +253,6 @@ void GameSession::SetCharacter(int room_num, int client_index, bool is_cat)
         player->SetState(std::make_unique<CatPlayer>());
         player->SetID(NUM_CAT);
         player->Set_OBB(player->state_->GetOBB());
-        //player->position_.y = -58.4f;
     }
     // 쥐일 때
     else 
@@ -261,7 +260,6 @@ void GameSession::SetCharacter(int room_num, int client_index, bool is_cat)
         player->SetState(std::make_unique<MousePlayer>());
         player->SetID(GetMouseNum());
         player->Set_OBB(player->state_->GetOBB());
-        //player->position_.y = -59.53f;
     }
 
     // 캐릭터 교체 브로드캐스트
@@ -368,6 +366,8 @@ void GameSession::CrtVoxelCheeseOctree(OctreeNode& root, DirectX::XMFLOAT3 posit
 
             for (int k = 0; k <= j / 2; ++k) 
             {
+                // TODO : 특정 치즈 삭제 가능시, 클라로 치즈 삭제 패킷 보내기
+                //        모든 플레이어 접속후, 치즈 로드하게 로직 변경 필요함
                 /*if ((i == y_value - 1 || j == z_value || k == 0 || k == j / 2) &&
                     !(uid(rd) % m_random_value)) {
                     position.x += scale;
