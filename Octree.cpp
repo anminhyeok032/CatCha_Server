@@ -104,7 +104,7 @@ bool OctreeNode::RemoveVoxel(const DirectX::BoundingSphere& sphere)
     return is_child_changed;
 }
 
-DirectX::BoundingBox OctreeNode::IntersectCheck(const DirectX::BoundingSphere& sphere) const
+bool OctreeNode::IntersectCheck(const DirectX::BoundingSphere& sphere, DirectX::BoundingBox& AABB) const
 {
     std::vector<DirectX::BoundingBox> intersectedAABBs;
 
@@ -114,7 +114,7 @@ DirectX::BoundingBox OctreeNode::IntersectCheck(const DirectX::BoundingSphere& s
     // 충돌한 AABB가 없으면 빈 AABB 반환
     if (intersectedAABBs.empty()) 
     {
-        return DirectX::BoundingBox();
+        return false;
     }
 
     // 최소 점 및 최대 점 초기화
@@ -141,11 +141,10 @@ DirectX::BoundingBox OctreeNode::IntersectCheck(const DirectX::BoundingSphere& s
     DirectX::XMVECTOR mergedExtents = DirectX::XMVectorScale(DirectX::XMVectorSubtract(maxPoint, minPoint), 0.5f);
 
     // 병합된 AABB를 반환
-    DirectX::BoundingBox mergedAABB;
-    DirectX::XMStoreFloat3(&mergedAABB.Center, mergedCenter);
-    DirectX::XMStoreFloat3(&mergedAABB.Extents, mergedExtents);
+    DirectX::XMStoreFloat3(&AABB.Center, mergedCenter);
+    DirectX::XMStoreFloat3(&AABB.Extents, mergedExtents);
 
-    return mergedAABB;
+    return true;
 }
 
 void OctreeNode::DiscoverAABB(const DirectX::BoundingSphere& sphere, std::vector<DirectX::BoundingBox>& result) const 

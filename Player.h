@@ -9,7 +9,7 @@ public:
 	// physics
 	float speed_ = 0.0f;
 	float max_speed_ = 200.f;
-	float acceleration_ = 100.0f;
+	float acceleration_ = 50.0f;
 	float deceleration_ = 1000.0f;
 
 	float jump_power_ = 500.0f;

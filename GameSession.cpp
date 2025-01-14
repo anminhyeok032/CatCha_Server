@@ -428,7 +428,7 @@ void GameSession::DeleteCheeseVoxel(const DirectX::XMFLOAT3& center)
     if(true == cheese_octree_.RemoveVoxel(sphere))
 	{
 		std::cout << "치즈 삭제 성공" << std::endl;
-        cheese_octree_.PrintNode();
+        //cheese_octree_.PrintNode();
 	}
 	else
 	{

@@ -26,7 +26,7 @@ public:
     bool RemoveVoxel(const DirectX::BoundingSphere& sphere);
 
     // 구와 AABB의 교차 여부 확인
-    DirectX::BoundingBox IntersectCheck(const DirectX::BoundingSphere& sphere) const;
+    bool IntersectCheck(const DirectX::BoundingSphere& sphere, DirectX::BoundingBox& AABB) const;
 
     void DiscoverAABB(const DirectX::BoundingSphere& sphere, std::vector<DirectX::BoundingBox>& result) const;
     

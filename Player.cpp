@@ -130,7 +130,7 @@ void Player::ProcessPacket(char* packet)
 
 		if (state_)
 		{
-			if(false == moveable_)
+			if(false == moveable_ || NUM_CAT == id_)
 			{
 				return;
 			}
@@ -350,7 +350,10 @@ void Player::ApplyFriction(float time_step)
 
 void Player::ApplyGravity(float time_step)
 {
-	velocity_vector_.y -= GRAVITY *time_step;
+	if (velocity_vector_.y > -300.0f)
+	{
+		velocity_vector_.y -= GRAVITY * time_step;
+	}
 }
 
 void Player::Set_OBB(DirectX::BoundingOrientedBox obb)

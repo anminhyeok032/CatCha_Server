@@ -39,6 +39,9 @@
     <ClCompile Include="MapData.cpp">
       <Filter>Global</Filter>
     </ClCompile>
+    <ClCompile Include="Octree.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Over_IO.h">
@@ -70,6 +73,9 @@
     </ClInclude>
     <ClInclude Include="MapData.h">
       <Filter>Global</Filter>
+    </ClInclude>
+    <ClInclude Include="Octree.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
