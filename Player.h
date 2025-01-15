@@ -42,7 +42,6 @@ public:
 		id_ = NUM_GHOST;
 		max_hp_ = 100;
 		curr_hp_ = 100;
-		is_jumping_ = false;
 		key_ = 0;
 		socket_ = INVALID_SOCKET;
 	}
@@ -82,8 +81,6 @@ public:
 	{
 		if (false == needs_update_.load())
 		{
-			TIMER_EVENT ev{ std::chrono::system_clock::now(), comp_key_.session_id };
-			commandQueue.push(ev);
 			needs_update_.store(true);
 		}
 	}
@@ -115,7 +112,6 @@ public:
 	void MoveBack();
 	void MoveLeft();
 	void MoveRight();
-	void Jump();
 
 	DirectX::XMFLOAT3 GetLook()		const { return look_; }
 	DirectX::XMFLOAT3 GetUp()		const { return up_; }

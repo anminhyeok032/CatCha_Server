@@ -9,11 +9,14 @@ public:
     // 키 인풋 처리
     virtual void InputKey(Player* player, uint8_t key) = 0;
 
+    // 점프
+    virtual void Jump(Player* player) = 0;
+
     // 충돌 처리
     virtual void CheckIntersects(Player* player, float deltaTime) = 0;
 
     // 치즈와의 충돌 처리
-    virtual void CheckCheeseIntersects(Player* player, float deltaTime) = 0;
+    virtual bool CheckCheeseIntersects(Player* player, float deltaTime) = 0;
 
     // 물리 및 위치 업데이트
     virtual bool CalculatePhysics(Player* player, float deltaTime) = 0;

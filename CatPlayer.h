@@ -29,11 +29,13 @@ public:
 	// KeyInput
 	void InputKey(Player* player, uint8_t key) override;
 
+	void Jump(Player* player) override;
+
 	// 충돌 처리
 	void CheckIntersects(Player* player, float deltaTime);
 
 	// 치즈와의 충돌 처리
-	void CheckCheeseIntersects(Player* player, float deltaTime) override;
+	bool CheckCheeseIntersects(Player* player, float deltaTime) override;
 
 	// 충돌시 depth 계산
 	float CalculatePenetrationDepth(const ObjectOBB& obj, DirectX::XMVECTOR normal);

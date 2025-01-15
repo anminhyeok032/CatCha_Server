@@ -23,25 +23,18 @@ void GameSession::Update()
                 need_update_send = true;
                 move_players |= (1 << pl.second->comp_key_.player_index);
             }
-            else
-            {
-                // 움직임이 없을시, 플레이어 업데이트 요청 초기화
-                pl.second->needs_update_.store(false);
-            }
         }
 
         // 현재 세션 시간 업데이트
         lastupdatetime_ = current_time;
 
-        // 업데이트가 필요할때만, 클라이언트에게 브로드캐스팅
+        // 업데이트가 필요할때만, 클라이언트에게 브로드캐스팅 및 업데이트 스레드 재동작
         if (true == need_update_send)
         {
             SendPlayerUpdate(move_players);
-            
-            TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(UPDATE_PERIOD_INT), session_num_ };
-            commandQueue.push(ev);
-            
         }
+        TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(UPDATE_PERIOD_INT), session_num_ };
+        commandQueue.push(ev);
     }
 }
 
@@ -124,9 +117,12 @@ void GameSession::BroadcastPosition(int player)
     p.state = (state_value << 1) 
         | (cat_attacked_player_[pl->id_] ? 1 : 0);
 
-
+    if (pl->stop_skill_time_ > 0.001f)
+    {
+        // 스킬 타음 사용전까지 기다림
+    }
     // 점프시작을 전송후, 점프 idle로 변경
-    if (pl->obj_state_ == Object_State::STATE_JUMP_START)
+    else if (pl->obj_state_ == Object_State::STATE_JUMP_START)
     {
         players_[player]->obj_state_ = Object_State::STATE_JUMP_IDLE;
     }
@@ -218,6 +214,22 @@ void GameSession::BroadcastAddCharacter(int player_num, int recv_index)
     p.quat_w = players_[player_num]->rotation_quat_.w;
 
     players_[recv_index]->DoSend(&p);
+}
+
+void GameSession::BroadcastRemoveVoxelSphere(const DirectX::XMFLOAT3& center)
+{
+    SC_REMOVE_VOXEL_SPHERE_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_REMOVE_VOXEL_SPHERE;
+	p.cheese_num = 0;
+	p.center_x = center.x;
+	p.center_y = center.y;
+	p.center_z = center.z;
+
+	for (auto& pl : players_)
+	{
+		pl.second->DoSend(&p);
+	}
 }
 
 uint64_t GameSession::GetServerTime()
@@ -336,10 +348,8 @@ void GameSession::CheckAttackedMice()
 
 void GameSession::CrtVoxelCheeseOctree(OctreeNode& root, DirectX::XMFLOAT3 position, float scale, UINT detail_level)
 {
+    int count = 0;
     int m_random_value = 10;
-    int y_value = 8;
-    int z_value = 21;
-    int x_value = z_value / 2;
 
     std::random_device rd;
     std::uniform_int_distribution<int> uid(1, m_random_value);
@@ -348,21 +358,21 @@ void GameSession::CrtVoxelCheeseOctree(OctreeNode& root, DirectX::XMFLOAT3 posit
     position.y += scale / 2.0f;
 
     // 치즈 옥트리 초기 기준 정하기
-    root.halfSize = z_value * scale / 2.0f;             // 가장 긴축을 기준으로 옥트리 크기 설정
+    root.halfSize = VOXEL_CHEESE_DEPTH * scale / 2.0f;             // 가장 긴축을 기준으로 옥트리 크기 설정
     root.center = DirectX::XMFLOAT3(
         pivot_position.x,                               // x축 중심은 시작 x 좌표
-        pivot_position.y + y_value * scale / 2.0f,      // y축 중심은 높이의 중간
+        pivot_position.y + VOXEL_CHEESE_HEIGHT * scale / 2.0f,      // y축 중심은 높이의 중간
         pivot_position.z                                // z축 중심은 시작 z 좌표
     );
     root.boundingBox = DirectX::BoundingBox(root.center, { root.halfSize, root.halfSize, root.halfSize });
 
-    for (int i = 0; i < y_value; ++i) 
+    for (int i = 0; i < VOXEL_CHEESE_HEIGHT; ++i)
     {
-        position.z = pivot_position.z - scale * (float)(z_value / 2);
+        position.z = pivot_position.z - scale * (float)(VOXEL_CHEESE_DEPTH / 2);
 
-        for (int j = 1; j <= z_value; ++j) 
+        for (int j = 1; j <= VOXEL_CHEESE_DEPTH; ++j)
         {
-            position.x = pivot_position.x - scale * (float)(x_value / 2);
+            position.x = pivot_position.x - scale * (float)(VOXEL_CHEESE_WIDTH / 2);
 
             for (int k = 0; k <= j / 2; ++k) 
             {
@@ -425,14 +435,20 @@ void GameSession::SubdivideVoxel(OctreeNode& node, DirectX::XMFLOAT3 position, f
 void GameSession::DeleteCheeseVoxel(const DirectX::XMFLOAT3& center)
 {
     DirectX::BoundingSphere sphere{ center, 5.0f };
-    if(true == cheese_octree_.RemoveVoxel(sphere))
-	{
-		std::cout << "치즈 삭제 성공" << std::endl;
-        //cheese_octree_.PrintNode();
-	}
-	else
-	{
-		std::cout << "치즈 삭제 실패" << std::endl;
-	}
+
+    for (auto& cheese : cheese_octree_)
+    {
+        if (true == cheese.RemoveVoxel(sphere))
+        {
+            std::cout << "치즈 삭제 성공" << std::endl;
+            //cheese_octree_.PrintNode();
+
+            BroadcastRemoveVoxelSphere(center);
+        }
+        else
+        {
+            std::cout << "치즈 삭제 실패" << std::endl;
+        }
+    }
 
 }

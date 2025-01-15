@@ -41,6 +41,7 @@ int GetSessionNumber()
 	}
 	g_sessions[room_num].session_num_ = room_num;
 	g_sessions[room_num].InitUDPSocket();
+	g_sessions[room_num].StartSessionUpdate();
 	return room_num;
 }
 

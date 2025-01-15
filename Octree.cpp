@@ -2,6 +2,19 @@
 
 UINT vexel_count = 0;
 
+const DirectX::XMFLOAT3 CHEESE_POS[CHEESE_NUM] =
+{
+    DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f),
+    DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
+    DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
+    DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)
+};
+
+const int CHEESE_VOXEL_COUNT = VOXEL_CHEESE_HEIGHT *
+                                (VOXEL_CHEESE_DEPTH +
+                                    (VOXEL_CHEESE_DEPTH / 2) * ((VOXEL_CHEESE_DEPTH / 2) + 1) / 2 +
+                                    ((VOXEL_CHEESE_DEPTH + 1) / 2) * ((VOXEL_CHEESE_DEPTH + 1) / 2 - 1) / 2);
+
 void OctreeNode::InsertVoxel(DirectX::XMFLOAT3 voxelPosition, int maxDepth, int currentDepth)
 {
     // 최대 깊이에 도달하면 복셀 데이터를 현재 노드에 저장

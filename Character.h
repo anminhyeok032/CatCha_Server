@@ -44,9 +44,6 @@ public:
 	std::unordered_map<Action, bool> keyboard_input_;
 	uint8_t key_ = 0;
 
-	// physics
-	bool is_jumping_ = false;
-
 
 public:
 	// Player 초기화를 위한 가상 함수

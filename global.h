@@ -35,7 +35,7 @@ constexpr int MAX_USER = 4;
 constexpr int MAX_NPC = 4;
 
 // 고정 시간 스텝 설정 (1/60초)
-constexpr float FIXED_TIME_STEP = 1.0f / 20.0f;
+constexpr float FIXED_TIME_STEP = 1.0f / 60.0f;
 constexpr float UPDATE_PERIOD = 1.0f / 60.0f;
 constexpr int	UPDATE_PERIOD_INT = static_cast<int>(UPDATE_PERIOD * 1000);
 constexpr float JUMP_END_TIME = 0.3f;
@@ -307,3 +307,18 @@ static DirectX::XMFLOAT3 operator*(const DirectX::XMFLOAT3& a, float scalar) {
 static DirectX::XMFLOAT3 operator*(float scalar, const DirectX::XMFLOAT3& a) {
 	return MathHelper::Multiply(a, scalar);
 }
+
+
+
+//==========================
+// Cheese Data
+//==========================
+constexpr int CHEESE_NUM = 4;
+constexpr float CHEESE_SCALE = 1.0f;
+
+extern const DirectX::XMFLOAT3 CHEESE_POS[CHEESE_NUM];
+
+constexpr int VOXEL_CHEESE_HEIGHT = 8;
+constexpr int VOXEL_CHEESE_DEPTH = 21;
+constexpr int VOXEL_CHEESE_WIDTH = VOXEL_CHEESE_DEPTH / 2;
+extern const int CHEESE_VOXEL_COUNT;

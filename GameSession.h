@@ -52,7 +52,7 @@ public:
 	std::unordered_map<int, bool> cat_attacked_player_;			// [key] = CHARACTER_NUMBER / [value] = is_attacked
 
 	// 치즈 옥트리
-	OctreeNode cheese_octree_;
+	std::vector<OctreeNode> cheese_octree_;
 
 public:
 	GameSession()
@@ -61,13 +61,22 @@ public:
 		lastupdatetime_ = GetServerTime();
 		remaining_time_ = 300;	// 5분
 		cat_attack_obb_.Center = DirectX::XMFLOAT3(0, -9999.0f, 0);
-		CrtVoxelCheeseOctree(cheese_octree_, DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f), 1.0f, 0);
+		for (int i = 0; i < CHEESE_NUM; i++)
+		{
+			cheese_octree_.emplace_back();
+			CrtVoxelCheeseOctree(cheese_octree_[i], CHEESE_POS[i], CHEESE_SCALE, 0);
+		}
 	}
 	~GameSession() {}
 
 	size_t CheckCharacterNum() const { return players_.size(); }
 
 	void Update();
+	void StartSessionUpdate()
+	{
+		TIMER_EVENT ev{ std::chrono::system_clock::now(), session_num_ };
+		commandQueue.push(ev);
+	}
 	uint64_t GetServerTime();
 	void SendPlayerUpdate(int move_players);
 	void SendTimeUpdate();
@@ -77,6 +86,7 @@ public:
 	void BroadcastSync();
 	void BroadcastChangeCharacter(int player_num, int CHARACTER_NUM);
 	void BroadcastAddCharacter(int player_num, int recv_index);
+	void BroadcastRemoveVoxelSphere(const DirectX::XMFLOAT3& center);
 
 	void SetCharacter(int room_num, int client_index, bool is_cat);
 

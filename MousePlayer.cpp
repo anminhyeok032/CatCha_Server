@@ -30,6 +30,30 @@ void MousePlayer::InputKey(Player* player, uint8_t key_)
 	player->RequestUpdate();
 }
 
+void MousePlayer::Jump(Player* player)
+{
+    if (player->obj_state_ == Object_State::STATE_IDLE || player->obj_state_ == Object_State::STATE_MOVE)
+    {
+        //std::cout << "점프!!!" << std::endl;
+        // 점프 시작으로 변경
+        player->obj_state_ = Object_State::STATE_JUMP_START;
+        // 점프 파워로 적용
+        player->velocity_vector_.y = player->jump_power_;
+        // 점프는 한번만 적용되게 키 인풋 map에서 삭제
+        player->keyboard_input_[Action::ACTION_JUMP] = false;
+        // 점프시 땅에서 떨어진걸로 판정
+        player->on_ground_ = false;
+        // 애니메이션 시간 적용
+        player->stop_skill_time_ = 0.333333343f;
+    }
+    else
+    {
+        // 점프는 한번만 적용되게 키 인풋 map에서 삭제
+        player->keyboard_input_[Action::ACTION_JUMP] = false;
+    }
+}
+
+
 
 void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 {
@@ -176,7 +200,7 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
         if (DirectX::XMVectorGetY(normalized_closest_normal) > 0.9f)
         {
             // 점프 시작시에는 적용 x
-            if (player->obj_state_ == Object_State::STATE_JUMP_START)
+            if (DirectX::XMVectorGetY(slide_vector) > 0.0f)
             {
                 continue;
             }
@@ -212,19 +236,13 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
     DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
 }
 
-void MousePlayer::CheckCheeseIntersects(Player* player, float deltaTime)
+bool MousePlayer::CheckCheeseIntersects(Player* player, float deltaTime)
 {
+    bool crashing_cheese = false;
+
     DirectX::BoundingBox ChesseAABB;
     DirectX::XMVECTOR currentPos = DirectX::XMLoadFloat3(&obb_.Center);
     DirectX::XMVECTOR slide_vector = DirectX::XMLoadFloat3(&player->velocity_vector_);
-
-
-    // TODO : 치즈 여러개 생성시 루프문으로 변경
-    // 큰 범위로 검사 범위 줄이기
-    if(false == player_sphere_.Intersects(g_sessions[player->id_].cheese_octree_.boundingBox))
-	{
-		return;
-	}
 
     // 예측 OBB
     DirectX::XMVECTOR pred_pos = DirectX::XMVectorAdd(currentPos, DirectX::XMVectorScale(slide_vector, deltaTime));
@@ -232,105 +250,114 @@ void MousePlayer::CheckCheeseIntersects(Player* player, float deltaTime)
     DirectX::XMStoreFloat3(&pred_pos_f3, pred_pos);
     DirectX::BoundingSphere player_sphere = DirectX::BoundingSphere(pred_pos_f3, obb_.Extents.y);
 
-    // 충돌한 AABB 받아서 AABB 가지고 velocity 슬라이딩 시키기
-    bool crashing_cheese = g_sessions[player->id_].cheese_octree_.IntersectCheck(player_sphere, ChesseAABB);
+    int session_id = player->comp_key_.session_id;
 
-    // 추출해낸 AABB를 이용해 슬라이딩 벡터 계산
-    if(true == crashing_cheese)
-	{
-        // AABB 중심과 Extent 로드
-        DirectX::XMVECTOR aabbCenter = DirectX::XMLoadFloat3(&ChesseAABB.Center);
-        DirectX::XMVECTOR aabbExtents = DirectX::XMLoadFloat3(&ChesseAABB.Extents);
-
-        DirectX::XMVECTOR collisionCenter = DirectX::XMLoadFloat3(&obb_.Center);
-
-        // 중점 연결 벡터 및 각 축별 거리 계산
-        DirectX::XMVECTOR centerVector = DirectX::XMVectorSubtract(collisionCenter, aabbCenter);
-        DirectX::XMVECTOR absCenterVector = DirectX::XMVectorAbs(centerVector);
-
-        // 각 축별 상대 거리 (거리 / Extent) 계산
-        DirectX::XMVECTOR relativeDistances = DirectX::XMVectorDivide(absCenterVector, aabbExtents);
-
-        // 가장 큰 축의 인덱스를 찾음
-        // 초기값: X축
-        DirectX::XMVECTOR maxVector = DirectX::XMVectorSplatX(relativeDistances);
-        int maxAxis = 0;
-
-        // y가 더 크면 Y축으로 변경
-        if (DirectX::XMVectorGetY(relativeDistances) > DirectX::XMVectorGetX(maxVector))
+    for (const auto& cheese : g_sessions[session_id].cheese_octree_)
+    {
+        // 큰 범위로 검사 범위 줄이기
+        if (false == player_sphere_.Intersects(cheese.boundingBox))
         {
-            maxVector = DirectX::XMVectorSplatY(relativeDistances);
-            maxAxis = 1;
-        }
-        // z가 더 크면 Z축으로 변경
-        if (DirectX::XMVectorGetZ(relativeDistances) > DirectX::XMVectorGetX(maxVector))
-        {
-            maxAxis = 2;
+            continue;
         }
 
-        // 충돌 면의 법선 벡터 생성
-        // 중심점간 벡터의 부호를 따름
-        float x_set = (DirectX::XMVectorGetX(centerVector) >= 0.0f) ? 1.0f : -1.0f;
-        float y_set = (DirectX::XMVectorGetY(centerVector) >= 0.0f) ? 1.0f : -1.0f;
-        float z_set = (DirectX::XMVectorGetZ(centerVector) >= 0.0f) ? 1.0f : -1.0f;
+        // 충돌한 AABB 받아서 AABB 가지고 velocity 슬라이딩 시키기
+        crashing_cheese = cheese.IntersectCheck(player_sphere, ChesseAABB);
 
-        DirectX::XMVECTOR normal = DirectX::XMVectorZero();
-        switch (maxAxis)
+        // 추출해낸 AABB를 이용해 슬라이딩 벡터 계산
+        if (true == crashing_cheese)
         {
-            // +X
-            case 0: 
-                normal = DirectX::XMVectorSet(x_set, 0.0f, 0.0f, 0.0f); 
+            // AABB 중심과 Extent 로드
+            DirectX::XMVECTOR aabbCenter = DirectX::XMLoadFloat3(&ChesseAABB.Center);
+            DirectX::XMVECTOR aabbExtents = DirectX::XMLoadFloat3(&ChesseAABB.Extents);
+
+            DirectX::XMVECTOR collisionCenter = DirectX::XMLoadFloat3(&obb_.Center);
+
+            // 중점 연결 벡터 및 각 축별 거리 계산
+            DirectX::XMVECTOR centerVector = DirectX::XMVectorSubtract(collisionCenter, aabbCenter);
+            DirectX::XMVECTOR absCenterVector = DirectX::XMVectorAbs(centerVector);
+
+            // 각 축별 상대 거리 (거리 / Extent) 계산
+            DirectX::XMVECTOR relativeDistances = DirectX::XMVectorDivide(absCenterVector, aabbExtents);
+
+            // 가장 큰 축의 인덱스를 찾음
+            // 초기값: X축
+            DirectX::XMVECTOR maxVector = DirectX::XMVectorSplatX(relativeDistances);
+            int maxAxis = 0;
+
+            // y가 더 크면 Y축으로 변경
+            if (DirectX::XMVectorGetY(relativeDistances) > DirectX::XMVectorGetX(maxVector))
+            {
+                maxVector = DirectX::XMVectorSplatY(relativeDistances);
+                maxAxis = 1;
+            }
+            // z가 더 크면 Z축으로 변경
+            if (DirectX::XMVectorGetZ(relativeDistances) > DirectX::XMVectorGetX(maxVector))
+            {
+                maxAxis = 2;
+            }
+
+            // 충돌 면의 법선 벡터 생성
+            // 중심점간 벡터의 부호를 따름
+            float x_set = (DirectX::XMVectorGetX(centerVector) >= 0.0f) ? 1.0f : -1.0f;
+            float y_set = (DirectX::XMVectorGetY(centerVector) >= 0.0f) ? 1.0f : -1.0f;
+            float z_set = (DirectX::XMVectorGetZ(centerVector) >= 0.0f) ? 1.0f : -1.0f;
+
+            DirectX::XMVECTOR normal = DirectX::XMVectorZero();
+            switch (maxAxis)
+            {
+                // +X
+            case 0:
+                normal = DirectX::XMVectorSet(x_set, 0.0f, 0.0f, 0.0f);
                 break;
-            // +Y
-            case 1: 
+                // +Y
+            case 1:
                 normal = DirectX::XMVectorSet(0.0f, y_set, 0.0f, 0.0f);
                 break;
-            // +Z
-            case 2: 
-                normal = DirectX::XMVectorSet(0.0f, 0.0f, z_set, 0.0f); 
-                break; 
-        }
-
-        // normal과 velocity가 같은 방향이면 슬라이딩 x
-        float dotProduct = DirectX::XMVectorGetX(DirectX::XMVector3Dot(slide_vector, normal));
-        if (dotProduct > 0.0f)
-        {
-            // 같은 방향이면 슬라이딩 계산 스킵
-            //return;
-        }
-        
-        std::cout << "normal : " << DirectX::XMVectorGetX(normal) << ", " << DirectX::XMVectorGetY(normal) << ", " << DirectX::XMVectorGetZ(normal) << std::endl;
-
-        // Y축(윗면) 충돌시 애니메이션 스테이트 설정
-        if (DirectX::XMVectorGetY(normal) > 0.9f)
-        {
-            // 점프 시작시에는 적용 x
-            if (player->obj_state_ == Object_State::STATE_JUMP_START)
-            {
-                return;
+                // +Z
+            case 2:
+                normal = DirectX::XMVectorSet(0.0f, 0.0f, z_set, 0.0f);
+                break;
             }
 
-            player->on_ground_ = true;
-            slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
-
-            // 점프 중 땅에 닿으면 점프 종료로 변환
-            if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
+            // Y축(윗면) 충돌시 애니메이션 스테이트 설정
+            if (DirectX::XMVectorGetY(normal) > 0.9f)
             {
-                player->obj_state_ = Object_State::STATE_JUMP_END;
+                // 점프 시작시에는 적용 x
+                if (player->obj_state_ == Object_State::STATE_JUMP_START)
+                {
+                    continue;
+                }
+
+                player->on_ground_ = true;
+                slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
+
+                // 점프 중 땅에 닿으면 점프 종료로 변환
+                if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
+                {
+                    player->obj_state_ = Object_State::STATE_JUMP_END;
+                }
+            }
+            else
+            {
+                // velocity를 법선에 투영해 슬라이딩 벡터 계산
+                // S = V - (V . N) * N
+                DirectX::XMVECTOR P = DirectX::XMVectorScale(normal,
+                    DirectX::XMVectorGetX(
+                        DirectX::XMVector3Dot(slide_vector, normal)));
+                slide_vector = DirectX::XMVectorSubtract(slide_vector, P);
             }
         }
-        else
-        {
-            // velocity를 법선에 투영해 슬라이딩 벡터 계산
-            // S = V - (V . N) * N
-            DirectX::XMVECTOR P = DirectX::XMVectorScale(normal,
-                DirectX::XMVectorGetX(
-                    DirectX::XMVector3Dot(slide_vector, normal)));
-            slide_vector = DirectX::XMVectorSubtract(slide_vector, P);
-        }
-	}
+    }
+    if (true == crashing_cheese)
+    {
+        DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
 
-	DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
+        return true;
+    }
+    
+    
+    return false;
+    
 }
 
 float MousePlayer::CalculatePenetrationDepth(const ObjectOBB& obj, DirectX::XMVECTOR normal)

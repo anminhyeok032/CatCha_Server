@@ -68,6 +68,7 @@ void Player::SetAddr()
 	//client_addr_.sin_addr = addr.sin_addr;
 }
 
+// IO thread
 void Player::ProcessPacket(char* packet)
 {
 	switch (packet[1])
@@ -182,66 +183,71 @@ void Player::ProcessPacket(char* packet)
 	}
 }
 
-
+// Update thread
 bool Player::UpdatePosition(float deltaTime)
 {
-	// 스킬 사용중이 아니면
-	if (moveable_ == true)
+	// 플레이어 업데이트 요청 제거
+	needs_update_.store(false);
+
+	if (state_)
 	{
-		// TODO : 고양이와 쥐의 처리를 나눠서 구현
-		// 첫 다운된 키에 따른 이동 처리
-		for (const auto& key : keyboard_input_)
+		// 스킬 사용중이 아니면
+		if (moveable_ == true)
 		{
-			if (key.second)
+			// TODO : 고양이와 쥐의 처리를 나눠서 구현
+			// 첫 다운된 키에 따른 이동 처리
+			for (const auto& key : keyboard_input_)
 			{
-				switch (key.first)
+				if (key.second)
 				{
-				case Action::MOVE_FORWARD:
-					MoveForward();
-					break;
-				case Action::MOVE_BACK:
-					MoveBack();
-					break;
-				case Action::MOVE_LEFT:
-					MoveLeft();
-					break;
-				case Action::MOVE_RIGHT:
-					MoveRight();
-					break;
-				case Action::ACTION_JUMP:
-					Jump();
-					break;
-				case Action::ACTION_ONE:
-					keyboard_input_[Action::ACTION_ONE] = false;
-					break;
-				default:
-					break;
+					switch (key.first)
+					{
+					case Action::MOVE_FORWARD:
+						MoveForward();
+						break;
+					case Action::MOVE_BACK:
+						MoveBack();
+						break;
+					case Action::MOVE_LEFT:
+						MoveLeft();
+						break;
+					case Action::MOVE_RIGHT:
+						MoveRight();
+						break;
+					case Action::ACTION_JUMP:
+						state_->Jump(this);
+						break;
+					case Action::ACTION_ONE:
+						keyboard_input_[Action::ACTION_ONE] = false;
+						break;
+					default:
+						break;
+					}
 				}
 			}
 		}
-	}
-	// 물리처리 - 움직였다면 true 반환
-	if (state_)
-	{
-		// 너무 큰 시간차는 고정 프레임으로 보정
-		if(deltaTime > FIXED_TIME_STEP)
-		{
-			deltaTime = FIXED_TIME_STEP;
-		}
 
+		// 물리처리 - 움직였다면 true 반환
 		// 충돌 처리
 		state_->CheckIntersects(this, deltaTime);
 
 		// 치즈와의 충돌 처리
-		state_->CheckCheeseIntersects(this, deltaTime);
+		bool moved = state_->CheckCheeseIntersects(this, deltaTime);
 
 		// 물리 처리
-		bool moved = state_->CalculatePhysics(this, deltaTime);
+		if (true == state_->CalculatePhysics(this, deltaTime))
+		{
+			 moved = true;
+		}
 
-		// OBB 갱신
+		state_->UpdateOBB(this);
+
+		// OBB 갱신 및 다시 업데이트 요청
 		if (moved)
 		{
-			state_->UpdateOBB(this);
+			
+			// 플레이어 업데이트 요청
+			needs_update_.store(true);
 		}
 		return moved;
 	}
@@ -382,25 +388,4 @@ void Player::MoveLeft()
 void Player::MoveRight() 
 {
 	velocity_vector_ = MathHelper::Add(GetVelocity(), GetRight(), acceleration_);
-}
-
-void Player::Jump()
-{
-	if (obj_state_ == Object_State::STATE_IDLE || obj_state_ == Object_State::STATE_MOVE)
-	{
-		//std::cout << "점프!!!" << std::endl;
-		// 점프 시작으로 변경
-		obj_state_ = Object_State::STATE_JUMP_START;
-		// 점프 파워로 적용
-		velocity_vector_.y = jump_power_;
-		// 점프는 한번만 적용되게 키 인풋 map에서 삭제
-		keyboard_input_[Action::ACTION_JUMP] = false;
-		// 점프시 땅에서 떨어진걸로 판정
-		on_ground_ = false;
-	}
-	else
-	{
-		// 점프는 한번만 적용되게 키 인풋 map에서 삭제
-		keyboard_input_[Action::ACTION_JUMP] = false;
-	}
 }
