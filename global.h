@@ -29,7 +29,6 @@
 #pragma comment(lib, "MSWSock.lib")
 
 constexpr short PORT = 4000;
-constexpr short UDPPORT = 8000;
 constexpr int BUFSIZE = 256;
 constexpr int MAX_USER = 4;
 constexpr int MAX_NPC = 4;

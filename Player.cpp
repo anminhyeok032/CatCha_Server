@@ -49,25 +49,6 @@ void Player::SendLoginInfoPacket()
 	DoSend(&p);
 }
 
-
-void Player::SetAddr()
-{
-	// TCP 소켓을 통해 얻은 클라이언트의 주소를 저장
-	sockaddr_in addr;
-	int addrLen = sizeof(addr);
-
-	// TCP 소켓의 주소
-	getpeername(socket_, (sockaddr*)&addr, &addrLen);
-
-	// UDP 소켓 주소로 저장
-	client_addr_.sin_family = AF_INET;
-	client_addr_.sin_port = htons(UDPPORT);
-	char SERVER_ADDR[BUFSIZE] = "127.0.0.1";
-	inet_pton(AF_INET, SERVER_ADDR, &client_addr_.sin_addr);
-
-	//client_addr_.sin_addr = addr.sin_addr;
-}
-
 // IO thread
 void Player::ProcessPacket(char* packet)
 {
@@ -81,7 +62,6 @@ void Player::ProcessPacket(char* packet)
 		std::cout << "플레이어 번호 : " << comp_key_.player_index << std::endl;
 
 		SendLoginInfoPacket();
-		SetAddr();
 		break;
 	}
 	case CS_CHOOSE_CHARACTER:
@@ -136,6 +116,8 @@ void Player::ProcessPacket(char* packet)
 				return;
 			}
 
+			keyboard_input_[Action::ACTION_ONE] = true;
+
 			int sessionId = comp_key_.session_id;
 
 			// look 정보를 통해 해당 위치의 voxel 삭제
@@ -152,10 +134,11 @@ void Player::ProcessPacket(char* packet)
 			DirectX::XMVECTOR attack_center = DirectX::XMVectorAdd(player_position, center_offset);
 			DirectX::XMStoreFloat3(&position, attack_center);
 
-			g_sessions[sessionId].DeleteCheeseVoxel(position);
-			state_->ActionOne(this);
+			// 해당 위치 저장후, 해당 세션 업데이트때 순차적용 - cheese 락을 사용하지 않기 위해
+			bite_center_ = position;
+			// 업데이트 요청
+			RequestUpdate();
 		}
-
 		break;
 	}
 	case CS_SYNC_PLAYER:
@@ -183,7 +166,9 @@ void Player::ProcessPacket(char* packet)
 	}
 }
 
-// Update thread
+//=================================================================================================
+// Update thread 로직
+//=================================================================================================
 bool Player::UpdatePosition(float deltaTime)
 {
 	// 플레이어 업데이트 요청 제거
@@ -219,6 +204,7 @@ bool Player::UpdatePosition(float deltaTime)
 						break;
 					case Action::ACTION_ONE:
 						keyboard_input_[Action::ACTION_ONE] = false;
+						state_->ActionOne(this);
 						break;
 					default:
 						break;
@@ -242,12 +228,17 @@ bool Player::UpdatePosition(float deltaTime)
 
 		state_->UpdateOBB(this);
 
+		if (true == force_move_update_)
+		{
+			force_move_update_ = false;
+			moved = true;
+		}
+
 		// OBB 갱신 및 다시 업데이트 요청
 		if (moved)
 		{
-			
 			// 플레이어 업데이트 요청
-			needs_update_.store(true);
+			RequestUpdate();
 		}
 		return moved;
 	}

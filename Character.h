@@ -22,7 +22,7 @@ public:
 	bool dirty_ = false;  // 회전 상태가 변경되었는지 확인
 
 	// 캐릭터 번호
-	int id_ = -1;		// 0~3 mouse, 4~7 AI, 8 cat
+	int id_ = -1;		// [CHARTACTER NUM] 0~3 mouse, 4~7 AI, 8 cat
 	bool is_cat_ = false;	// true : Cat, false : Mouse
 
 	// 세션 및 플레이어 번호

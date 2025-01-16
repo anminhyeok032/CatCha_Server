@@ -8,34 +8,34 @@ void GameSession::Update()
     bool need_update_send = false;
     uint64_t current_time = GetServerTime();
     int move_players = 0;
+   
+    float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
+
+    // 움직인 플레이어의 Postion만 업데이트 하도록 int 8마리의 움직임 여부를 파싱해서 담음
+    for (auto& pl : players_)
     {
-        std::lock_guard<std::mutex> lock(mt_session_state_);
-        float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
+        // 업데이트 요청이 없으면
+        if(pl.second->needs_update_.load() == false) continue;
 
-        // 움직인 플레이어의 Postion만 업데이트 하도록 int 8마리의 움직임 여부를 파싱해서 담음
-        for (auto& pl : players_)
+        if (true == pl.second->UpdatePosition(deltaTime))
         {
-            // 업데이트 요청이 없으면
-            if(pl.second->needs_update_.load() == false) continue;
-
-            if (true == pl.second->UpdatePosition(deltaTime))
-            {
-                need_update_send = true;
-                move_players |= (1 << pl.second->comp_key_.player_index);
-            }
+            need_update_send = true;
+            move_players |= (1 << pl.second->comp_key_.player_index);
         }
-
-        // 현재 세션 시간 업데이트
-        lastupdatetime_ = current_time;
-
-        // 업데이트가 필요할때만, 클라이언트에게 브로드캐스팅 및 업데이트 스레드 재동작
-        if (true == need_update_send)
-        {
-            SendPlayerUpdate(move_players);
-        }
-        TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(UPDATE_PERIOD_INT), session_num_ };
-        commandQueue.push(ev);
     }
+
+    // 현재 세션 시간 업데이트
+    lastupdatetime_ = current_time;
+
+    // 움직임 업데이트가 필요할때만 클라이언트에게 브로드캐스팅
+    if (true == need_update_send)
+    {
+        SendPlayerUpdate(move_players);
+    }
+    // 정해진 주기로 실행하기 위해 queue에 다시 담기
+    TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(UPDATE_PERIOD_INT), session_num_ };
+    commandQueue.push(ev);
+    
 }
 
 void GameSession::SendPlayerUpdate(int move_players)
@@ -63,38 +63,6 @@ void GameSession::SendTimeUpdate()
 
 }
 
-void GameSession::InitUDPSocket()
-{
-    // UDP 소켓 설정
-    udp_socket_ = WSASocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, nullptr, 0, WSA_FLAG_OVERLAPPED);
-    if (udp_socket_ == INVALID_SOCKET) {
-        std::cerr << "Failed to create socket" << std::endl;
-        return;
-    }
-
-    // Bind socket to port
-    sockaddr_in server_addr;
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(UDPPORT);
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-
-    if (bind(udp_socket_, (sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
-        std::cerr << "Bind failed" << std::endl;
-        return;
-    }
-
-    CompletionKey completion_key{ session_num_, -1 };
-    CreateIoCompletionPort(reinterpret_cast<HANDLE>(udp_socket_), g_h_iocp, reinterpret_cast<ULONG_PTR>(&completion_key), 0);
-    
-    Over_IO* over = new Over_IO();
-    DWORD flag = 0;
-    int res = WSARecvFrom(udp_socket_, &over->wsabuf_, 1, nullptr, &flag, reinterpret_cast<sockaddr*>(&over->clientAddr_),
-        &over->clientAddrLen_, &over->over_, nullptr);
-    if (res == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
-    {
-        print_error("WSARecvFrom", WSAGetLastError());
-    }
-}
 
 void GameSession::BroadcastPosition(int player)
 {
@@ -147,16 +115,6 @@ void GameSession::BroadcastPosition(int player)
         pl.second->DoSend(&p);
     }
     
-    // TODO : UDP로 변경
-    //for (auto& player : characters_) // 세션에 속한 클라이언트 목록
-    //{
-    //    int res = sendto(udp_socket_, (char*)&p, sizeof(p), 0,
-    //        (sockaddr*)&player.second->client_addr_.sin_addr, sizeof(player.second->client_addr_));
-    //    if (res != 0)
-    //    {
-    //        print_error("udp", WSAGetLastError());
-    //    }
-    //}
 }
 
 void GameSession::BroadcastSync()
@@ -243,13 +201,12 @@ uint64_t GameSession::GetServerTime()
 
 void GameSession::SetCharacter(int room_num, int client_index, bool is_cat) 
 {
-    // Update 쓰레드 세션 접근 락
-    std::lock_guard<std::mutex> lock(mt_session_state_);
-
     auto& player = players_[client_index];
 
     if (player->id_ == NUM_GHOST)
     {
+        // 동시에 여러 스레드에서 캐릭터 변경
+        std::lock_guard<std::mutex> lock(mt_session_state_);
         for (auto& pl : players_)
         {
             if(client_index == pl.second->comp_key_.player_index) continue;              // 자기 자신
@@ -334,9 +291,10 @@ void GameSession::CheckAttackedMice()
         {
             if (true == cat_attack_obb_.Intersects(mouse.second->state_->GetOBB()))
             {
-                mouse.second->velocity_vector_.x = cat_attack_direction_.x * CAT_PUNCH_POWER * 10.0f;
-                mouse.second->velocity_vector_.y = CAT_PUNCH_POWER;
-                mouse.second->velocity_vector_.z = cat_attack_direction_.z * CAT_PUNCH_POWER * 10.0f;
+
+                mouse.second->velocity_vector_.x = cat_attack_direction_.x * CAT_PUNCH_POWER;
+                mouse.second->velocity_vector_.y = CAT_PUNCH_POWER / 2.0f;
+                mouse.second->velocity_vector_.z = cat_attack_direction_.z * CAT_PUNCH_POWER;
                 std::cout << "Cat Attack Success : mouse - " << mouse.second->id_ << std::endl;
                 cat_attacked_player_[mouse.second->id_] = true;
                 mouse.second->RequestUpdate();

@@ -14,7 +14,7 @@ void CatPlayer::InputKey(Player* player, uint8_t key_)
         switch (action)
         {
         case Action::ACTION_ONE:
-            ActionOne(player);
+            //ActionOne(player);
             break;
         default:
             break;
@@ -524,7 +524,7 @@ void CatPlayer::CreateAttackOBB(Player* player, DirectX::BoundingOrientedBox& bo
     DirectX::XMVECTOR player_position = XMLoadFloat3(&obb_.Center);
     DirectX::XMVECTOR look = DirectX::XMVector3Normalize(XMLoadFloat3(&player->look_));
 
-    g_sessions[player->comp_key_.session_id].cat_attack_direction_ = player->look_;
+    DirectX::XMStoreFloat3(&g_sessions[player->comp_key_.session_id].cat_attack_direction_, look);
 
     // 공격 OBB의 중심점 설정
     // 캐릭터 앞 공격 범위의 절반만큼 이동
@@ -547,9 +547,16 @@ void CatPlayer::InitAttackOBB(Player* player, DirectX::BoundingOrientedBox& box)
 	box.Extents = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 	box.Orientation = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
+    int session_id = player->comp_key_.session_id;
+
     // 해당 공격에 맞은 쥐들 초기화
-    for (auto& mouse_attched : g_sessions[player->comp_key_.session_id].cat_attacked_player_)
-    {
-        mouse_attched.second = false;
-    }
+    for(const auto& mouse : g_sessions[session_id].players_)
+	{
+        if (true == g_sessions[session_id].cat_attacked_player_[mouse.second->id_])
+        {
+            g_sessions[session_id].cat_attacked_player_[mouse.second->id_] = false;
+            mouse.second->RequestUpdate();
+            mouse.second->force_move_update_ = true;
+        }
+	}
 }

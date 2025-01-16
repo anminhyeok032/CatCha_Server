@@ -17,6 +17,8 @@ public:
 	// 애니메이션 동기화 관련 변수들
 	bool on_ground_ = false;
 	Object_State obj_state_ = Object_State::STATE_IDLE;
+	// 움직임 업데이트가 필요할때
+	bool force_move_update_ = false;
 
 	// 스킬 사용시 움직이지 않도록
 	bool moveable_ = true;
@@ -37,6 +39,9 @@ public:
 	// 플레이어 업데이트 여부
 	std::atomic<bool> needs_update_{ false };
 
+	// bite시 생기는 구의 중점
+	DirectX::XMFLOAT3 bite_center_ = DirectX::XMFLOAT3();
+
 	Player()
 	{
 		id_ = NUM_GHOST;
@@ -44,6 +49,7 @@ public:
 		curr_hp_ = 100;
 		key_ = 0;
 		socket_ = INVALID_SOCKET;
+		std::cout << " player index - " << comp_key_.player_index << ", character 생성 - " << id_ << std::endl;
 	}
 
 	~Player() 
@@ -52,7 +58,6 @@ public:
 	}
 
 	void SetSocket(SOCKET socket) override { socket_ = socket; }
-	void SetAddr();
 	void SetID(int id) { id_ = id; }
 
 	// 상태 전환

@@ -40,7 +40,6 @@ int GetSessionNumber()
 		}
 	}
 	g_sessions[room_num].session_num_ = room_num;
-	g_sessions[room_num].InitUDPSocket();
 	g_sessions[room_num].StartSessionUpdate();
 	return room_num;
 }
@@ -88,33 +87,6 @@ void Worker()
 		int sessionId = completionKey->session_id;
 		int playerIndex = completionKey->player_index;
 
-		// TODO : UDP 처리
-		/* 
-		// 소켓 타입에 따라 처리 분기
-		// UDP
-		if (ex_over->socket_type_ == SOCKET_TYPE::UDP_SOCKET)
-		{
-			std::cout << "udp 받음\n";
-		}
-		//{
-		//	// UDP 패킷 처리
-		//	Packet* packet = reinterpret_cast<Packet*>(ex_over->wsabuf_.buf);
-		//	g_sessions[sessionId].ProcessPacket(packet);  // 게임 세션을 통해 패킷 처리
-
-		//	// ACK 패킷 전송
-		//	g_sessions[sessionId].SendAck((SOCKET)completionKey, packet.sequenceNumber, ex_over->clientAddr_, ex_over->clientAddrLen_);
-
-		//	// 비동기 수신을 위해 IOCP에 다시 등록
-		//	memset(&(ex_over->over_), 0, sizeof(WSAOVERLAPPED));
-		//	ex_over->wsabuf_.buf = ex_over->send_buf_;
-		//	ex_over->wsabuf_.len = sizeof(Packet);
-		//	ex_over->clientAddrLen_ = sizeof(ex_over->clientAddr_);
-
-		//	DWORD flags = 0;
-		//	WSARecvFrom((SOCKET)completionKey, &(ex_over->wsabuf_), 1, NULL, &flags,
-		//		reinterpret_cast<sockaddr*>(&ex_over->clientAddr_), &ex_over->clientAddrLen_, &(ex_over->over_), NULL);
-		//}
-		//else if (ex_over->socket_type_ == SOCKET_TYPE::TCP_SOCKET) */
 
 		{
 			switch (ex_over->io_key_) {

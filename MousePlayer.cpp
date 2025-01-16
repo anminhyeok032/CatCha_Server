@@ -16,7 +16,7 @@ void MousePlayer::InputKey(Player* player, uint8_t key_)
         switch (action)
         {
         case Action::ACTION_ONE:
-            ActionOne(player);
+            //ActionOne(player);
             break;
         default:
             break;
@@ -505,7 +505,7 @@ void MousePlayer::ActionOne(Player* player)
     player->moveable_ = false;
     player->stop_skill_time_ = MOUSE_BITE_TIME;
     player->obj_state_ = Object_State::STATE_ACTION_ONE;
-    player->RequestUpdate();
 
-    
+    g_sessions[player->comp_key_.session_id].DeleteCheeseVoxel(player->bite_center_);
+    player->RequestUpdate();
 }
