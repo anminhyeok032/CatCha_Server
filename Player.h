@@ -66,6 +66,7 @@ public:
 	void DoReceive() override;
 	void DoSend(void* packet) override;
 	void SendLoginInfoPacket();								// 첫 로그인 패킷 전송
+	void SendRandomCheeseSeedPacket();						// 치즈 시드 전송
 
 	void ProcessPacket(char* packet) override;
 	void SetCompletionKey(CompletionKey& key) override { comp_key_ = key; }

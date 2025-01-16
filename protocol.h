@@ -28,7 +28,7 @@ constexpr char SC_MOVE_PLAYER = 14;
 constexpr char SC_CHANGE_CHARACTER = 15;
 constexpr char SC_TIME = 16;
 constexpr char SC_SYNC_PLAYER = 17;
-constexpr char SC_REMOVE_ONE_VOXEL = 18;
+constexpr char SC_RANDOM_VOXEL_SEED = 18;
 constexpr char SC_REMOVE_VOXEL_SPHERE = 19;
 
 #pragma pack (push, 1)
@@ -144,11 +144,10 @@ struct SC_CHANGE_CHARACTER_PACKET {
 	uint8_t new_character_num;
 };
 
-struct SC_REMOVE_ONE_VOXEL_PACKET {
+struct SC_RANDOM_VOXEL_SEED_PACKET {
 	unsigned char size;
 	char	type;
-	unsigned char cheese_num;		// 치즈 번호
-	short	voxel_index;			// 삭제할 복셀 인덱스
+	unsigned char random_seeds[5];			// 5개의 랜덤 시드
 };
 
 struct SC_REMOVE_VOXEL_SPHERE_PACKET {

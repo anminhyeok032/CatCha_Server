@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "CharacterState.h"
 #include "MapData.h"
+//#include "VoxelPatternManager.h"
 
 // Global variables
 SOCKET g_server_socket, g_client_socket;
@@ -15,6 +16,7 @@ std::unordered_map<int, GameSession> g_sessions;
 concurrency::concurrent_priority_queue<TIMER_EVENT> commandQueue;
 concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
 std::unordered_map<std::string, ObjectOBB> g_obbData;
+VoxelPatternManager g_voxel_pattern_manager;
 
 int GetSessionNumber()
 {

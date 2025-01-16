@@ -49,6 +49,18 @@ void Player::SendLoginInfoPacket()
 	DoSend(&p);
 }
 
+void Player::SendRandomCheeseSeedPacket()
+{
+	SC_RANDOM_VOXEL_SEED_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_RANDOM_VOXEL_SEED;
+	for (int i = 0; i < CHEESE_NUM; ++i)
+	{
+		p.random_seeds[i] = g_voxel_pattern_manager.random_seeds_[i];
+	}
+	DoSend(&p);
+}
+
 // IO thread
 void Player::ProcessPacket(char* packet)
 {
@@ -62,6 +74,7 @@ void Player::ProcessPacket(char* packet)
 		std::cout << "플레이어 번호 : " << comp_key_.player_index << std::endl;
 
 		SendLoginInfoPacket();
+		SendRandomCheeseSeedPacket();
 		break;
 	}
 	case CS_CHOOSE_CHARACTER:

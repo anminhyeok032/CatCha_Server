@@ -20,6 +20,24 @@ public:
         std::fill(std::begin(activeFlags), std::end(activeFlags), false);
     }
 
+    // 복사 생성자
+    OctreeNode(const OctreeNode& other) {
+        center = other.center;
+        halfSize = other.halfSize;
+        voxelData = other.voxelData;
+        boundingBox = other.boundingBox;
+
+        // 자식 노드도 깊은 복사
+        for (int i = 0; i < 8; ++i) 
+        {
+            activeFlags[i] = other.activeFlags[i];
+            if (other.children[i]) 
+            {
+                children[i] = std::make_unique<OctreeNode>(*other.children[i]);
+            }
+        }
+    }
+
     // 복셀 데이터를 노드에 삽입
     void InsertVoxel(DirectX::XMFLOAT3 voxelPosition, int maxDepth, int currentDepth);
     // 복셀 데이터 충돌 검사 후 삭제

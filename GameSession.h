@@ -2,6 +2,7 @@
 #include "Over_IO.h"
 #include "Character.h"
 #include "Octree.h"
+#include "VoxelPattenManager.h"
 
 
 enum SESSION_STATE {
@@ -14,6 +15,7 @@ class Player;
 class CatPlayer;
 class MousePlayer;
 class OctreeNode;
+class VoxelPatternManager;
 
 class GameSession
 {
@@ -58,8 +60,9 @@ public:
 		cat_attack_obb_.Center = DirectX::XMFLOAT3(0, -9999.0f, 0);
 		for (int i = 0; i < CHEESE_NUM; i++)
 		{
-			cheese_octree_.emplace_back();
-			CrtVoxelCheeseOctree(cheese_octree_[i], CHEESE_POS[i], CHEESE_SCALE, 0);
+			cheese_octree_.emplace_back(g_voxel_pattern_manager.voxel_patterns_[i]);
+			//CrtVoxelCheeseOctree(cheese_octree_[i], CHEESE_POS[i], CHEESE_SCALE, 0);
+			//cheese_octree_[i] = g_voxel_pattern_manager.voxel_patterns_[i].DeepCopy();
 		}
 	}
 	~GameSession() {}
@@ -86,8 +89,6 @@ public:
 
 	int GetMouseNum();
 	void CheckAttackedMice();
-	void CrtVoxelCheeseOctree(OctreeNode& root, DirectX::XMFLOAT3 position, float scale, UINT detail_level);
-	void SubdivideVoxel(OctreeNode& node, DirectX::XMFLOAT3 position, float scale, UINT detail_level);
 	void DeleteCheeseVoxel(const DirectX::XMFLOAT3& center);
 };
 

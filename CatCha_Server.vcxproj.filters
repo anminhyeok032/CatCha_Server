@@ -19,6 +19,9 @@
     <Filter Include="Global">
       <UniqueIdentifier>{f2b6c0b0-4ffe-44dd-b376-7aae014dcb76}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Voxel">
+      <UniqueIdentifier>{ee434ca8-4d7c-4d3d-b44e-ee386d4ce0fd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MainServer.cpp">
@@ -40,7 +43,7 @@
       <Filter>Global</Filter>
     </ClCompile>
     <ClCompile Include="Octree.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Voxel</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -75,7 +78,10 @@
       <Filter>Global</Filter>
     </ClInclude>
     <ClInclude Include="Octree.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Voxel</Filter>
+    </ClInclude>
+    <ClInclude Include="VoxelPattenManager.h">
+      <Filter>Voxel</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

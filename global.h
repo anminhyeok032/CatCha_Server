@@ -312,8 +312,9 @@ static DirectX::XMFLOAT3 operator*(float scalar, const DirectX::XMFLOAT3& a) {
 //==========================
 // Cheese Data
 //==========================
-constexpr int CHEESE_NUM = 4;
+constexpr int CHEESE_NUM = 5;
 constexpr float CHEESE_SCALE = 1.0f;
+constexpr int CHEESE_DETAIL_LEVEL = 1;
 
 extern const DirectX::XMFLOAT3 CHEESE_POS[CHEESE_NUM];
 
