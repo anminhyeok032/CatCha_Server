@@ -20,7 +20,7 @@ void OctreeNode::InsertVoxel(DirectX::XMFLOAT3 voxelPosition, int maxDepth, int 
     // 최대 깊이에 도달하면 복셀 데이터를 현재 노드에 저장
     if (currentDepth >= maxDepth)
     {
-        voxelData[vexel_count++] = (DirectX::XMLoadFloat3(&voxelPosition));
+        voxelData.emplace_back(DirectX::XMLoadFloat3(&voxelPosition));
         return;
     }
 
@@ -75,20 +75,15 @@ bool OctreeNode::RemoveVoxel(const DirectX::BoundingSphere& sphere)
     // Leaf 노드일 경우
     if (false == voxelData.empty())
     {
-        bool removed = false;
-        for (auto it = voxelData.begin(); it != voxelData.end(); )
-        {
-            if (sphere.Contains(it->second))
-            {
-                it = voxelData.erase(it);
-                removed = true;
-            }
-            else
-            {
-                ++it;
-            }
-        }
-        return removed; // 복셀 삭제 여부 반환
+        size_t og_size = voxelData.size();
+        voxelData.erase(
+            std::remove_if(voxelData.begin(), voxelData.end(), [&](const DirectX::XMVECTOR& voxel)
+                {
+                    return sphere.Contains(voxel);
+                }),
+            voxelData.end()
+        );
+        return og_size > voxelData.size();  // 복셀 삭제 여부 반환
     }
 
     // 하위 노드로 재귀적 탐색

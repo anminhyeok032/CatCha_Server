@@ -8,16 +8,17 @@ class OctreeNode {
 public:
     DirectX::XMFLOAT3 center;                               // 현재 노드의 중심점 좌표
     float halfSize;                                         // 현재 노드의 크기의 절반 (공간 분할의 기준)
-    bool activeFlags[8];                                    // 8개의 자식 노드 활성 상태
-    std::unordered_map<int, DirectX::XMVECTOR> voxelData;   // 복셀 데이터를 저장하는 벡터
-    std::unique_ptr<OctreeNode> children[8];                // 8개의 자식 노드를 저장하는 포인터 배열
     DirectX::BoundingBox boundingBox;                       // 현재 노드의 바운딩 박스
+    std::bitset<8> activeFlags;                             // 8개의 자식 노드 활성 상태
+    std::vector<DirectX::XMVECTOR> voxelData;               // 복셀 데이터를 저장하는 벡터
+    std::unique_ptr<OctreeNode> children[8];                // 8개의 자식 노드를 저장하는 포인터 배열
+
 
     OctreeNode() = default;
 
     OctreeNode(DirectX::XMFLOAT3 center, float halfSize) : center(center), halfSize(halfSize) 
     {
-        std::fill(std::begin(activeFlags), std::end(activeFlags), false);
+        
     }
 
     // 복사 생성자

@@ -19,7 +19,9 @@
 #include <concurrent_priority_queue.h>
 #include <concurrent_unordered_map.h>
 
-#include<cmath>
+#include <cmath>
+
+#include <bitset>
 
 #include <fstream>
 #include <sstream>
