@@ -72,6 +72,7 @@ public:
 	void Update();
 	void StartSessionUpdate()
 	{
+		std::cout << "Create GameSession - " << session_num_ << std::endl;
 		TIMER_EVENT ev{ std::chrono::system_clock::now(), session_num_ };
 		commandQueue.push(ev);
 	}

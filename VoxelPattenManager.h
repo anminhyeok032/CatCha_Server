@@ -1,6 +1,8 @@
 #pragma once
 #include "Octree.h"
 
+constexpr int CHEESE_DETAIL_LEVEL = 0;
+
 class VoxelPatternManager
 {
 public:
@@ -18,7 +20,7 @@ public:
 		{
             std::cout << "Create Voxel Pattern  - [" << i << "]" << std::endl;
             random_seeds_[i] = uid(rd);
-            std::cout << "Random Seed : " << random_seeds_[i] << std::endl;
+            //std::cout << "Random Seed : " << random_seeds_[i] << std::endl;
 			CrtVoxelCheeseOctree(voxel_patterns_[i], CHEESE_POS[i], CHEESE_SCALE, CHEESE_DETAIL_LEVEL, random_seeds_[i]);
 		}
 	}
@@ -59,7 +61,6 @@ public:
                     if ((i == VOXEL_CHEESE_HEIGHT - 1 || j == VOXEL_CHEESE_DEPTH || k == 0 || k == j / 2) &&
                         !(uid(generator) % m_random_value)) 
                     {
-                        std::cout << uid(generator) << std::endl;
                         position.x += scale;
                         continue;
                     }
@@ -74,7 +75,7 @@ public:
 
             position.y += scale;
         }
-        root.PrintNode();
+        //root.PrintNode();
     }
 
     // 복셀 분할 함수
@@ -83,7 +84,7 @@ public:
         if (detail_level == 0)
         {
             // 더 이상 분할하지 않고 복셀 삽입
-            node.InsertVoxel(position, detail_level + MAX_DEPTH, 0);
+            node.InsertVoxel(position, CHEESE_DETAIL_LEVEL + MAX_DEPTH, 0);
             return;
         }
 

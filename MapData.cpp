@@ -71,7 +71,7 @@ bool MapData::LoadMapData(const std::string& filePath)
             size_t pos = line.find(':');
             std::string values = line.substr(pos + 1);
             ParseVector3(values, extents);
-            extents = DirectX::XMFLOAT3(extents.x / 2.0f, extents.y / 2.0f, extents.z / 2.0f);
+            //extents = DirectX::XMFLOAT3(extents.x / 2.0f, extents.y / 2.0f, extents.z / 2.0f);
         }
     }
 
