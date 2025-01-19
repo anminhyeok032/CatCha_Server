@@ -5,9 +5,10 @@ UINT vexel_count = 0;
 const DirectX::XMFLOAT3 CHEESE_POS[CHEESE_NUM] =
 {
     DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f),
-    DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
-    DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
-    DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)
+    DirectX::XMFLOAT3(169.475f, 10.049f, 270.732f),
+    DirectX::XMFLOAT3(-990.0f, -990.0f, -990.0f),
+    DirectX::XMFLOAT3(-990.0f, -990.0f, -990.0f),
+    DirectX::XMFLOAT3(-990.0f, -990.0f, -990.0f)
 };
 
 const int CHEESE_VOXEL_COUNT = VOXEL_CHEESE_HEIGHT *

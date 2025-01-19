@@ -20,7 +20,9 @@ void GameSession::Update()
         if (true == pl.second->UpdatePosition(deltaTime))
         {
             need_update_send = true;
-            move_players |= (1 << pl.second->comp_key_.player_index);
+            move_players |= (1 << pl.first);
+            //std::cout << "Player " << pl.first << " Move" << std::endl;
+            //std::cout << "Position : " << pl.second->position_.x << ", " << pl.second->position_.y << ", " << pl.second->position_.z << std::endl;
         }
     }
 
@@ -42,7 +44,8 @@ void GameSession::SendPlayerUpdate(int move_players)
 {
     Over_IO* over = new Over_IO;
     over->io_key_ = IO_MOVE;
-    CompletionKey* completion_key = new CompletionKey{ session_num_, move_players };
+    int* players = new int(move_players);
+    CompletionKey* completion_key = new CompletionKey{ &session_num_, players };
     PostQueuedCompletionStatus(g_h_iocp, 1, reinterpret_cast<ULONG_PTR>(completion_key), &over->over_);
 }
 
@@ -83,7 +86,7 @@ void GameSession::BroadcastPosition(int player)
     unsigned char state_value = static_cast<unsigned char>(pl->obj_state_);
     // cat_attacked을 최하위 비트에 저장
     p.state = (state_value << 1) 
-        | (cat_attacked_player_[pl->id_] ? 1 : 0);
+        | (cat_attacked_player_[pl->character_id_] ? 1 : 0);
 
     if (pl->stop_skill_time_ > 0.001f)
     {
@@ -146,10 +149,10 @@ void GameSession::BroadcastChangeCharacter(int player_num, int CHARACTER_NUM)
     SC_CHANGE_CHARACTER_PACKET p;
     p.size = sizeof(p);
     p.type = SC_CHANGE_CHARACTER;
-    p.id = player_num;
-    p.prev_character_num = static_cast<uint8_t>(players_[player_num]->id_);
+    p.player_num = player_num;
+    p.prev_character_num = static_cast<uint8_t>(players_[player_num]->character_id_);
     players_[player_num]->SetID(CHARACTER_NUM);
-    p.new_character_num = static_cast<uint8_t>(players_[player_num]->id_);
+    p.new_character_num = static_cast<uint8_t>(players_[player_num]->character_id_);
     for (auto& pl : players_)
 	{
 		pl.second->DoSend(&p);
@@ -162,7 +165,7 @@ void GameSession::BroadcastAddCharacter(int player_num, int recv_index)
     p.size = sizeof(p);
     p.type = SC_ADD_PLAYER;
     p.id = player_num;
-    p.character_num = static_cast<uint8_t>(players_[player_num]->id_);
+    p.character_num = static_cast<uint8_t>(players_[player_num]->character_id_);
     p.x = players_[player_num]->position_.x;
     p.y = players_[player_num]->position_.y;
     p.z = players_[player_num]->position_.z;
@@ -174,12 +177,12 @@ void GameSession::BroadcastAddCharacter(int player_num, int recv_index)
     players_[recv_index]->DoSend(&p);
 }
 
-void GameSession::BroadcastRemoveVoxelSphere(const DirectX::XMFLOAT3& center)
+void GameSession::BroadcastRemoveVoxelSphere(int cheese_num, const DirectX::XMFLOAT3& center)
 {
     SC_REMOVE_VOXEL_SPHERE_PACKET p;
 	p.size = sizeof(p);
 	p.type = SC_REMOVE_VOXEL_SPHERE;
-	p.cheese_num = 0;
+	p.cheese_num = cheese_num;
 	p.center_x = center.x;
 	p.center_y = center.y;
 	p.center_z = center.z;
@@ -203,16 +206,22 @@ void GameSession::SetCharacter(int room_num, int client_index, bool is_cat)
 {
     auto& player = players_[client_index];
 
-    if (player->id_ == NUM_GHOST)
+    // 자신의 플레이어 번호 설정
+    player->SendMyPlayerNumber();
+
+    // 새로 접속할 플레이어일시
+    // - 새로운 접속 클라이언트에게 기존 클라이언트 정보 전송
+    // - 기존 클라이언트 정보 새로운 클라이언트에게 전송
+    if (player->character_id_ == NUM_GHOST)
     {
         // 동시에 여러 스레드에서 캐릭터 변경
         std::lock_guard<std::mutex> lock(mt_session_state_);
         for (auto& pl : players_)
         {
-            if(client_index == pl.second->comp_key_.player_index) continue;              // 자기 자신
-            if(pl.second->id_ == NUM_GHOST) continue;       		                     // 유령 상태    
-            BroadcastAddCharacter(client_index, pl.second->comp_key_.player_index);
-            BroadcastAddCharacter(pl.second->comp_key_.player_index, client_index);
+            if (client_index == *pl.second->comp_key_.player_index) continue;              // 자기 자신
+            if (pl.second->character_id_ == NUM_GHOST) continue;       		               // 유령 상태    
+            BroadcastAddCharacter(client_index, *pl.second->comp_key_.player_index);
+            BroadcastAddCharacter(*pl.second->comp_key_.player_index, client_index);
         }
     }
 
@@ -221,18 +230,37 @@ void GameSession::SetCharacter(int room_num, int client_index, bool is_cat)
     {
         player->SetState(std::make_unique<CatPlayer>());
         player->SetID(NUM_CAT);
-        player->Set_OBB(player->state_->GetOBB());
+        player->Set_OBB(player->character_state_->GetOBB());
+        {
+            std::lock_guard<std::mutex> lock(mt_session_state_);
+            g_sessions[room_num].session_state_ = SESSION_STATE::SESSION_HAS_CAT;
+        }
     }
     // 쥐일 때
     else 
     {
         player->SetState(std::make_unique<MousePlayer>());
         player->SetID(GetMouseNum());
-        player->Set_OBB(player->state_->GetOBB());
+        player->Set_OBB(player->character_state_->GetOBB());
+    }
+
+    // 새로 접속할 플레이어일시
+    // - 새로운 접속 클라이언트에게 기존 클라이언트 정보 전송
+    // - 기존 클라이언트 정보 새로운 클라이언트에게 전송
+    {
+        // 동시에 여러 스레드에서 캐릭터 변경
+        std::lock_guard<std::mutex> lock(mt_session_state_);
+        for (auto& pl : players_)
+        {
+            if (client_index == *pl.second->comp_key_.player_index) continue;              // 자기 자신
+            if (pl.second->character_id_ == NUM_GHOST) continue;       		               // 유령 상태    
+            BroadcastAddCharacter(client_index, *pl.second->comp_key_.player_index);
+            BroadcastAddCharacter(*pl.second->comp_key_.player_index, client_index);
+        }
     }
 
     // 캐릭터 교체 브로드캐스트
-    BroadcastChangeCharacter(client_index, players_[client_index]->id_);
+    BroadcastChangeCharacter(client_index, players_[client_index]->character_id_);
     player->RequestUpdate();
 }
 
@@ -241,22 +269,25 @@ int GameSession::GetMouseNum()
     // 사용 중인 마우스 ID 확인용 array
     std::array<bool, 4> mouse_ids_check = { false, false, false, false };
 
-    // 현재 플레이어들의 ID 확인 후 체크
-    for (const auto& pl : players_) 
     {
-        int id = pl.second->id_; 
-        if (id >= NUM_MOUSE1 && id <= NUM_MOUSE4) 
+        std::lock_guard<std::mutex> lock(mt_session_state_);
+        // 현재 플레이어들의 ID 확인 후 체크
+        for (const auto& pl : players_)
         {
-            mouse_ids_check[id] = true;
+            int id = pl.second->character_id_;
+            if (id >= NUM_MOUSE1 && id <= NUM_MOUSE4)
+            {
+                mouse_ids_check[id] = true;
+            }
         }
-    }
 
-    // 사용 가능한 마우스 ID return
-    for (int i = 0; i < 4; ++i) 
-    {
-        if (false == mouse_ids_check[i]) 
+        // 사용 가능한 마우스 ID return
+        for (int i = 0; i < 4; ++i)
         {
-            return i;
+            if (false == mouse_ids_check[i])
+            {
+                return i;
+            }
         }
     }
 
@@ -271,7 +302,7 @@ void GameSession::CheckAttackedMice()
     // 모든 쥐 검사
     for (auto& mouse : players_)
     {
-        if(mouse.second->id_ == NUM_CAT) continue; // 고양이는 제외
+        if(mouse.second->character_id_ == NUM_CAT) continue; // 고양이는 제외
 
         for (const auto& mouse_attacked : cat_attacked_player_)
         {
@@ -279,7 +310,7 @@ void GameSession::CheckAttackedMice()
             if (mouse_attacked.second == true)
             {
                 // 자기 자신이면 중복 공격 방지
-                if (mouse.second->id_ == mouse_attacked.first)
+                if (mouse.second->character_id_ == mouse_attacked.first)
                 {
                     return;
                 }
@@ -287,16 +318,16 @@ void GameSession::CheckAttackedMice()
         }
 
         // 고양이의 공격 OBB와 쥐의 OBB 충돌 검사
-        if (state_)
+        if (mouse.second->character_state_)
         {
-            if (true == cat_attack_obb_.Intersects(mouse.second->state_->GetOBB()))
+            if (true == cat_attack_obb_.Intersects(mouse.second->character_state_->GetOBB()))
             {
 
                 mouse.second->velocity_vector_.x = cat_attack_direction_.x * CAT_PUNCH_POWER;
                 mouse.second->velocity_vector_.y = CAT_PUNCH_POWER / 2.0f;
                 mouse.second->velocity_vector_.z = cat_attack_direction_.z * CAT_PUNCH_POWER;
-                std::cout << "Cat Attack Success : mouse - " << mouse.second->id_ << std::endl;
-                cat_attacked_player_[mouse.second->id_] = true;
+                std::cout << "Cat Attack Success : mouse - " << mouse.second->character_id_ << std::endl;
+                cat_attacked_player_[mouse.second->character_id_] = true;
                 mouse.second->RequestUpdate();
             }
         }
@@ -307,6 +338,7 @@ void GameSession::CheckAttackedMice()
 
 void GameSession::DeleteCheeseVoxel(const DirectX::XMFLOAT3& center)
 {
+    int cheese_num = 0;
     DirectX::BoundingSphere sphere{ center, 5.0f };
 
     for (auto& cheese : cheese_octree_)
@@ -316,12 +348,13 @@ void GameSession::DeleteCheeseVoxel(const DirectX::XMFLOAT3& center)
             std::cout << "치즈 삭제 성공" << std::endl;
             //cheese_octree_.PrintNode();
 
-            BroadcastRemoveVoxelSphere(center);
+            BroadcastRemoveVoxelSphere(cheese_num, center);
         }
         else
         {
             std::cout << "치즈 삭제 실패" << std::endl;
         }
+        cheese_num++;
     }
 
 }

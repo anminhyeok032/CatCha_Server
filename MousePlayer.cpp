@@ -250,7 +250,7 @@ bool MousePlayer::CheckCheeseIntersects(Player* player, float deltaTime)
     DirectX::XMStoreFloat3(&pred_pos_f3, pred_pos);
     DirectX::BoundingSphere player_sphere = DirectX::BoundingSphere(pred_pos_f3, obb_.Extents.y);
 
-    int session_id = player->comp_key_.session_id;
+    int session_id = *player->comp_key_.session_id;
 
     for (const auto& cheese : g_sessions[session_id].cheese_octree_)
     {
@@ -501,11 +501,11 @@ void MousePlayer::ActionOne(Player* player)
     {
         return;
     }
-    std::cout << "Ä¡Áî ¸Ô±â : Mouse - " << player->id_ << std::endl;
+    std::cout << "Ä¡Áî ¸Ô±â : Mouse - " << player->character_id_ << std::endl;
     player->moveable_ = false;
     player->stop_skill_time_ = MOUSE_BITE_TIME;
     player->obj_state_ = Object_State::STATE_ACTION_ONE;
 
-    g_sessions[player->comp_key_.session_id].DeleteCheeseVoxel(player->bite_center_);
+    g_sessions[*player->comp_key_.session_id].DeleteCheeseVoxel(player->bite_center_);
     player->RequestUpdate();
 }

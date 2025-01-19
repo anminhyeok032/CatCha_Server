@@ -32,8 +32,11 @@
 
 constexpr short PORT = 4000;
 constexpr int BUFSIZE = 256;
-constexpr int MAX_USER = 4;
-constexpr int MAX_NPC = 4;
+constexpr int SESSION_MAX_USER = 5;
+constexpr int SESSION_MAX_NPC = 4;
+
+constexpr int MAX_USER = SESSION_MAX_USER * 1000;
+constexpr int MAX_NPC = 4000;
 
 // 고정 시간 스텝 설정 (1/60초)
 constexpr float FIXED_TIME_STEP = 1.0f / 60.0f;
@@ -47,8 +50,8 @@ constexpr float MOUSE_BITE_TIME = 0.416666657f;
 
 struct CompletionKey
 {
-	int session_id;
-	int player_index;
+	int* session_id;
+	int* player_index;
 };
 
 enum IO_TYPE
@@ -100,6 +103,14 @@ enum CHARACTER_NUMBER
 	NUM_GHOST
 };
 
+enum class PLAYER_STATE
+{
+	PS_FREE,
+	PS_ALLOC,
+	PS_INGAME
+};
+
+
 struct TIMER_EVENT {
 	std::chrono::system_clock::time_point wakeup_time;
 	int session_id;
@@ -130,7 +141,7 @@ constexpr float FRICTION = 0.99f;
 constexpr float STOP_THRESHOLD = 0.9f;	// 속도가 이 값보다 작아지면 멈추는 것으로 간주
 
 extern void print_error(const char* msg, int err_no);
-
+extern int GetSessionNumber(bool is_cat);
 
 //===========================================================
 // Directx12

@@ -6,6 +6,14 @@ class CharacterState;
 class Player : public Character
 {
 public:
+	// 플레이어 서버 상태
+	PLAYER_STATE player_server_state_ = PLAYER_STATE::PS_FREE;
+	std::mutex mt_player_server_state_;
+
+	// 플레이어 정보
+	char name[NAME_SIZE];
+	char password[PASSWORD_SIZE];
+
 	// physics
 	float speed_ = 0.0f;
 	float max_speed_ = 200.f;
@@ -34,7 +42,7 @@ public:
 
 	DirectX::XMFLOAT3 delta_position_ = DirectX::XMFLOAT3();
 
-	std::unique_ptr<CharacterState> state_;  // 현재 상태 객체
+	std::unique_ptr<CharacterState> character_state_;  // 현재 상태 객체
 
 	// 플레이어 업데이트 여부
 	std::atomic<bool> needs_update_{ false };
@@ -44,12 +52,11 @@ public:
 
 	Player()
 	{
-		id_ = NUM_GHOST;
+		character_id_ = NUM_GHOST;
 		max_hp_ = 100;
 		curr_hp_ = 100;
 		key_ = 0;
 		socket_ = INVALID_SOCKET;
-		std::cout << " player index - " << comp_key_.player_index << ", character 생성 - " << id_ << std::endl;
 	}
 
 	~Player() 
@@ -58,15 +65,16 @@ public:
 	}
 
 	void SetSocket(SOCKET socket) override { socket_ = socket; }
-	void SetID(int id) { id_ = id; }
+	void SetID(int id) { character_id_ = id; }
 
 	// 상태 전환
 	void SetState(std::unique_ptr<CharacterState> new_state);
 
 	void DoReceive() override;
 	void DoSend(void* packet) override;
-	void SendLoginInfoPacket();								// 첫 로그인 패킷 전송
-	void SendRandomCheeseSeedPacket();						// 치즈 시드 전송
+	void SendLoginInfoPacket(bool result);								// 첫 로그인 패킷 전송
+	void SendMyPlayerNumber();											// 자신의 플레이어 번호 전송	
+	void SendRandomCheeseSeedPacket();									// 치즈 시드 전송
 
 	void ProcessPacket(char* packet) override;
 	void SetCompletionKey(CompletionKey& key) override { comp_key_ = key; }
@@ -124,4 +132,3 @@ public:
 	DirectX::XMFLOAT3 GetRight()	const { return right_; }
 
 };
-

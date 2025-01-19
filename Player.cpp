@@ -16,7 +16,7 @@ void print_error(const char* msg, int err_no)
 
 void Player::SetState(std::unique_ptr<CharacterState> new_state)
 {
-	state_ = std::move(new_state);
+	character_state_ = std::move(new_state);
 }
 
 void Player::DoReceive()
@@ -37,15 +37,21 @@ void Player::DoSend(void* packet)
 	int res = WSASend(socket_, &send_over->wsabuf_, 1, 0, 0, &send_over->over_, 0);
 }
 
-void Player::SendLoginInfoPacket()
+void Player::SendLoginInfoPacket(bool result)
 {
 	SC_LOGIN_INFO_PACKET p;
-	p.id = comp_key_.player_index;
 	p.size = sizeof(p);
 	p.type = SC_LOGIN_INFO;
-	p.x = position_.x;
-	p.y = position_.y;
-	p.z = position_.z;
+	p.result = result;
+	DoSend(&p);
+}
+
+void Player::SendMyPlayerNumber()
+{ 
+	SC_SET_MY_ID_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_SET_MY_ID;
+	p.my_id = *comp_key_.player_index;
 	DoSend(&p);
 }
 
@@ -70,30 +76,55 @@ void Player::ProcessPacket(char* packet)
 	case CS_LOGIN:
 	{
 		CS_LOGIN_PACKET* p = reinterpret_cast<CS_LOGIN_PACKET*>(packet);
-		std::cout << p->name << " login " << std::endl;
-		std::cout << "플레이어 번호 : " << comp_key_.player_index << std::endl;
+		strcpy_s(name, p->name);
+		strcpy_s(password, p->password);
 
-		SendLoginInfoPacket();
-		SendRandomCheeseSeedPacket();
+		// TODO : SQL 연결 작업 추가 필요
+		std::cout << name << " login " << std::endl;
+
+		SendLoginInfoPacket(true);
+
 		break;
 	}
 	case CS_CHOOSE_CHARACTER:
 	{
 		CS_CHOOSE_CHARACTER_PACKET* p = reinterpret_cast<CS_CHOOSE_CHARACTER_PACKET*>(packet);
 		std::cout << "캐릭터 선택 : " << (p->is_cat ? "Cat" : "Mouse") << std::endl;
-		int sessionId = comp_key_.session_id;
-		int playerIndex = comp_key_.player_index;
+
+		{
+			std::lock_guard<std::mutex> lg{ mt_player_server_state_ };
+			player_server_state_ = PLAYER_STATE::PS_INGAME;
+		}
+
+		// [매칭] 새로 들어갈 세션 정보 저장
+		int session_id = GetSessionNumber(p->is_cat);
+		int client_id = static_cast<int>(g_sessions[session_id].CheckCharacterNum());
+
+		// 새로운 세션으로 임시 세션 플레이어 정보 옮기
+		g_sessions[session_id].players_.emplace(client_id, std::move(g_sessions[*comp_key_.session_id].players_[*comp_key_.player_index]));
+		*comp_key_.session_id = session_id;
+		*comp_key_.player_index = client_id;
+
+		// 캐릭터 선택
+		g_sessions[session_id].SetCharacter(session_id, client_id, p->is_cat);
+
+		std::cout << "[ " << name << " ] - " << "[ " << session_id << " ] 세션에 " << client_id << "번째 플레이어로 " << (p->is_cat ? "Cat" : "Mouse") << "로 입장" << std::endl;
+
+		// 치즈 랜덤 모양 전송
+		SendRandomCheeseSeedPacket();
 		
-		g_sessions[sessionId].SetCharacter(sessionId, playerIndex, p->is_cat);
+		// 새로운 플레이어 receive
+		g_sessions[session_id].players_[client_id]->prev_packet_.clear();
+		g_sessions[session_id].players_[client_id]->DoReceive();
 		break;
 	}
 	case CS_MOVE:
 	{
 		CS_MOVE_PACKET* p = reinterpret_cast<CS_MOVE_PACKET*>(packet);
 		key_ = p->keyinput;
-		if (state_)
+		if (character_state_)
 		{
-			state_->InputKey(this, key_);
+			character_state_->InputKey(this, key_);
 		}
 		break;
 	}
@@ -122,21 +153,21 @@ void Player::ProcessPacket(char* packet)
 	{
 		CS_VOXEL_LOOK_PACKET* p = reinterpret_cast<CS_VOXEL_LOOK_PACKET*>(packet);
 
-		if (state_)
+		if (character_state_)
 		{
-			if(false == moveable_ || NUM_CAT == id_)
+			if(false == moveable_ || NUM_CAT == character_id_)
 			{
 				return;
 			}
 
 			keyboard_input_[Action::ACTION_ONE] = true;
 
-			int sessionId = comp_key_.session_id;
+			int sessionId = *comp_key_.session_id;
 
 			// look 정보를 통해 해당 위치의 voxel 삭제
 			// 캐릭터의 위치 및 방향 벡터
 			DirectX::XMFLOAT3 look{ p->look_x, p->look_y, p->look_z };
-			DirectX::XMFLOAT3 position = state_.get()->GetOBB().Center;
+			DirectX::XMFLOAT3 position = character_state_.get()->GetOBB().Center;
 
 			DirectX::XMVECTOR player_position = XMLoadFloat3(&position);
 			DirectX::XMVECTOR normal_look = DirectX::XMVector3Normalize(XMLoadFloat3(&look));
@@ -187,7 +218,7 @@ bool Player::UpdatePosition(float deltaTime)
 	// 플레이어 업데이트 요청 제거
 	needs_update_.store(false);
 
-	if (state_)
+	if (character_state_)
 	{
 		// 스킬 사용중이 아니면
 		if (moveable_ == true)
@@ -213,11 +244,11 @@ bool Player::UpdatePosition(float deltaTime)
 						MoveRight();
 						break;
 					case Action::ACTION_JUMP:
-						state_->Jump(this);
+						character_state_->Jump(this);
 						break;
 					case Action::ACTION_ONE:
 						keyboard_input_[Action::ACTION_ONE] = false;
-						state_->ActionOne(this);
+						character_state_->ActionOne(this);
 						break;
 					default:
 						break;
@@ -225,21 +256,25 @@ bool Player::UpdatePosition(float deltaTime)
 				}
 			}
 		}
+		if (deltaTime > 1.0f)
+		{
+			deltaTime = 0.0f;
+		}
 
 		// 물리처리 - 움직였다면 true 반환
 		// 충돌 처리
-		state_->CheckIntersects(this, deltaTime);
+		character_state_->CheckIntersects(this, deltaTime);
 
 		// 치즈와의 충돌 처리
-		bool moved = state_->CheckCheeseIntersects(this, deltaTime);
+		bool moved = character_state_->CheckCheeseIntersects(this, deltaTime);
 
 		// 물리 처리
-		if (true == state_->CalculatePhysics(this, deltaTime))
+		if (true == character_state_->CalculatePhysics(this, deltaTime))
 		{
 			 moved = true;
 		}
 
-		state_->UpdateOBB(this);
+		character_state_->UpdateOBB(this);
 
 		if (true == force_move_update_)
 		{

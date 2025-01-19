@@ -18,35 +18,119 @@ concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
 std::unordered_map<std::string, ObjectOBB> g_obbData;
 VoxelPatternManager g_voxel_pattern_manager;
 
-int GetSessionNumber()
+int GetSessionNumber(bool is_cat)
 {
 	int room_num = 0;
 	for (const auto& room : g_sessions)
 	{
+		// 임시 세션 패스
+		if(room.first == -1)
+		{
+			continue;
+		}
+
 		std::lock_guard <std::mutex> lg{ g_sessions[room_num].mt_session_state_ };
-		if (room.second.state_ == SESSION_FULL)
+		// 방이 꽉 찬 경우
+		if (room.second.session_state_ == SESSION_FULL)
 		{
 			room_num++;
 			continue;
 		}
+		// 방이 다 차지 않은 경우
 		else
-		{
-			if (g_sessions[room.first].CheckCharacterNum() < MAX_USER + MAX_NPC)
+		{	
+			// 고양이를 선택한 경우
+			if (true == is_cat)
 			{
-				return room.first;
+				// 해당 방에 고양이가 이미 있는 경우
+				if (room.second.session_state_ == SESSION_HAS_CAT)
+				{
+					room_num++;
+					continue;
+				}
+				// 해당 방에 고양이가 없는 경우
+				else
+				{
+					// 가득 차면 FULL로 설정
+					if (g_sessions[room.first].CheckCharacterNum() < SESSION_MAX_USER)
+					{
+						g_sessions[room.first].session_state_ = SESSION_FULL;
+					}
+					// 고양이 있는 방으로 설정
+					else
+					{
+						g_sessions[room.first].session_state_ = SESSION_HAS_CAT;
+					}
+					return room.first;
+				}
 			}
+			// 쥐를 선택한 경우
 			else
 			{
-				g_sessions[room.first].state_ = SESSION_FULL;
+				// 고양이가 존재하는 방일때
+				if (room.second.session_state_ == SESSION_HAS_CAT)
+				{
+					// 방이 아직 안찼을때
+					if (g_sessions[room.first].CheckCharacterNum() < SESSION_MAX_USER)
+					{
+						return room.first;
+					}
+					// 방이 다 찬 경우
+					else
+					{
+						// 방이 다찬 상태로 설정
+						room_num++;
+						continue;
+					}
+				}
+				// 고양이가 없는 방일때
+				else
+				{
+					// 방이 아직 안찼을때
+					if (g_sessions[room.first].CheckCharacterNum() < SESSION_MAX_USER - 1)
+					{
+						return room.first;
+					}
+					// 방이 다 찬 경우
+					else
+					{
+						// 방이 다찬 상태로 설정
+						room_num++;
+						g_sessions[room.first].session_state_ = SESSION_FULL;
+						continue;
+					}
+				}
 			}
 		}
 	}
+	// 새로운 세션 시작
 	g_sessions[room_num].session_num_ = room_num;
 	g_sessions[room_num].StartSessionUpdate();
 	return room_num;
 }
 
+int GetWaitingPlayerNum()
+{
+	int player_num = 0;
+	for (int i = 0; i < MAX_USER; i++)
+	{
+		auto search = g_sessions[-1].players_.find(i);
+		if (search != g_sessions[-1].players_.end())
+		{
+			player_num++;
+			continue;
+		}
+		else
+		{
+			g_sessions[-1].players_.emplace(i, std::make_unique<Player>());
+			std::cout << "Player [" << i << "] is waiting" << std::endl;
+			return player_num;
+		}
+	}
 
+	std::cout << "Player [" << player_num << "] is waiting" << std::endl;
+	return player_num;
+}
 
 void Worker()
 {
@@ -86,35 +170,48 @@ void Worker()
 
 		// Completion Key를 통해 세션 및 플레이어 식별
 		CompletionKey* completionKey = reinterpret_cast<CompletionKey*>(key);
-		int sessionId = completionKey->session_id;
-		int playerIndex = completionKey->player_index;
+		int sessionId;
+		int playerIndex;
+		if (!completionKey || !completionKey->session_id || !completionKey->player_index)
+		{
+			// 새로운 유저 접속시
+		}
+		else 
+		{
+			sessionId = *(completionKey->session_id);
+			playerIndex = *(completionKey->player_index);
+		}
 
 
 		{
 			switch (ex_over->io_key_) {
 			case IO_ACCEPT:
 			{
-				int room_num = GetSessionNumber();
-				int client_id = static_cast<int>(g_sessions[room_num].CheckCharacterNum());
-
-				// 새 소켓 생성 및 초기화
-				SOCKET new_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-				if (new_client_socket == INVALID_SOCKET) 
+				int* client_id = new int(GetWaitingPlayerNum());
+				if(*client_id != -1)
 				{
-					std::cout << "Error: Failed to create new_client_socket socket" << std::endl;
+					// 인게임 전 임시 Session에 담아 캐릭터 선택시 옮김
+					int* temp_session_num = new int(-1);
+					{
+						std::lock_guard<std::mutex> lg{ g_sessions[*temp_session_num].players_[*client_id]->mt_player_server_state_};
+						g_sessions[*temp_session_num].players_[*client_id]->player_server_state_ = PLAYER_STATE::PS_ALLOC;
+					}
+					g_sessions[*temp_session_num].players_[*client_id]->SetSocket(g_client_socket);
+					
+					// 임시 Completion Key 생성
+					CompletionKey* completion_key = new CompletionKey{ temp_session_num, client_id};
+					g_sessions[*temp_session_num].players_[*client_id]->SetCompletionKey(*completion_key);
+
+					// IOCP 등록
+					CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(completion_key), 0);
+					// 수신 시작
+					g_sessions[*temp_session_num].players_[*client_id]->DoReceive();
+				}
+				else 
+				{
+					std::cout << "Error: MAX USER EXCEEDED" << std::endl;
 					break;
 				}
-
-				// 플레이어 초기화
-				g_sessions[room_num].players_[client_id] = std::make_unique<Player>();
-				g_sessions[room_num].players_[client_id]->SetSocket(g_client_socket);
-				// Completion Key 생성
-				CompletionKey* completion_key = new CompletionKey{room_num, client_id};
-				g_sessions[room_num].players_[client_id]->SetCompletionKey(*completion_key);
-				// IOCP 등록
-				CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(completion_key), 0);
-				// 수신 시작
-				g_sessions[room_num].players_[client_id]->DoReceive();
 
 				// AcceptEx를 통한 다음 클라이언트 대기
 				g_client_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
@@ -145,7 +242,10 @@ void Worker()
 					if (packet_size <= buffer.size())
 					{
 						player->ProcessPacket(buffer.data());
-						buffer.erase(buffer.begin(), buffer.begin() + packet_size);
+						if (false == buffer.empty())
+						{
+							buffer.erase(buffer.begin(), buffer.begin() + packet_size);
+						}
 					}
 					else
 					{
@@ -155,7 +255,15 @@ void Worker()
 					}
 				}
 				
-				player->DoReceive();
+				if (player)
+				{
+					player->DoReceive();
+				}
+				else
+				{
+					// 새로운 세션으로 임시 세션 플레이어 정보 옮기
+					g_sessions[sessionId].players_.erase(playerIndex);
+				}
 				
 				break;
 			}
@@ -167,7 +275,7 @@ void Worker()
 			case IO_MOVE:
 			{
 
-				for (int i = 0; i < MAX_USER + MAX_NPC; i++)
+				for (int i = 0; i < SESSION_MAX_USER + SESSION_MAX_NPC; i++)
 				{
 					bool has_moved = (playerIndex & (1 << i)) != 0;
 					if (true == has_moved)
@@ -181,9 +289,10 @@ void Worker()
 				if(g_sessions[sessionId].update_count_ >= 50)
 				{
 					g_sessions[sessionId].update_count_ = 0;
-					std::cout << "****Sync Update Position ****\n";
 					g_sessions[sessionId].BroadcastSync();
 				}
+
+				delete completionKey;
 				break;
 			}
 
@@ -291,6 +400,8 @@ int main()
 		std::cout << "Failed to load map data." << std::endl;
 	}
 
+	// 임시 저장 세션
+	g_sessions.try_emplace(-1, -1);
 
 	std::thread update_thread(UpdateThread);
 	std::thread update_thread2(UpdateThread);

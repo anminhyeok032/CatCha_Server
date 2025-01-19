@@ -22,11 +22,10 @@ public:
 	bool dirty_ = false;  // 회전 상태가 변경되었는지 확인
 
 	// 캐릭터 번호
-	int id_ = -1;		// [CHARTACTER NUM] 0~3 mouse, 4~7 AI, 8 cat
-	bool is_cat_ = false;	// true : Cat, false : Mouse
+	int character_id_ = -1;					// [CHARACTER NUM] 0~3 mouse, 4~7 AI, 8 cat
 
 	// 세션 및 플레이어 번호
-	CompletionKey comp_key_{};
+	CompletionKey comp_key_{};		// 세션 번호, 서버 플레이어 번호
 
 	// packet 재조립
 	std::vector<char> prev_packet_;

@@ -1,7 +1,7 @@
 #pragma once
 #include "Octree.h"
 
-constexpr int CHEESE_DETAIL_LEVEL = 0;
+constexpr int CHEESE_DETAIL_LEVEL = 1;
 
 class VoxelPatternManager
 {
@@ -38,11 +38,11 @@ public:
         position.y += scale / 2.0f;
 
         // 치즈 옥트리 초기 기준 정하기
-        root.halfSize = VOXEL_CHEESE_DEPTH * scale / 2.0f;             // 가장 긴축을 기준으로 옥트리 크기 설정
+        root.halfSize = VOXEL_CHEESE_DEPTH * scale / 2.0f;              // 가장 긴축을 기준으로 옥트리 크기 설정
         root.center = DirectX::XMFLOAT3(
-            pivot_position.x,                               // x축 중심은 시작 x 좌표
+            pivot_position.x,                                           // x축 중심은 시작 x 좌표
             pivot_position.y + VOXEL_CHEESE_HEIGHT * scale / 2.0f,      // y축 중심은 높이의 중간
-            pivot_position.z                                // z축 중심은 시작 z 좌표
+            pivot_position.z                                            // z축 중심은 시작 z 좌표
         );
         root.boundingBox = DirectX::BoundingBox(root.center, { root.halfSize, root.halfSize, root.halfSize });
 
@@ -56,8 +56,6 @@ public:
 
                 for (int k = 0; k <= j / 2; ++k)
                 {
-                    // TODO : 특정 치즈 삭제 가능시, 클라로 치즈 삭제 패킷 보내기
-                    //        모든 플레이어 접속후, 치즈 로드하게 로직 변경 필요함
                     if ((i == VOXEL_CHEESE_HEIGHT - 1 || j == VOXEL_CHEESE_DEPTH || k == 0 || k == j / 2) &&
                         !(uid(generator) % m_random_value)) 
                     {

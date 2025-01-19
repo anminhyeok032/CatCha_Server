@@ -30,6 +30,7 @@ constexpr char SC_TIME = 16;
 constexpr char SC_SYNC_PLAYER = 17;
 constexpr char SC_RANDOM_VOXEL_SEED = 18;
 constexpr char SC_REMOVE_VOXEL_SPHERE = 19;
+constexpr char SC_SET_MY_ID = 20;
 
 #pragma pack (push, 1)
 ///////////////////////////////////////////////
@@ -91,8 +92,7 @@ struct CS_VOXEL_LOOK_PACKET {
 struct SC_LOGIN_INFO_PACKET {
 	unsigned char size;
 	char	type;
-	int 	id;
-	float 	x, y, z;	
+	unsigned char result;		// 로그인 결과
 };
 
 struct SC_TIME_PACKET {
@@ -139,7 +139,7 @@ struct SC_SYNC_PLAYER_PACKET {
 struct SC_CHANGE_CHARACTER_PACKET {
 	unsigned char size;
 	char	type;
-	int		id;
+	uint8_t	player_num;
 	uint8_t prev_character_num;
 	uint8_t new_character_num;
 };
@@ -155,5 +155,11 @@ struct SC_REMOVE_VOXEL_SPHERE_PACKET {
 	char	type;
 	unsigned char cheese_num;				// 치즈 번호
 	float	center_x, center_y, center_z;	// 삭제할 복셀 중심
+};
+
+struct SC_SET_MY_ID_PACKET {
+	unsigned char		size;
+	char				type;
+	unsigned char		my_id;					// 자신의 아이디 번호
 };
 #pragma pack (pop)

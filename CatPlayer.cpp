@@ -21,7 +21,7 @@ void CatPlayer::InputKey(Player* player, uint8_t key_)
         }
     }
 
-	//std::cout << "key input : " << (int)key << " = " << (is_key_pressed ? "true" : "false") << std::endl;
+	//std::cout << "key input : " << (int)key_ << " = " << (is_key_pressed ? "true" : "false") << std::endl;
 
 	// keyboard 업데이트
 	player->SetKeyState(action, is_key_pressed);
@@ -249,7 +249,7 @@ bool CatPlayer::CheckCheeseIntersects(Player* player, float deltaTime)
     DirectX::XMStoreFloat3(&pred_pos_f3, pred_pos);
     DirectX::BoundingSphere player_sphere = DirectX::BoundingSphere(pred_pos_f3, obb_.Extents.y);
 
-    int session_id = player->comp_key_.session_id;
+    int session_id = *player->comp_key_.session_id;
 
     for (const auto& cheese : g_sessions[session_id].cheese_octree_)
     {
@@ -453,7 +453,7 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
         // 공격이 끝났다면 공격박스 초기화
         if (player->obj_state_ == Object_State::STATE_ACTION_ONE)
         {
-            InitAttackOBB(player, g_sessions[player->comp_key_.session_id].cat_attack_obb_);
+            InitAttackOBB(player, g_sessions[*player->comp_key_.session_id].cat_attack_obb_);
         }
 
         player->stop_skill_time_ = 0.0f;
@@ -507,7 +507,7 @@ void CatPlayer::ActionOne(Player* player)
     player->stop_skill_time_ = CAT_ATTACK_TIME;
     player->obj_state_ = Object_State::STATE_ACTION_ONE;
     
-    int session_id = player->comp_key_.session_id;
+    int session_id = *player->comp_key_.session_id;
 
     // 박스 생성
     CreateAttackOBB(player, g_sessions[session_id].cat_attack_obb_);
@@ -524,7 +524,7 @@ void CatPlayer::CreateAttackOBB(Player* player, DirectX::BoundingOrientedBox& bo
     DirectX::XMVECTOR player_position = XMLoadFloat3(&obb_.Center);
     DirectX::XMVECTOR look = DirectX::XMVector3Normalize(XMLoadFloat3(&player->look_));
 
-    DirectX::XMStoreFloat3(&g_sessions[player->comp_key_.session_id].cat_attack_direction_, look);
+    DirectX::XMStoreFloat3(&g_sessions[*player->comp_key_.session_id].cat_attack_direction_, look);
 
     // 공격 OBB의 중심점 설정
     // 캐릭터 앞 공격 범위의 절반만큼 이동
@@ -547,14 +547,14 @@ void CatPlayer::InitAttackOBB(Player* player, DirectX::BoundingOrientedBox& box)
 	box.Extents = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 	box.Orientation = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
-    int session_id = player->comp_key_.session_id;
+    int session_id = *player->comp_key_.session_id;
 
     // 해당 공격에 맞은 쥐들 초기화
     for(const auto& mouse : g_sessions[session_id].players_)
 	{
-        if (true == g_sessions[session_id].cat_attacked_player_[mouse.second->id_])
+        if (true == g_sessions[session_id].cat_attacked_player_[mouse.second->character_id_])
         {
-            g_sessions[session_id].cat_attacked_player_[mouse.second->id_] = false;
+            g_sessions[session_id].cat_attacked_player_[mouse.second->character_id_] = false;
             mouse.second->RequestUpdate();
             mouse.second->force_move_update_ = true;
         }
