@@ -43,7 +43,7 @@ constexpr float FIXED_TIME_STEP = 1.0f / 60.0f;
 constexpr float UPDATE_PERIOD = 1.0f / 60.0f;
 constexpr int	UPDATE_PERIOD_INT = static_cast<int>(UPDATE_PERIOD * 1000);
 constexpr float JUMP_END_TIME = 0.3f;
-constexpr float CAT_ATTACK_TIME = 1.33333337f;
+constexpr float CAT_ATTACK_TIME = 1.33333337f / 2.0f;
 constexpr float CAT_PUNCH_POWER = 250.0f;
 constexpr float MOUSE_BITE_TIME = 0.416666657f;
 
@@ -78,9 +78,11 @@ enum class Action
 // 애니메이션 상태
 // *33개가 넘어가면 Update시 State에 파싱 자료형 변경필요
 enum class Object_State {
+	STATE_NONE,
 	STATE_IDLE, STATE_MOVE,
 	STATE_JUMP_START, STATE_JUMP_IDLE, STATE_JUMP_END,
-	STATE_ACTION_ONE, STATE_ACTION_TWO, STATE_ACTION_THREE
+	STATE_ACTION_ONE, STATE_ACTION_TWO, STATE_ACTION_THREE,
+	STATE_DEAD
 };
 
 enum class SOCKET_TYPE

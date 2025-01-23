@@ -328,6 +328,12 @@ void GameSession::CheckAttackedMice()
                 mouse.second->velocity_vector_.z = cat_attack_direction_.z * CAT_PUNCH_POWER;
                 std::cout << "Cat Attack Success : mouse - " << mouse.second->character_id_ << std::endl;
                 cat_attacked_player_[mouse.second->character_id_] = true;
+
+                if (mouse.second->curr_hp_ > 0)
+                {
+                    mouse.second->curr_hp_ -= 50;
+                }
+
                 mouse.second->RequestUpdate();
             }
         }

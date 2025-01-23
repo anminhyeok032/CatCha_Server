@@ -292,7 +292,9 @@ void Worker()
 					g_sessions[sessionId].BroadcastSync();
 				}
 
+				delete completionKey->player_index;
 				delete completionKey;
+				delete ex_over;
 				break;
 			}
 

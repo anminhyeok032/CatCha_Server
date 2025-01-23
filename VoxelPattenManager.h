@@ -1,7 +1,7 @@
 #pragma once
 #include "Octree.h"
 
-constexpr int CHEESE_DETAIL_LEVEL = 1;
+constexpr int CHEESE_DETAIL_LEVEL = 2;
 
 class VoxelPatternManager
 {

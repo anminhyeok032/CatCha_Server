@@ -13,6 +13,7 @@ public:
 	// 플레이어 정보
 	char name[NAME_SIZE];
 	char password[PASSWORD_SIZE];
+	int	curr_hp_ = 0;	// 현재 체력
 
 	// physics
 	float speed_ = 0.0f;
@@ -53,7 +54,6 @@ public:
 	Player()
 	{
 		character_id_ = NUM_GHOST;
-		max_hp_ = 100;
 		curr_hp_ = 100;
 		key_ = 0;
 		socket_ = INVALID_SOCKET;

@@ -260,7 +260,10 @@ bool CatPlayer::CheckCheeseIntersects(Player* player, float deltaTime)
         }
 
         // 충돌한 AABB 받아서 AABB 가지고 velocity 슬라이딩 시키기
-        crashing_cheese = cheese.IntersectCheck(player_sphere, ChesseAABB);
+        if (true == cheese.IntersectCheck(player_sphere, ChesseAABB))
+        {
+            crashing_cheese = true;
+        }
 
         // 추출해낸 AABB를 이용해 슬라이딩 벡터 계산
         if (true == crashing_cheese)
@@ -438,6 +441,10 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
 	player->ApplyFriction(deltaTime);
 	// 위치 업데이트
 	player->position_ = MathHelper::Add(player->position_, player->delta_position_);
+    if(player->position_.y < -62.6f)
+	{
+		player->position_.y = -62.59f;
+	}
 
 	//std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
 

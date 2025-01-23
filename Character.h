@@ -6,8 +6,6 @@ class Character
 public:
 	// 캐릭터 정보
 	DirectX::XMFLOAT3 position_ = DirectX::XMFLOAT3();
-	int max_hp_ = 0;	// 최대 체력
-	int	curr_hp_ = 0;	// 현재 체력
 
 	// 받은 pitch 변화값 총량
 	float total_pitch_ = 0;
