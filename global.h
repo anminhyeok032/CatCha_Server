@@ -129,7 +129,10 @@ struct Packet {
 };
 
 
-
+struct Tile {
+	int x, z;
+	bool walkable;
+};
 
 
 extern SOCKET g_server_socket, g_client_socket;

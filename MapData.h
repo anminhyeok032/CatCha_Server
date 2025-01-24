@@ -3,6 +3,11 @@
 
 extern std::unordered_map<std::string, ObjectOBB> g_obbData;
 extern std::array<std::array<int, 3>, 12> g_triangle_indices;
+extern std::vector<Tile> g_tile_map;
+
+constexpr int TILE_SIZE = 10;
+constexpr int TILE_MAP_WIDTH = 1200;
+constexpr int TILE_MAP_LENGTH = 1200;
 
 class MapData {
 public:
@@ -17,5 +22,9 @@ public:
     std::string Trim(const std::string& str);
     // 월드 좌표 축 계산
     void CalculateWorldAxes(DirectX::BoundingOrientedBox& obb, DirectX::XMVECTOR worldAxes[3]);
+    // AI를 위한 타일맵 생성
+    void CheckTileMap4AI();
+    // 타일맵 출력
+    void PrintTileMap();
 };
 

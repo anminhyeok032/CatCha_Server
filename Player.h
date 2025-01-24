@@ -16,10 +16,10 @@ public:
 	int	curr_hp_ = 0;	// 현재 체력
 
 	// physics
-	float speed_ = 0.0f;
-	float max_speed_ = 200.f;
-	float acceleration_ = 50.0f;
-	float deceleration_ = 1000.0f;
+	float speed_ = 0.0f;				// 현재 속도
+	float max_speed_ = 100.f;			// 최대 속도
+	float acceleration_ = 50.0f;		// 가속
+	float deceleration_ = 1000.0f;		// 감속
 
 	float jump_power_ = 500.0f;
 

@@ -16,6 +16,7 @@ std::unordered_map<int, GameSession> g_sessions;
 concurrency::concurrent_priority_queue<TIMER_EVENT> commandQueue;
 concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
 std::unordered_map<std::string, ObjectOBB> g_obbData;
+std::vector<Tile> g_tile_map;
 VoxelPatternManager g_voxel_pattern_manager;
 
 int GetSessionNumber(bool is_cat)
@@ -395,6 +396,10 @@ int main()
 	if (mapData->LoadMapData("Map.txt")) 
 	{
 		std::cout << "Map data loaded." << std::endl;
+		std::cout << "Loading Tile Map for AI..." << std::endl;
+		mapData->CheckTileMap4AI();
+		mapData->PrintTileMap();
+		std::cout << "Tile Map for AI loaded." << std::endl;
 		delete mapData;
 	}
 	else 

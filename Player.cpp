@@ -318,7 +318,6 @@ bool Player::UpdateVelocity(float time_step)
 	{
 		float scale_factor = max_speed_ / speed_;
 		velocity_vector_.x *= scale_factor;
-		//velocity_vector_.y = 0.0f;  // Y√‡ ¡¶∞≈
 		velocity_vector_.z *= scale_factor;
 		speed_ = max_speed_;
 	}

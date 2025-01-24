@@ -147,3 +147,70 @@ void MapData::CalculateWorldAxes(DirectX::BoundingOrientedBox& obb, DirectX::XMV
     }
 
 }
+
+void MapData::CheckTileMap4AI()
+{
+    int numTilesX = TILE_MAP_WIDTH / TILE_SIZE;
+    int numTilesZ = TILE_MAP_LENGTH / TILE_SIZE;
+
+    g_tile_map.reserve(numTilesX * numTilesZ);
+
+    for (int x = 0; x < numTilesX; ++x) 
+    {
+        for (int z = 0; z < numTilesZ; ++z) 
+        {
+            g_tile_map.push_back({ x, z, true });
+        }
+    }
+
+    for (const auto& object : g_obbData)
+    {
+        if (object.second.name == "Ground-0_OBB") continue;
+
+        for (auto& tile : g_tile_map)
+        {
+            if (false == tile.walkable) continue;
+
+            // 타일의 중심 좌표
+            float tile_center_x = -TILE_MAP_WIDTH / 2.0f + tile.x * TILE_SIZE + TILE_SIZE / 2.0f;
+            float tile_center_z = -TILE_MAP_LENGTH / 2.0f + tile.z * TILE_SIZE + TILE_SIZE / 2.0f;
+
+            // 타일의 AABB와 물건의 OBB 충돌 체크 후 walkable 설정
+            DirectX::BoundingBox tile_aabb(
+                DirectX::XMFLOAT3(tile_center_x, -62.6f, tile_center_z),
+                DirectX::XMFLOAT3(TILE_SIZE / 2.0f, 2.5f, TILE_SIZE / 2.0f));
+
+            if (true == object.second.obb.Intersects(tile_aabb))
+            {
+                tile.walkable = false;
+            }
+        }
+    }
+}
+
+
+void MapData::PrintTileMap()
+{
+    int numTilesX = TILE_MAP_WIDTH / TILE_SIZE;
+    int numTilesZ = TILE_MAP_LENGTH / TILE_SIZE;
+
+    for (int z = 0; z < numTilesZ; ++z)
+    {
+        for (int x = 0; x < numTilesX; ++x)
+        {
+            // 타일맵의 1차원 인덱스 계산
+            const Tile& tile = g_tile_map[x * numTilesZ + z];
+
+            // walkable 여부에 따라 출력
+            if (true == tile.walkable)
+            {
+                std::cout << ". ";
+            }
+            else
+            {
+                std::cout << "X ";
+            }
+        }
+        std::cout << std::endl;
+    }
+}
