@@ -42,10 +42,18 @@ constexpr int MAX_NPC = 4000;
 constexpr float FIXED_TIME_STEP = 1.0f / 60.0f;
 constexpr float UPDATE_PERIOD = 1.0f / 60.0f;
 constexpr int	UPDATE_PERIOD_INT = static_cast<int>(UPDATE_PERIOD * 1000);
+constexpr int	AI_UPDATE_PERIOD_INT = 1000;
 constexpr float JUMP_END_TIME = 0.3f;
 constexpr float CAT_ATTACK_TIME = 1.33333337f / 2.0f;
 constexpr float CAT_PUNCH_POWER = 250.0f;
 constexpr float MOUSE_BITE_TIME = 0.416666657f;
+
+// AI를 위한 맵 설정
+constexpr float FLOOR_Y = -62.6f;
+constexpr int TILE_SIZE = 10;
+constexpr int TILE_MAP_WIDTH = 1200;
+constexpr int TILE_MAP_LENGTH = 1200;
+constexpr int TILE_X_CORR = TILE_MAP_LENGTH / TILE_SIZE;
 
 
 struct CompletionKey
@@ -59,7 +67,8 @@ enum IO_TYPE
 	IO_ACCEPT = 0,
 	IO_SEND,
 	IO_RECV,
-	IO_MOVE
+	IO_MOVE,
+	IO_AI_MOVE
 };
 
 enum class Action 
@@ -139,7 +148,8 @@ extern SOCKET g_server_socket, g_client_socket;
 extern HANDLE g_h_iocp;
 
 extern concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
-extern Concurrency::concurrent_priority_queue<TIMER_EVENT> commandQueue;
+extern concurrency::concurrent_priority_queue<TIMER_EVENT> commandQueue;
+extern concurrency::concurrent_priority_queue<TIMER_EVENT> AI_Queue;
 
 constexpr float GRAVITY = 980.0f;
 constexpr float FRICTION = 0.99f;

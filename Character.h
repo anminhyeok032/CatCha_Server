@@ -53,4 +53,6 @@ public:
 	virtual SOCKET GetSocket() = 0;
 	virtual CompletionKey GetCompletionKey() = 0;
 
+	virtual void SetID(int id) { }
+
 };

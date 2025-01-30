@@ -22,6 +22,15 @@
     <Filter Include="Voxel">
       <UniqueIdentifier>{ee434ca8-4d7c-4d3d-b44e-ee386d4ce0fd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Character\AI">
+      <UniqueIdentifier>{e84d8453-9163-4444-b87e-167a87577291}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Character\CharacterState">
+      <UniqueIdentifier>{d161a615-a1cd-4774-a6a5-72d0e3cd833d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global\Map">
+      <UniqueIdentifier>{6e32039b-b3f3-474e-872a-591ef6962fb0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MainServer.cpp">
@@ -33,17 +42,20 @@
     <ClCompile Include="GameSession.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="CatPlayer.cpp">
-      <Filter>Character</Filter>
-    </ClCompile>
-    <ClCompile Include="MousePlayer.cpp">
-      <Filter>Character</Filter>
-    </ClCompile>
-    <ClCompile Include="MapData.cpp">
-      <Filter>Global</Filter>
-    </ClCompile>
     <ClCompile Include="Octree.cpp">
       <Filter>Voxel</Filter>
+    </ClCompile>
+    <ClCompile Include="AIPlayer.cpp">
+      <Filter>Character\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="CatPlayer.cpp">
+      <Filter>Character\CharacterState</Filter>
+    </ClCompile>
+    <ClCompile Include="MousePlayer.cpp">
+      <Filter>Character\CharacterState</Filter>
+    </ClCompile>
+    <ClCompile Include="MapData.cpp">
+      <Filter>Global\Map</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -59,22 +71,10 @@
     <ClInclude Include="Player.h">
       <Filter>Character</Filter>
     </ClInclude>
-    <ClInclude Include="CatPlayer.h">
-      <Filter>Character</Filter>
-    </ClInclude>
-    <ClInclude Include="MousePlayer.h">
-      <Filter>Character</Filter>
-    </ClInclude>
     <ClInclude Include="protocol.h">
       <Filter>Global</Filter>
     </ClInclude>
     <ClInclude Include="global.h">
-      <Filter>Global</Filter>
-    </ClInclude>
-    <ClInclude Include="CharacterState.h">
-      <Filter>Character</Filter>
-    </ClInclude>
-    <ClInclude Include="MapData.h">
       <Filter>Global</Filter>
     </ClInclude>
     <ClInclude Include="Octree.h">
@@ -83,5 +83,25 @@
     <ClInclude Include="VoxelPattenManager.h">
       <Filter>Voxel</Filter>
     </ClInclude>
+    <ClInclude Include="AIPlayer.h">
+      <Filter>Character\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="CharacterState.h">
+      <Filter>Character\CharacterState</Filter>
+    </ClInclude>
+    <ClInclude Include="CatPlayer.h">
+      <Filter>Character\CharacterState</Filter>
+    </ClInclude>
+    <ClInclude Include="MousePlayer.h">
+      <Filter>Character\CharacterState</Filter>
+    </ClInclude>
+    <ClInclude Include="MapData.h">
+      <Filter>Global\Map</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Map.txt">
+      <Filter>리소스 파일</Filter>
+    </Text>
   </ItemGroup>
 </Project>

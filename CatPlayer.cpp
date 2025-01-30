@@ -1,5 +1,6 @@
 #include "CatPlayer.h"
 #include "Player.h"
+#include "AIPlayer.h"
 #include "MapData.h"
 
 void CatPlayer::InputKey(Player* player, uint8_t key_)

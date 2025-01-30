@@ -2,6 +2,7 @@
 #include "Player.h" 
 #include "CatPlayer.h"
 #include "MousePlayer.h"
+#include "AIPlayer.h"
 
 void GameSession::Update()
 {
@@ -39,6 +40,41 @@ void GameSession::Update()
     commandQueue.push(ev);
     
 }
+
+void GameSession::UpdateAI()
+{
+    bool need_update_send = false;
+    uint64_t current_time = GetServerTime();
+    int move_AIs = 0;
+
+    float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
+
+    // 움직인 AI의 Postion만 업데이트 하도록 int 4마리의 움직임 여부를 파싱해서 담음
+    for (auto& pl : ai_players_)
+    {
+
+        if (true == pl.second->UpdatePosition(deltaTime))
+        {
+            need_update_send = true;
+            move_AIs |= (1 << pl.first);
+            //std::cout << "Player " << pl.first << " Move" << std::endl;
+            //std::cout << "Position : " << pl.second->position_.x << ", " << pl.second->position_.y << ", " << pl.second->position_.z << std::endl;
+        }
+    }
+
+    // 현재 세션 시간 업데이트
+    lastupdatetime_ = current_time;
+
+    // 움직임 업데이트가 필요할때만 클라이언트에게 브로드캐스팅
+    if (true == need_update_send)
+    {
+        SendAIUpdate();
+    }
+    // 정해진 주기로 실행하기 위해 queue에 다시 담기
+    TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(AI_UPDATE_PERIOD_INT / 2), session_num_ };
+    AI_Queue.push(ev);
+}
+
 
 void GameSession::SendPlayerUpdate(int move_players)
 {
@@ -191,6 +227,30 @@ void GameSession::BroadcastRemoveVoxelSphere(int cheese_num, const DirectX::XMFL
 	{
 		pl.second->DoSend(&p);
 	}
+}
+
+void GameSession::SendAIUpdate()
+{
+    Over_IO* over = new Over_IO;
+    over->io_key_ = IO_AI_MOVE;
+    int* n = new int(-1);
+    CompletionKey* completion_key = new CompletionKey{ &session_num_, n };
+    PostQueuedCompletionStatus(g_h_iocp, 1, reinterpret_cast<ULONG_PTR>(completion_key), &over->over_);
+}
+
+void GameSession::BroadcastAIPostion(int num)
+{
+    SC_AI_MOVE_PACKET p;
+    p.size = sizeof(p);
+    p.type = SC_AI_MOVE;
+    p.id = num + NUM_AI1;       // 플레이어 번호 맞추기 위해
+    p.x = ai_players_[num]->position_.x;
+    p.z = ai_players_[num]->position_.z;
+
+    for (auto& pl : players_)
+    {
+        pl.second->DoSend(&p);
+    }
 }
 
 uint64_t GameSession::GetServerTime()
@@ -363,4 +423,19 @@ void GameSession::DeleteCheeseVoxel(const DirectX::XMFLOAT3& center)
         cheese_num++;
     }
 
+}
+
+
+void GameSession::InitializeSessionAI()
+{
+    for(int i = 0; i < 4; ++i)
+	{
+        ai_players_.emplace(i, std::make_unique<AIPlayer>());
+		ai_players_[i]->SetID(i + 4);
+        ai_players_[i]->position_ = { 0.0f, FLOOR_Y, 0.0f };
+        ai_players_[i]->SetBoundingSphere();
+	}
+    std::cout << "Create Session AI - " << session_num_ << std::endl;
+    TIMER_EVENT ev{ std::chrono::system_clock::now(), session_num_ };
+    AI_Queue.push(ev);
 }

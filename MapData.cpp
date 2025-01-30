@@ -177,7 +177,7 @@ void MapData::CheckTileMap4AI()
 
             // 타일의 AABB와 물건의 OBB 충돌 체크 후 walkable 설정
             DirectX::BoundingBox tile_aabb(
-                DirectX::XMFLOAT3(tile_center_x, -62.6f, tile_center_z),
+                DirectX::XMFLOAT3(tile_center_x, FLOOR_Y, tile_center_z),
                 DirectX::XMFLOAT3(TILE_SIZE / 2.0f, 2.5f, TILE_SIZE / 2.0f));
 
             if (true == object.second.obb.Intersects(tile_aabb))

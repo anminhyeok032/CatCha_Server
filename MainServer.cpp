@@ -3,6 +3,7 @@
 #include "Over_IO.h"
 #include "GameSession.h"
 #include "Player.h"
+#include "AIPlayer.h"
 #include "CharacterState.h"
 #include "MapData.h"
 //#include "VoxelPatternManager.h"
@@ -14,9 +15,9 @@ Over_IO g_over;
 
 std::unordered_map<int, GameSession> g_sessions;
 concurrency::concurrent_priority_queue<TIMER_EVENT> commandQueue;
+concurrency::concurrent_priority_queue<TIMER_EVENT> AI_Queue;
 concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
 std::unordered_map<std::string, ObjectOBB> g_obbData;
-std::vector<Tile> g_tile_map;
 VoxelPatternManager g_voxel_pattern_manager;
 
 int GetSessionNumber(bool is_cat)
@@ -276,7 +277,7 @@ void Worker()
 			case IO_MOVE:
 			{
 
-				for (int i = 0; i < SESSION_MAX_USER + SESSION_MAX_NPC; i++)
+				for (int i = 0; i < SESSION_MAX_USER; i++)
 				{
 					bool has_moved = (playerIndex & (1 << i)) != 0;
 					if (true == has_moved)
@@ -293,6 +294,19 @@ void Worker()
 					g_sessions[sessionId].BroadcastSync();
 				}
 
+				delete completionKey->player_index;
+				delete completionKey;
+				delete ex_over;
+				break;
+			}
+			case IO_AI_MOVE:
+			{
+				for (int i = 0; i < SESSION_MAX_NPC; i++)
+				{
+					// TODO : AI 이동 Atomic 하게 살아있는지 검사해서 보내주기
+					g_sessions[sessionId].BroadcastAIPostion(i);
+					
+				}
 				delete completionKey->player_index;
 				delete completionKey;
 				delete ex_over;
@@ -329,6 +343,29 @@ void UpdateThread()
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			continue;
+		}
+	}
+}
+
+void AIUpdateThread()
+{
+	while (true)
+	{
+		TIMER_EVENT ev;
+		
+		// AI 업데이트
+		if (true == AI_Queue.try_pop(ev))
+		{
+			if (ev.wakeup_time > std::chrono::system_clock::now())
+			{
+				AI_Queue.push(ev);
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				continue;
+			}
+			else
+			{
+				g_sessions[ev.session_id].UpdateAI();
+			}
 		}
 	}
 }
@@ -398,7 +435,7 @@ int main()
 		std::cout << "Map data loaded." << std::endl;
 		std::cout << "Loading Tile Map for AI..." << std::endl;
 		mapData->CheckTileMap4AI();
-		mapData->PrintTileMap();
+		//mapData->PrintTileMap();
 		std::cout << "Tile Map for AI loaded." << std::endl;
 		delete mapData;
 	}
@@ -410,13 +447,22 @@ int main()
 	// 임시 저장 세션
 	g_sessions.try_emplace(-1, -1);
 
+	int others_thr_num = 0;
 	std::thread update_thread(UpdateThread);
 	std::thread update_thread2(UpdateThread);
 	//std::thread timer_thread(TimeThread);
 	
+	std::thread AI_thread(AIUpdateThread);
+	others_thr_num = 3;
 
 	// 내 cpu 코어 개수만큼의 스레드 생성
-	int num_threads = std::thread::hardware_concurrency();
+	int num_threads = std::thread::hardware_concurrency() - others_thr_num;
+	if(num_threads <= 0)
+	{
+		std::cout << "Error: No available threads" << std::endl;
+		return -1;
+	}
+
 	std::vector<std::thread> worker_threads;
 
 	for (int i = 0; i < num_threads; ++i)
@@ -430,7 +476,7 @@ int main()
 	update_thread.join();
 	update_thread2.join();
 	//timer_thread.join();
-
+	AI_thread.join();
 
 
 	closesocket(g_server_socket);

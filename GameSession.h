@@ -13,6 +13,7 @@ enum SESSION_STATE {
 
 class Character;
 class Player;
+class AIPlayer;
 class CatPlayer;
 class MousePlayer;
 class OctreeNode;
@@ -23,6 +24,7 @@ class GameSession
 public:
 
 	std::unordered_map<int, std::unique_ptr<Player>> players_;			// [key] = player_index <ÁÖÀÇ* CHARACTER_NUMBER ¾Æ´Ô> / [value] = player
+	std::unordered_map<int, std::unique_ptr<AIPlayer>> ai_players_;		// [key] = player_index <ÁÖÀÇ* CHARACTER_NUMBER ¾Æ´Ô> / [value] = ai_player
 
 	SESSION_STATE session_state_ = SESSION_STATE::SESSION_WAIT;
 
@@ -80,11 +82,13 @@ public:
 	size_t CheckCharacterNum() const { return players_.size(); }
 
 	void Update();
+	void UpdateAI();
 	void StartSessionUpdate()
 	{
 		std::cout << "Create GameSession - " << session_num_ << std::endl;
 		TIMER_EVENT ev{ std::chrono::system_clock::now(), session_num_ };
 		commandQueue.push(ev);
+		InitializeSessionAI();
 	}
 	uint64_t GetServerTime();
 	void SendPlayerUpdate(int move_players);
@@ -96,11 +100,15 @@ public:
 	void BroadcastAddCharacter(int player_num, int recv_index);
 	void BroadcastRemoveVoxelSphere(int cheese_num, const DirectX::XMFLOAT3& center);
 
+	void SendAIUpdate();
+	void BroadcastAIPostion(int num);
+
 	void SetCharacter(int room_num, int client_index, bool is_cat);
 
 	int GetMouseNum();
 	void CheckAttackedMice();
 	void DeleteCheeseVoxel(const DirectX::XMFLOAT3& center);
+	void InitializeSessionAI();
 };
 
 extern std::unordered_map <int, GameSession> g_sessions;

@@ -65,7 +65,7 @@ public:
 	}
 
 	void SetSocket(SOCKET socket) override { socket_ = socket; }
-	void SetID(int id) { character_id_ = id; }
+	void SetID(int id) override { character_id_ = id; }
 
 	// 상태 전환
 	void SetState(std::unique_ptr<CharacterState> new_state);

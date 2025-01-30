@@ -1,5 +1,6 @@
 #include "Player.h"
 #include "CharacterState.h"
+#include "AIPlayer.h"
 
 void print_error(const char* msg, int err_no)
 {

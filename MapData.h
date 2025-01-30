@@ -5,10 +5,6 @@ extern std::unordered_map<std::string, ObjectOBB> g_obbData;
 extern std::array<std::array<int, 3>, 12> g_triangle_indices;
 extern std::vector<Tile> g_tile_map;
 
-constexpr int TILE_SIZE = 10;
-constexpr int TILE_MAP_WIDTH = 1200;
-constexpr int TILE_MAP_LENGTH = 1200;
-
 class MapData {
 public:
     // 맵 데이터 로드
