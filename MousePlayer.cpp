@@ -460,9 +460,21 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
 	{
 		player->obj_state_ = Object_State::STATE_DEAD;
         player->moveable_ = false;
-        player->stop_skill_time_ = 10.0f;
 		need_update = true;
-        // TODO : 죽었을때 AI로 환생 시도 처리
+
+        // 죽었을때 AI로 환생 시도 처리
+        bool is_reborn = g_sessions[*player->comp_key_.session_id].RebornToAI(*player->comp_key_.player_index);
+        // 환생 성공시
+        if(true == is_reborn)
+		{
+            player->stop_skill_time_ = 3.0f;
+		}
+        // 환생 실패시
+        else
+        {
+            // TODO : 종료 검사 로직 추가 
+            player->stop_skill_time_ = 10000.0f;
+        }
 	}
 
     // 스킬 시간이 다 갈때까지 state 유지
@@ -476,6 +488,16 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
     {
         player->stop_skill_time_ = 0.0f;
         player->moveable_ = true;
+
+        // 캐릭터가 죽었을때 AI로 환생 성공시
+        if (player->obj_state_ == Object_State::STATE_DEAD)
+        {
+            // 캐릭터 교체 브로드캐스트
+            g_sessions[*player->comp_key_.session_id].BroadcastChangeCharacter(*player->comp_key_.player_index, player->reborn_ai_character_id_);
+            // AI로 환생
+            player->position_ = g_sessions[*player->comp_key_.session_id].ai_players_[player->reborn_ai_character_id_]->position_;
+            player->rotation_quat_ = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+        }
         player->obj_state_ = Object_State::STATE_IDLE;
         need_update = true;
     }

@@ -4,7 +4,7 @@
 #include <unordered_set>
 
 std::vector<Tile> g_tile_map;
-std::default_random_engine dre;
+std::random_device dre;
 std::uniform_int_distribution<int> uid(0, TILE_MAP_WIDTH / TILE_SIZE - 1);
 
 void AIPlayer::SetBoundingSphere()
@@ -188,6 +188,8 @@ bool AIPlayer::UpdatePosition(float deltaTime)
             left_distance = 0.0f;
         }
     }
+
+    SetBoundingSphere();
 
     // 경로가 비어 있다면 목표에 도달한 상태로 설정
     if (path_.empty()) 

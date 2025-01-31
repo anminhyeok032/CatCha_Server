@@ -46,6 +46,7 @@ constexpr int	AI_UPDATE_PERIOD_INT = 1000;
 constexpr float JUMP_END_TIME = 0.3f;
 constexpr float CAT_ATTACK_TIME = 1.33333337f / 2.0f;
 constexpr float CAT_PUNCH_POWER = 250.0f;
+constexpr int CAT_ATTACK_DAMAGE = 50;
 constexpr float MOUSE_BITE_TIME = 0.416666657f;
 
 // AI를 위한 맵 설정

@@ -18,6 +18,8 @@ public:
 
 	bool is_reached_ = false;
 
+	std::atomic<bool> is_activate_{ true };
+
 	// A*로 찾은 경로
 	std::vector<std::pair<int, int>> path_;
 

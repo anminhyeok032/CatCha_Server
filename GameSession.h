@@ -96,11 +96,11 @@ public:
 
 	void BroadcastPosition(int player);
 	void BroadcastSync();
-	void BroadcastChangeCharacter(int player_num, int CHARACTER_NUM);
+	void BroadcastChangeCharacter(int player_num, int CHARACTER_NUM);			// player_index, ¹Ù²Ü Character_number 
 	void BroadcastAddCharacter(int player_num, int recv_index);
 	void BroadcastRemoveVoxelSphere(int cheese_num, const DirectX::XMFLOAT3& center);
 
-	void SendAIUpdate();
+	void SendAIUpdate(int move_AIs);
 	void BroadcastAIPostion(int num);
 
 	void SetCharacter(int room_num, int client_index, bool is_cat);
@@ -109,6 +109,7 @@ public:
 	void CheckAttackedMice();
 	void DeleteCheeseVoxel(const DirectX::XMFLOAT3& center);
 	void InitializeSessionAI();
+	bool RebornToAI(int player_num);
 };
 
 extern std::unordered_map <int, GameSession> g_sessions;

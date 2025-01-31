@@ -14,6 +14,7 @@ public:
 	char name[NAME_SIZE];
 	char password[PASSWORD_SIZE];
 	int	curr_hp_ = 0;	// 현재 체력
+	int reborn_ai_character_id_ = -1;	// 부활시킬 AI 캐릭터 번호
 
 	// physics
 	float speed_ = 0.0f;				// 현재 속도

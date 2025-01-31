@@ -301,11 +301,13 @@ void Worker()
 			}
 			case IO_AI_MOVE:
 			{
-				for (int i = 0; i < SESSION_MAX_NPC; i++)
+				for (int i = NUM_AI1; i <= NUM_AI4; i++)
 				{
-					// TODO : AI 이동 Atomic 하게 살아있는지 검사해서 보내주기
-					g_sessions[sessionId].BroadcastAIPostion(i);
-					
+					bool has_moved = (playerIndex & (1 << i)) != 0;
+					if (true == has_moved)
+					{
+						g_sessions[sessionId].BroadcastAIPostion(i);
+					}
 				}
 				delete completionKey->player_index;
 				delete completionKey;
@@ -366,6 +368,11 @@ void AIUpdateThread()
 			{
 				g_sessions[ev.session_id].UpdateAI();
 			}
+		}
+		else
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			continue;
 		}
 	}
 }
@@ -456,7 +463,7 @@ int main()
 	others_thr_num = 3;
 
 	// 내 cpu 코어 개수만큼의 스레드 생성
-	int num_threads = std::thread::hardware_concurrency() - others_thr_num;
+	int num_threads = std::thread::hardware_concurrency();
 	if(num_threads <= 0)
 	{
 		std::cout << "Error: No available threads" << std::endl;

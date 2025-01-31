@@ -12,7 +12,7 @@ void GameSession::Update()
    
     float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
 
-    // 움직인 플레이어의 Postion만 업데이트 하도록 int 8마리의 움직임 여부를 파싱해서 담음
+    // 움직인 플레이어의 Postion만 업데이트 하도록 int 5마리의 움직임 여부를 파싱해서 담음
     for (auto& pl : players_)
     {
         // 업데이트 요청이 없으면
@@ -52,7 +52,7 @@ void GameSession::UpdateAI()
     // 움직인 AI의 Postion만 업데이트 하도록 int 4마리의 움직임 여부를 파싱해서 담음
     for (auto& pl : ai_players_)
     {
-
+        if (pl.second->is_activate_.load() == false) continue;
         if (true == pl.second->UpdatePosition(deltaTime))
         {
             need_update_send = true;
@@ -68,7 +68,7 @@ void GameSession::UpdateAI()
     // 움직임 업데이트가 필요할때만 클라이언트에게 브로드캐스팅
     if (true == need_update_send)
     {
-        SendAIUpdate();
+        SendAIUpdate(move_AIs);
     }
     // 정해진 주기로 실행하기 위해 queue에 다시 담기
     TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(AI_UPDATE_PERIOD_INT / 2), session_num_ };
@@ -229,12 +229,12 @@ void GameSession::BroadcastRemoveVoxelSphere(int cheese_num, const DirectX::XMFL
 	}
 }
 
-void GameSession::SendAIUpdate()
+void GameSession::SendAIUpdate(int move_AIs)
 {
     Over_IO* over = new Over_IO;
     over->io_key_ = IO_AI_MOVE;
-    int* n = new int(-1);
-    CompletionKey* completion_key = new CompletionKey{ &session_num_, n };
+    int* ai = new int(move_AIs);
+    CompletionKey* completion_key = new CompletionKey{ &session_num_, ai };
     PostQueuedCompletionStatus(g_h_iocp, 1, reinterpret_cast<ULONG_PTR>(completion_key), &over->over_);
 }
 
@@ -243,7 +243,7 @@ void GameSession::BroadcastAIPostion(int num)
     SC_AI_MOVE_PACKET p;
     p.size = sizeof(p);
     p.type = SC_AI_MOVE;
-    p.id = num + NUM_AI1;       // 플레이어 번호 맞추기 위해
+    p.id = num;
     p.x = ai_players_[num]->position_.x;
     p.z = ai_players_[num]->position_.z;
 
@@ -391,7 +391,7 @@ void GameSession::CheckAttackedMice()
 
                 if (mouse.second->curr_hp_ > 0)
                 {
-                    mouse.second->curr_hp_ -= 50;
+                    mouse.second->curr_hp_ -= CAT_ATTACK_DAMAGE;
                 }
 
                 mouse.second->RequestUpdate();
@@ -406,36 +406,58 @@ void GameSession::DeleteCheeseVoxel(const DirectX::XMFLOAT3& center)
 {
     int cheese_num = 0;
     DirectX::BoundingSphere sphere{ center, 5.0f };
+    bool is_removed = false;
 
     for (auto& cheese : cheese_octree_)
     {
         if (true == cheese.RemoveVoxel(sphere))
         {
-            std::cout << "치즈 삭제 성공" << std::endl;
-            //cheese_octree_.PrintNode();
-
+            is_removed = true;
             BroadcastRemoveVoxelSphere(cheese_num, center);
-        }
-        else
-        {
-            std::cout << "치즈 삭제 실패" << std::endl;
         }
         cheese_num++;
     }
 
+    if (true == is_removed)
+    {
+        std::cout << "치즈 삭제 성공" << std::endl;
+    }
 }
 
 
 void GameSession::InitializeSessionAI()
 {
-    for(int i = 0; i < 4; ++i)
+    for(int i = NUM_AI1; i <= NUM_AI4; ++i)
 	{
         ai_players_.emplace(i, std::make_unique<AIPlayer>());
-		ai_players_[i]->SetID(i + 4);
+		ai_players_[i]->SetID(i);
         ai_players_[i]->position_ = { 0.0f, FLOOR_Y, 0.0f };
         ai_players_[i]->SetBoundingSphere();
 	}
     std::cout << "Create Session AI - " << session_num_ << std::endl;
     TIMER_EVENT ev{ std::chrono::system_clock::now(), session_num_ };
     AI_Queue.push(ev);
+}
+
+bool GameSession::RebornToAI(int player_num)
+{
+    bool is_reborn = false;
+	// AI로 변경
+    for (auto& ai : ai_players_)
+    {
+        if (true == ai.second->is_activate_.load())
+        {
+            is_reborn = true;
+            ai.second->is_activate_.store(false);
+            ai.second->path_.clear();
+            std::cout << "Reborn to AI - " << ai.second->character_id_ << std::endl;
+            players_[player_num]->curr_hp_ = 100;
+            //players_[player_num]->position_ = ai.second->position_;
+            players_[player_num]->reborn_ai_character_id_ = ai.second->character_id_;
+
+            break;
+        }
+    }
+
+    return is_reborn;
 }
