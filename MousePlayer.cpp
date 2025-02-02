@@ -209,9 +209,6 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
             player->on_ground_ = true;
             slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
 
-            // y축에서 공중에 뜨는것 방지 살짝 눌러줌
-            //depth_delta = DirectX::XMVectorAdd(depth_delta, DirectX::XMVectorNegate(normalized_closest_normal));
-
             // 점프 중 땅에 닿으면 점프 종료로 변환
             if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
             {
@@ -467,7 +464,7 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
         // 환생 성공시
         if(true == is_reborn)
 		{
-            player->stop_skill_time_ = 3.0f;
+            player->stop_skill_time_ = 5.0f;
 		}
         // 환생 실패시
         else
@@ -497,6 +494,7 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
             // AI로 환생
             player->position_ = g_sessions[*player->comp_key_.session_id].ai_players_[player->reborn_ai_character_id_]->position_;
             player->rotation_quat_ = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+            player->dirty_ = true;
         }
         player->obj_state_ = Object_State::STATE_IDLE;
         need_update = true;

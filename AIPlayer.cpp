@@ -4,8 +4,8 @@
 #include <unordered_set>
 
 std::vector<Tile> g_tile_map;
+std::vector<int> g_tile_map_walkable_only;
 std::random_device dre;
-std::uniform_int_distribution<int> uid(0, TILE_MAP_WIDTH / TILE_SIZE - 1);
 
 void AIPlayer::SetBoundingSphere()
 {
@@ -131,8 +131,14 @@ bool AIPlayer::UpdatePosition(float deltaTime)
 {
 	if (path_.empty() || true == is_reached_)
 	{
-        int target_x = uid(dre);
-        int target_z = uid(dre);
+        static std::uniform_int_distribution<int> uid{ 0, static_cast<int>(g_tile_map_walkable_only.size() - 1) };
+        int rand_tile = uid(dre);
+
+        int tile = g_tile_map_walkable_only[rand_tile];
+
+        int target_x = tile / TILE_X_CORR;
+        int target_z = tile % TILE_X_CORR;
+
         FindPath(target_x, target_z);
         return false;
 	}

@@ -186,6 +186,22 @@ void MapData::CheckTileMap4AI()
             }
         }
     }
+    // walkable이 true인 타일만 담아 사용
+    BuildWalkableTileMapIndex();
+}
+
+void MapData::BuildWalkableTileMapIndex()
+{
+    g_tile_map_walkable_only.clear();
+    int numTilesX = TILE_MAP_WIDTH / TILE_SIZE;
+    int numTilesZ = TILE_MAP_LENGTH / TILE_SIZE;
+    for (int i = 0; i < g_tile_map.size(); ++i)
+    {
+        if (true == g_tile_map[i].walkable)
+        {
+            g_tile_map_walkable_only.emplace_back(i);
+        }
+    }
 }
 
 

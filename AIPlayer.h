@@ -25,6 +25,7 @@ public:
 
 	DirectX::BoundingSphere bounding_sphere_{ DirectX::XMFLOAT3{0, FLOOR_Y, 0}, 10.92712f / 2.0f };
 
+
 public:
 
 	AIPlayer()

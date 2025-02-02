@@ -53,15 +53,15 @@ int GetSessionNumber(bool is_cat)
 				// 해당 방에 고양이가 없는 경우
 				else
 				{
-					// 가득 차면 FULL로 설정
-					if (g_sessions[room.first].CheckCharacterNum() < SESSION_MAX_USER)
-					{
-						g_sessions[room.first].session_state_ = SESSION_FULL;
-					}
 					// 고양이 있는 방으로 설정
-					else
+					if (g_sessions[room.first].CheckCharacterNum() < SESSION_MAX_USER - 1)
 					{
 						g_sessions[room.first].session_state_ = SESSION_HAS_CAT;
+					}
+					// 가득 차면 FULL로 설정
+					else
+					{
+						g_sessions[room.first].session_state_ = SESSION_FULL;
 					}
 					return room.first;
 				}
@@ -75,6 +75,11 @@ int GetSessionNumber(bool is_cat)
 					// 방이 아직 안찼을때
 					if (g_sessions[room.first].CheckCharacterNum() < SESSION_MAX_USER)
 					{
+						// 내가 들어와서 꽉 찼다면
+						if(g_sessions[room.first].CheckCharacterNum() + 1 == SESSION_MAX_USER)
+						{
+							g_sessions[room.first].session_state_ = SESSION_FULL;
+						}
 						return room.first;
 					}
 					// 방이 다 찬 경우
@@ -82,6 +87,7 @@ int GetSessionNumber(bool is_cat)
 					{
 						// 방이 다찬 상태로 설정
 						room_num++;
+						g_sessions[room.first].session_state_ = SESSION_FULL;
 						continue;
 					}
 				}
@@ -96,9 +102,8 @@ int GetSessionNumber(bool is_cat)
 					// 방이 다 찬 경우
 					else
 					{
-						// 방이 다찬 상태로 설정
+						// 쥐만 다차서 다른 방 배정
 						room_num++;
-						g_sessions[room.first].session_state_ = SESSION_FULL;
 						continue;
 					}
 				}
@@ -107,6 +112,11 @@ int GetSessionNumber(bool is_cat)
 	}
 	// 새로운 세션 시작
 	g_sessions[room_num].session_num_ = room_num;
+	if(true == is_cat)
+	{
+		std::lock_guard <std::mutex> lg{ g_sessions[room_num].mt_session_state_ };
+		g_sessions[room_num].session_state_ = SESSION_HAS_CAT;
+	}
 	g_sessions[room_num].StartSessionUpdate();
 	return room_num;
 }

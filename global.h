@@ -50,7 +50,7 @@ constexpr int CAT_ATTACK_DAMAGE = 50;
 constexpr float MOUSE_BITE_TIME = 0.416666657f;
 
 // AI를 위한 맵 설정
-constexpr float FLOOR_Y = -62.6f;
+constexpr float FLOOR_Y = -61.6f;
 constexpr int TILE_SIZE = 10;
 constexpr int TILE_MAP_WIDTH = 1200;
 constexpr int TILE_MAP_LENGTH = 1200;
@@ -350,3 +350,33 @@ constexpr int VOXEL_CHEESE_HEIGHT = 8;
 constexpr int VOXEL_CHEESE_DEPTH = 21;
 constexpr int VOXEL_CHEESE_WIDTH = VOXEL_CHEESE_DEPTH / 2;
 extern const int CHEESE_VOXEL_COUNT;
+
+//==========================
+// Character Initialize Data
+//==========================
+constexpr DirectX::XMFLOAT3 CHARACTER_POS[9] =
+{
+	DirectX::XMFLOAT3(10.0f, FLOOR_Y, 10.0f),					// Mouse1
+	DirectX::XMFLOAT3(-10.0f, FLOOR_Y, 10.0f),					// Mouse2
+	DirectX::XMFLOAT3(10.0f, FLOOR_Y, -10.0f),					// Mouse3
+	DirectX::XMFLOAT3(-10.0f, FLOOR_Y, -10.0f),					// Mouse4
+	DirectX::XMFLOAT3(0.0f, FLOOR_Y, 0.0f),						// AI1
+	DirectX::XMFLOAT3(0.0f, FLOOR_Y, 0.0f),						// AI2
+	DirectX::XMFLOAT3(0.0f, FLOOR_Y, 0.0f),						// AI3
+	DirectX::XMFLOAT3(0.0f, FLOOR_Y, 0.0f),						// AI4
+	DirectX::XMFLOAT3(437.225f, FLOOR_Y, -117.493f)				// CAT
+};
+
+constexpr DirectX::XMFLOAT4 CHARACTER_ROTATION[9] =
+{
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// Mouse1
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// Mouse2
+	DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f),					// Mouse3
+	DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f),					// Mouse4
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// AI1
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// AI2
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// AI3
+	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),					// AI4
+	DirectX::XMFLOAT4(0.0f, -0.7071f, 0.0f, 0.7071f)			// CAT
+};
+

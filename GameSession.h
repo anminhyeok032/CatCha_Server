@@ -88,11 +88,11 @@ public:
 		std::cout << "Create GameSession - " << session_num_ << std::endl;
 		TIMER_EVENT ev{ std::chrono::system_clock::now(), session_num_ };
 		commandQueue.push(ev);
-		InitializeSessionAI();
 	}
 	uint64_t GetServerTime();
 	void SendPlayerUpdate(int move_players);
 	void SendTimeUpdate();
+	void SendGameStart();
 
 	void BroadcastPosition(int player);
 	void BroadcastSync();

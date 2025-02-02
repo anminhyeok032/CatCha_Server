@@ -18,11 +18,11 @@ public:
 
 	// physics
 	float speed_ = 0.0f;				// 현재 속도
-	float max_speed_ = 100.f;			// 최대 속도
+	float max_speed_ = 150.f;			// 최대 속도
 	float acceleration_ = 50.0f;		// 가속
 	float deceleration_ = 1000.0f;		// 감속
 
-	float jump_power_ = 500.0f;
+	float jump_power_ = 400.0f;
 
 	// 애니메이션 동기화 관련 변수들
 	bool on_ground_ = false;

@@ -102,6 +102,35 @@ void GameSession::SendTimeUpdate()
 
 }
 
+void GameSession::SendGameStart()
+{
+    SC_GAME_START_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_GAME_START;
+
+	for (auto& pl : players_)
+	{
+        // 캐릭터 정보 다시 초기화
+        pl.second->position_        = CHARACTER_POS[pl.second->character_id_];
+        pl.second->rotation_quat_   = CHARACTER_ROTATION[pl.second->character_id_];
+        pl.second->velocity_vector_ = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+        pl.second->force_vector_    = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+        pl.second->depth_delta_     = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+        pl.second->dirty_ = true;
+        pl.second->keyboard_input_.clear();
+        pl.second->UpdateLookUpRight();
+
+        // 캐릭터 상태 초기화
+        pl.second->moveable_ = false;
+        pl.second->stop_skill_time_ = 3.0f;
+        pl.second->obj_state_ = Object_State::STATE_IDLE;
+        pl.second->curr_hp_ = 100;
+        pl.second->needs_update_.store(true);
+
+		pl.second->DoSend(&p);
+	}
+}
+
 
 void GameSession::BroadcastPosition(int player)
 {
@@ -269,32 +298,12 @@ void GameSession::SetCharacter(int room_num, int client_index, bool is_cat)
     // 자신의 플레이어 번호 설정
     player->SendMyPlayerNumber();
 
-    // 새로 접속할 플레이어일시
-    // - 새로운 접속 클라이언트에게 기존 클라이언트 정보 전송
-    // - 기존 클라이언트 정보 새로운 클라이언트에게 전송
-    if (player->character_id_ == NUM_GHOST)
-    {
-        // 동시에 여러 스레드에서 캐릭터 변경
-        std::lock_guard<std::mutex> lock(mt_session_state_);
-        for (auto& pl : players_)
-        {
-            if (client_index == *pl.second->comp_key_.player_index) continue;              // 자기 자신
-            if (pl.second->character_id_ == NUM_GHOST) continue;       		               // 유령 상태    
-            BroadcastAddCharacter(client_index, *pl.second->comp_key_.player_index);
-            BroadcastAddCharacter(*pl.second->comp_key_.player_index, client_index);
-        }
-    }
-
     // 고양이일 때
     if (is_cat) 
     {
         player->SetState(std::make_unique<CatPlayer>());
         player->SetID(NUM_CAT);
         player->Set_OBB(player->character_state_->GetOBB());
-        {
-            std::lock_guard<std::mutex> lock(mt_session_state_);
-            g_sessions[room_num].session_state_ = SESSION_STATE::SESSION_HAS_CAT;
-        }
     }
     // 쥐일 때
     else 
@@ -321,6 +330,19 @@ void GameSession::SetCharacter(int room_num, int client_index, bool is_cat)
 
     // 캐릭터 교체 브로드캐스트
     BroadcastChangeCharacter(client_index, players_[client_index]->character_id_);
+
+    // 세션 꽉 차면 게임 시작
+    {
+        std::lock_guard <std::mutex> lg{ mt_session_state_ };
+        if (session_state_ == SESSION_STATE::SESSION_FULL)
+        {
+            // 게임 시작
+            SendGameStart();
+            // AI 생성
+            InitializeSessionAI();
+        }
+    }
+
     player->RequestUpdate();
 }
 
@@ -431,7 +453,7 @@ void GameSession::InitializeSessionAI()
 	{
         ai_players_.emplace(i, std::make_unique<AIPlayer>());
 		ai_players_[i]->SetID(i);
-        ai_players_[i]->position_ = { 0.0f, FLOOR_Y, 0.0f };
+        ai_players_[i]->position_ = CHARACTER_POS[i];
         ai_players_[i]->SetBoundingSphere();
 	}
     std::cout << "Create Session AI - " << session_num_ << std::endl;

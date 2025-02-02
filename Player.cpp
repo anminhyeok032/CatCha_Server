@@ -257,9 +257,9 @@ bool Player::UpdatePosition(float deltaTime)
 				}
 			}
 		}
-		if (deltaTime > 1.0f)
+		if (deltaTime > UPDATE_PERIOD * 3.0f)
 		{
-			deltaTime = 0.0f;
+			deltaTime = UPDATE_PERIOD * 2.0f;
 		}
 
 		// 물리처리 - 움직였다면 true 반환

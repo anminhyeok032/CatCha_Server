@@ -4,6 +4,7 @@
 extern std::unordered_map<std::string, ObjectOBB> g_obbData;
 extern std::array<std::array<int, 3>, 12> g_triangle_indices;
 extern std::vector<Tile> g_tile_map;
+extern std::vector<int> g_tile_map_walkable_only;
 
 class MapData {
 public:
@@ -20,6 +21,8 @@ public:
     void CalculateWorldAxes(DirectX::BoundingOrientedBox& obb, DirectX::XMVECTOR worldAxes[3]);
     // AI를 위한 타일맵 생성
     void CheckTileMap4AI();
+    // 랜덤한 좌표를 찾을 걸을수 있는 타일맵
+    void BuildWalkableTileMapIndex();
     // 타일맵 출력
     void PrintTileMap();
 };
