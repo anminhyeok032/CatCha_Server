@@ -324,6 +324,15 @@ void Worker()
 				delete ex_over;
 				break;
 			}
+			case IO_TIME:
+			{
+				g_sessions[sessionId].BroadcastTime();
+				delete completionKey->player_index;
+				delete completionKey;
+				delete ex_over;
+				break;
+			}
+
 
 			}
 		}
@@ -387,36 +396,36 @@ void AIUpdateThread()
 	}
 }
 
-//void TimeThread()
-//{
-//	while (true)
-//	{
-//		TIMER_EVENT ev;
-//		auto current_time = std::chrono::system_clock::now();
-//		if (true == timer_queue.try_pop(ev))
-//		{
-//			if (ev.wakeup_time > current_time) {
-//				timer_queue.push(ev);		
-//				std::this_thread::yield();
-//				continue;
-//			}
-//			// TODO : 시간 스레드는 분리할것
-//			// 1초에 한번씩 게임 남은 시간 브로드캐스팅
-//			uint64_t current_time = g_sessions[ev.session_id].GetServerTime();
-//			std::cout << current_time << std::endl;
-//
-//			// 현재 세션 시간 업데이트
-//			g_sessions[ev.session_id].lastupdatetime_ = current_time;
-//			if (g_sessions[ev.session_id].lastupdatetime_ - g_sessions[ev.session_id].last_game_time_ >= 1000)
-//			{
-//				std::cout << "Time : " << g_sessions[ev.session_id].remaining_time_ << std::endl;
-//				g_sessions[ev.session_id].last_game_time_ = current_time;
-//				g_sessions[ev.session_id].remaining_time_--;
-//				g_sessions[ev.session_id].SendTimeUpdate();
-//			}
-//		}
-//	}
-//}
+void TimerThread()
+{
+	while (true)
+	{
+		TIMER_EVENT ev;
+		auto current_time = std::chrono::system_clock::now();
+		if (true == timer_queue.try_pop(ev))
+		{
+			if (ev.wakeup_time > current_time) 
+			{
+				timer_queue.push(ev);		
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				continue;
+			}
+			else
+			{
+				Over_IO* over = new Over_IO;
+				over->io_key_ = IO_TIME;
+				int* time = new int(-1);
+				CompletionKey* completion_key = new CompletionKey{ &ev.session_id, time };
+				PostQueuedCompletionStatus(g_h_iocp, 1, reinterpret_cast<ULONG_PTR>(completion_key), &over->over_);
+			}
+		}
+		else
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			continue;
+		}
+	}
+}
 
 int main()
 {
@@ -467,7 +476,7 @@ int main()
 	int others_thr_num = 0;
 	std::thread update_thread(UpdateThread);
 	std::thread update_thread2(UpdateThread);
-	//std::thread timer_thread(TimeThread);
+	std::thread timer_thread(TimerThread);
 	
 	std::thread AI_thread(AIUpdateThread);
 	others_thr_num = 3;
@@ -492,7 +501,7 @@ int main()
 	}
 	update_thread.join();
 	update_thread2.join();
-	//timer_thread.join();
+	timer_thread.join();
 	AI_thread.join();
 
 

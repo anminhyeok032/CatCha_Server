@@ -57,7 +57,6 @@ void GameSession::UpdateAI()
         {
             need_update_send = true;
             move_AIs |= (1 << pl.first);
-            //std::cout << "Player " << pl.first << " Move" << std::endl;
             //std::cout << "Position : " << pl.second->position_.x << ", " << pl.second->position_.y << ", " << pl.second->position_.z << std::endl;
         }
     }
@@ -85,29 +84,18 @@ void GameSession::SendPlayerUpdate(int move_players)
     PostQueuedCompletionStatus(g_h_iocp, 1, reinterpret_cast<ULONG_PTR>(completion_key), &over->over_);
 }
 
-void GameSession::SendTimeUpdate()
+
+void GameSession::BroadcastGameStart()
 {
-    SC_TIME_PACKET p;
-    p.size = sizeof(p);
-    p.type = SC_TIME;
-    p.time = remaining_time_;
-
-    for (auto& pl : players_)
-    {
-        pl.second->DoSend(&p);
-    }
-
-    TIMER_EVENT ev{ std::chrono::system_clock::now(), session_num_ };
-    timer_queue.push(ev);
-
-}
-
-void GameSession::SendGameStart()
-{
-    SC_GAME_START_PACKET p;
+    SC_GAME_STATE_PACKET p;
 	p.size = sizeof(p);
 	p.type = SC_GAME_START;
 
+    // Timer 스레드 시작
+    remaining_time_ = GAME_TIME + FREEZING_TIME;
+    BroadcastTime();
+
+    // 플레이어 정보 초기화
 	for (auto& pl : players_)
 	{
         // 캐릭터 정보 다시 초기화
@@ -122,7 +110,7 @@ void GameSession::SendGameStart()
 
         // 캐릭터 상태 초기화
         pl.second->moveable_ = false;
-        pl.second->stop_skill_time_ = 3.0f;
+        pl.second->stop_skill_time_ = static_cast<float>(FREEZING_TIME);
         pl.second->obj_state_ = Object_State::STATE_IDLE;
         pl.second->curr_hp_ = 100;
         pl.second->needs_update_.store(true);
@@ -282,6 +270,29 @@ void GameSession::BroadcastAIPostion(int num)
     }
 }
 
+void GameSession::BroadcastTime()
+{
+    SC_TIME_PACKET p;
+    p.size = sizeof(p);
+    p.type = SC_TIME;
+    p.time = remaining_time_--;
+
+    for (auto& pl : players_)
+    {
+        pl.second->DoSend(&p);
+    }
+    
+    if (remaining_time_ > 0)
+    {
+        TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(1000), session_num_ };
+        timer_queue.push(ev);
+    }
+    else
+    {
+        // TODO : 게임 종료 로직 실행
+    }
+}
+
 uint64_t GameSession::GetServerTime()
 {
     // 서버 시간 가져오기
@@ -337,7 +348,7 @@ void GameSession::SetCharacter(int room_num, int client_index, bool is_cat)
         if (session_state_ == SESSION_STATE::SESSION_FULL)
         {
             // 게임 시작
-            SendGameStart();
+            BroadcastGameStart();
             // AI 생성
             InitializeSessionAI();
         }

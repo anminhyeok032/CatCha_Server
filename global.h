@@ -37,6 +37,8 @@ constexpr int SESSION_MAX_NPC = 4;
 
 constexpr int MAX_USER = SESSION_MAX_USER * 1000;
 constexpr int MAX_NPC = 4000;
+constexpr short GAME_TIME = 300;
+constexpr short FREEZING_TIME = 3;				// ∏ÿ√„ ∞Ì¡§ Ω√∞£
 
 // ∞Ì¡§ Ω√∞£ Ω∫≈‹ º≥¡§ (1/60√ )
 constexpr float FIXED_TIME_STEP = 1.0f / 60.0f;
@@ -69,7 +71,8 @@ enum IO_TYPE
 	IO_SEND,
 	IO_RECV,
 	IO_MOVE,
-	IO_AI_MOVE
+	IO_AI_MOVE,
+	IO_TIME
 };
 
 enum class Action 
@@ -341,7 +344,7 @@ static DirectX::XMFLOAT3 operator*(float scalar, const DirectX::XMFLOAT3& a) {
 //==========================
 // Cheese Data
 //==========================
-constexpr int CHEESE_NUM = 5;
+constexpr int CHEESE_NUM = 4;
 constexpr float CHEESE_SCALE = 1.0f;
 
 extern const DirectX::XMFLOAT3 CHEESE_POS[CHEESE_NUM];

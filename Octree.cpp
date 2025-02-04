@@ -4,7 +4,7 @@ UINT vexel_count = 0;
 
 const DirectX::XMFLOAT3 CHEESE_POS[CHEESE_NUM] =
 {
-    DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f),
+    //DirectX::XMFLOAT3(169.475f, 10.049f, 230.732f),
     DirectX::XMFLOAT3(441.877f, 15.263f, 466.983f),
     DirectX::XMFLOAT3(135.288f, 21.432f, -504.089f),
     DirectX::XMFLOAT3(-550.68f, -8.712f, 468.083f),
