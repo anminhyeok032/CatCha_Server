@@ -85,7 +85,7 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 		}
 
         // 충돌 체크 횟수를 줄이기 위한 BoundingSphere로 먼저 체크
-        if (false == player_sphere_.Intersects(object.second.obb))
+        if (false == player_sphere_.Intersects(object.obb))
         {
             continue;
         }
@@ -95,7 +95,7 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
         // 가장 가까운 면 normal 벡터
         DirectX::XMVECTOR closest_normal = DirectX::XMVectorZero();
 
-        if (false == object.second.obb.Intersects(pred_obb))
+        if (false == object.obb.Intersects(pred_obb))
         {
             continue;
         }
@@ -108,11 +108,11 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 
         // 부딪힌 물체 OBB 꼭짓점 배열
         DirectX::XMFLOAT3 corners[8];
-        object.second.obb.GetCorners(corners);
+        object.obb.GetCorners(corners);
 
         // **1. 위/아래 면 검사**
         // velocity의 y축만 사용
-        DirectX::XMVECTOR d = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&object.second.obb.Center), currentPos);
+        DirectX::XMVECTOR d = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&object.obb.Center), currentPos);
         DirectX::XMVECTOR check_d = DirectX::XMVectorSet(0.0f, DirectX::XMVectorGetY(d), 0.0f, 0.0f);
         if (DirectX::XMVectorGetX(DirectX::XMVector3Length(check_d)) > 0.0001f)
         {
@@ -189,7 +189,7 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 
         // 충돌후 관통된 깊이를 구해 깊이만큼 벡터로 튀어나오게 계산        
         // 충돌 깊이 보정 벡터 계산
-        float depth = CalculatePenetrationDepth(object.second, normalized_closest_normal);
+        float depth = CalculatePenetrationDepth(object, normalized_closest_normal);
         DirectX::XMVECTOR depth_delta = DirectX::XMVectorZero();
         if (depth > 0.00001f)
         {
@@ -469,8 +469,9 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
         // 환생 실패시
         else
         {
-            // TODO : 종료 검사 로직 추가 
             player->stop_skill_time_ = 10000.0f;
+            // 사망시 생존 목록에서 삭제
+            g_sessions[*player->comp_key_.session_id].alive_mouse_.erase(*player->comp_key_.player_index);
         }
 	}
 

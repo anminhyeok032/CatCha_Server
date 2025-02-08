@@ -33,13 +33,22 @@ bool MapData::LoadMapData(const std::string& filePath)
     DirectX::XMFLOAT3 extents = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
     DirectX::XMFLOAT4 rotation = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
+    g_obbData.clear();
+
     while (std::getline(file, line))
     {
         if (line.empty())
         {
             currentOBB.obb = DirectX::BoundingOrientedBox(position, extents, rotation);
             CalculateWorldAxes(currentOBB.obb, currentOBB.worldAxes);
-            g_obbData.emplace(currentOBB.name, std::move(currentOBB));
+            if (currentOBB.name != "Escape")
+            {
+                g_obbData.emplace_back(std::move(currentOBB));
+            }
+            else
+            {
+                g_EscapeOBB = currentOBB.obb;
+            }
             currentOBB = ObjectOBB();  // 다음 객체를 위해 초기화
             continue;
         }
@@ -80,7 +89,14 @@ bool MapData::LoadMapData(const std::string& filePath)
     {
         currentOBB.obb = DirectX::BoundingOrientedBox(position, extents, rotation);
         CalculateWorldAxes(currentOBB.obb, currentOBB.worldAxes);
-        g_obbData.emplace(currentOBB.name, std::move(currentOBB));
+        if (currentOBB.name != "Escape")
+        {
+            g_obbData.emplace_back(std::move(currentOBB));
+        }
+        else
+        {
+            g_EscapeOBB = currentOBB.obb;
+        }
     }
 
     file.close();
@@ -165,7 +181,7 @@ void MapData::CheckTileMap4AI()
 
     for (const auto& object : g_obbData)
     {
-        if (object.second.name == "Ground-0_OBB") continue;
+        if (object.name == "Ground-0_OBB") continue;
 
         for (auto& tile : g_tile_map)
         {
@@ -180,7 +196,7 @@ void MapData::CheckTileMap4AI()
                 DirectX::XMFLOAT3(tile_center_x, FLOOR_Y, tile_center_z),
                 DirectX::XMFLOAT3(TILE_SIZE / 2.0f, 2.5f, TILE_SIZE / 2.0f));
 
-            if (true == object.second.obb.Intersects(tile_aabb))
+            if (true == object.obb.Intersects(tile_aabb))
             {
                 tile.walkable = false;
             }

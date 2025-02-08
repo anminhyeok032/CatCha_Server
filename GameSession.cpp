@@ -3,6 +3,7 @@
 #include "CatPlayer.h"
 #include "MousePlayer.h"
 #include "AIPlayer.h"
+#include "MapData.h"
 
 void GameSession::Update()
 {
@@ -33,13 +34,19 @@ void GameSession::Update()
     // 움직임 업데이트가 필요할때만 클라이언트에게 브로드캐스팅
     if (true == need_update_send)
     {
-        SendPlayerUpdate(move_players);
+        RequestSendPlayerUpdate(move_players);
     }
-    // 정해진 주기로 실행하기 위해 queue에 다시 담기
-    TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(UPDATE_PERIOD_INT), session_num_ };
-    commandQueue.push(ev);
+
+    // 게임 종료가 안되었으면 다시 업데이트
+    if (true == CheckGameOver())
+    {
+        // 정해진 주기로 실행하기 위해 queue에 다시 담기
+        TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(UPDATE_PERIOD_INT), session_num_ };
+        commandQueue.push(ev);
+    }
     
 }
+
 
 void GameSession::UpdateAI()
 {
@@ -67,7 +74,7 @@ void GameSession::UpdateAI()
     // 움직임 업데이트가 필요할때만 클라이언트에게 브로드캐스팅
     if (true == need_update_send)
     {
-        SendAIUpdate(move_AIs);
+        RequestSendAIUpdate(move_AIs);
     }
     // 정해진 주기로 실행하기 위해 queue에 다시 담기
     TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(AI_UPDATE_PERIOD_INT / 2), session_num_ };
@@ -75,12 +82,22 @@ void GameSession::UpdateAI()
 }
 
 
-void GameSession::SendPlayerUpdate(int move_players)
+void GameSession::RequestSendPlayerUpdate(int move_players)
 {
     Over_IO* over = new Over_IO;
     over->io_key_ = IO_MOVE;
     int* players = new int(move_players);
     CompletionKey* completion_key = new CompletionKey{ &session_num_, players };
+    PostQueuedCompletionStatus(g_h_iocp, 1, reinterpret_cast<ULONG_PTR>(completion_key), &over->over_);
+}
+
+
+void GameSession::RequestSendGameEvent(GAME_EVENT ge)
+{
+    Over_IO* over = new Over_IO;
+    over->io_key_ = IO_GAME_EVENT;
+    int* game_event = new int(static_cast<int>(ge));
+    CompletionKey* completion_key = new CompletionKey{ &session_num_, game_event };
     PostQueuedCompletionStatus(g_h_iocp, 1, reinterpret_cast<ULONG_PTR>(completion_key), &over->over_);
 }
 
@@ -230,12 +247,12 @@ void GameSession::BroadcastAddCharacter(int player_num, int recv_index)
     players_[recv_index]->DoSend(&p);
 }
 
-void GameSession::BroadcastRemoveVoxelSphere(int cheese_num, const DirectX::XMFLOAT3& center)
+void GameSession::BroadcastRemoveVoxelSphere(int cheese_num, const DirectX::XMFLOAT3& center, bool is_removed_all)
 {
     SC_REMOVE_VOXEL_SPHERE_PACKET p;
 	p.size = sizeof(p);
 	p.type = SC_REMOVE_VOXEL_SPHERE;
-	p.cheese_num = cheese_num;
+	p.cheese_num = (static_cast<unsigned char>(cheese_num) << 1) | (is_removed_all ? 1 : 0);    // 비트 맨끝에 모두 삭제됐는지 파싱
 	p.center_x = center.x;
 	p.center_y = center.y;
 	p.center_z = center.z;
@@ -246,7 +263,7 @@ void GameSession::BroadcastRemoveVoxelSphere(int cheese_num, const DirectX::XMFL
 	}
 }
 
-void GameSession::SendAIUpdate(int move_AIs)
+void GameSession::RequestSendAIUpdate(int move_AIs)
 {
     Over_IO* over = new Over_IO;
     over->io_key_ = IO_AI_MOVE;
@@ -289,9 +306,73 @@ void GameSession::BroadcastTime()
     }
     else
     {
-        // TODO : 게임 종료 로직 실행
+        // 게임 종료
+        CheckResult();
     }
 }
+
+void GameSession::BroadcastDoorOpen()
+{
+    SC_GAME_STATE_PACKET p;
+    p.size = sizeof(p);
+    p.type = SC_GAME_OPEN_DOOR;
+    
+    for (auto& pl : players_)
+    {
+        pl.second->DoSend(&p);
+    }
+
+    std::cout << "[ " << session_num_ << " ] - 치즈 다먹어서 문 열림" << std::endl;
+    is_door_open_ = true;
+}
+
+void GameSession::BroadcastCatWin()
+{
+    std::cout << "[ " << session_num_ << " ] - CAT PLAYER WIN" << std::endl;
+    SC_GAME_STATE_PACKET p;
+    p.size = sizeof(p);
+    p.type = SC_GAME_WIN_CAT;
+    for (const auto& pl : players_)
+    {
+        if (pl.second->character_id_ == NUM_CAT)
+        {
+            std::cout << "player win - " << pl.first << std::endl;
+            p.winner = pl.first;
+        }
+    }
+
+    for (auto& pl : players_)
+    {
+        pl.second->DoSend(&p);
+    }
+    
+    // 플레이어 모두 대기 서버로 이동
+    MovePlayerToWaitngSession();
+}
+
+void GameSession::BroadcastMouseWin()
+{
+    std::cout << "[ " << session_num_ << " ] - MOUSE PLAYER WIN" << std::endl;
+    SC_GAME_STATE_PACKET p;
+    p.size = sizeof(p);
+    p.type = SC_GAME_WIN_MOUSE;
+
+    p.winner = 0;
+    for (const auto& pl : escape_mouse_)
+    {
+        std::cout << "player win - " << pl << std::endl;
+        p.winner |= (1 << pl);      // 탈출한 쥐(player_index) 파싱해서 담음
+    }
+
+    for (auto& pl : players_)
+    {
+        pl.second->DoSend(&p);
+    }
+
+    // 플레이어 모두 대기 서버로 이동
+    MovePlayerToWaitngSession();
+}
+
 
 uint64_t GameSession::GetServerTime()
 {
@@ -322,6 +403,9 @@ void GameSession::SetCharacter(int room_num, int client_index, bool is_cat)
         player->SetState(std::make_unique<MousePlayer>());
         player->SetID(GetMouseNum());
         player->Set_OBB(player->character_state_->GetOBB());
+
+        // 살아있는 쥐 목록에 추가
+        alive_mouse_.emplace(client_index, false);
     }
 
     // 새로 접속할 플레이어일시
@@ -438,7 +522,7 @@ void GameSession::CheckAttackedMice()
 void GameSession::DeleteCheeseVoxel(const DirectX::XMFLOAT3& center)
 {
     int cheese_num = 0;
-    DirectX::BoundingSphere sphere{ center, 5.0f };
+    DirectX::BoundingSphere sphere{ center, MOUSE_BITE_SIZE };
     bool is_removed = false;
 
     for (auto& cheese : cheese_octree_)
@@ -446,7 +530,18 @@ void GameSession::DeleteCheeseVoxel(const DirectX::XMFLOAT3& center)
         if (true == cheese.RemoveVoxel(sphere))
         {
             is_removed = true;
-            BroadcastRemoveVoxelSphere(cheese_num, center);
+
+            // 해당 치즈 복셀이 전부 삭제 되었을시,
+            if (true == cheese.IsEmpty())
+            {
+                std::cout << "해당 치즈 전부 삭제 - " << cheese_num << std::endl;
+                broken_cheese_num_.emplace_back(cheese_num);
+                BroadcastRemoveVoxelSphere(cheese_num, center, true);
+            }
+            else
+            {
+                BroadcastRemoveVoxelSphere(cheese_num, center, false);
+            }
         }
         cheese_num++;
     }
@@ -454,6 +549,11 @@ void GameSession::DeleteCheeseVoxel(const DirectX::XMFLOAT3& center)
     if (true == is_removed)
     {
         std::cout << "치즈 삭제 성공" << std::endl;
+        if (broken_cheese_num_.size() >= CHEESE_NUM)
+        {
+            std::cout << "모든 치즈 전부 삭제!" << std::endl;
+            RequestSendGameEvent(GAME_EVENT::GE_OPEN_DOOR);
+        }
     }
 }
 
@@ -471,6 +571,7 @@ void GameSession::InitializeSessionAI()
     TIMER_EVENT ev{ std::chrono::system_clock::now(), session_num_ };
     AI_Queue.push(ev);
 }
+
 
 bool GameSession::RebornToAI(int player_num)
 {
@@ -493,4 +594,100 @@ bool GameSession::RebornToAI(int player_num)
     }
 
     return is_reborn;
+}
+
+bool GameSession::CheckGameOver()
+{
+    bool need_update = true;
+    // 아직 플레이어가 다 안들어왔을때
+    if (players_.size() < SESSION_MAX_USER)
+    {
+        return need_update;
+    }
+    // 살아있는 생쥐가 더이상 없을때
+    if (true == alive_mouse_.empty())
+    {
+        RequestSendGameEvent(GAME_EVENT::GE_WIN_CAT);
+        need_update = false;
+    }
+    else
+    {
+        // 문 열리고 나서 탈출 확인
+        if (true == is_door_open_)
+        {
+
+            bool escape_all = true;
+            for (auto& mouse : alive_mouse_)
+            {
+                if (true == mouse.second)    continue;      // 탈출한 인원은 pass
+
+                DirectX::BoundingSphere sphere{ players_[mouse.first]->position_, 5.0f };
+
+                // 탈출구로 탈출 성공시
+                if (true == g_EscapeOBB.Intersects(sphere))
+                {
+                    std::cout << "player escape - " << mouse.first << std::endl;
+                    mouse.second = true;
+                    players_[mouse.first]->moveable_ = false;
+                    players_[mouse.first]->needs_update_.store(false);
+                    escape_mouse_.push_back(mouse.first);
+                }
+                else
+                {
+                    escape_all = false;
+                }
+
+            }
+
+            // 살아있는 모든 생쥐가 탈출했을시
+            if (true == escape_all)
+            {
+                RequestSendGameEvent(GAME_EVENT::GE_WIN_MOUSE);
+                need_update = false;
+            }
+
+        }
+    }
+    return need_update;
+}
+
+void GameSession::CheckResult()
+{
+    // 탈출한 쥐가 없으면, 고양이 승리
+    if (escape_mouse_.empty())
+    {
+        BroadcastCatWin();
+    }
+    // 탈출한 쥐가 있으면, 쥐 승리
+    else
+    {
+        BroadcastMouseWin();
+    }
+}
+
+void GameSession::MovePlayerToWaitngSession()
+{
+    std::cout << "[ " << session_num_ << " ] - 대기 세션으로 이동" << std::endl;
+    for (int i = 0; i < SESSION_MAX_USER; ++i)
+    {
+        {
+            std::lock_guard<std::mutex> lg{ players_[i]->mt_player_server_state_ };
+            players_[i]->player_server_state_ = PLAYER_STATE::PS_ALLOC;
+            players_[i]->ResetPlayer();
+        }
+        int* temp_session_num = new int(-1);
+        int* client_id = new int(GetWaitingPlayerNum());
+        if (*client_id != -1)
+        {
+            // 새로운 세션으로 임시 세션 플레이어 정보 옮기
+            g_sessions[*temp_session_num].players_.emplace(*client_id, std::move(players_[i]));
+            CompletionKey* completion_key = new CompletionKey{ temp_session_num, client_id };
+            g_sessions[*temp_session_num].players_[*client_id]->SetCompletionKey(*completion_key);
+
+
+            // 대기서버 플레이어 receive
+            g_sessions[*temp_session_num].players_[*client_id]->prev_packet_.clear();
+            g_sessions[*temp_session_num].players_[*client_id]->DoReceive();
+        }
+    }
 }

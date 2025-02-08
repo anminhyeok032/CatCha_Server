@@ -50,6 +50,7 @@ constexpr float CAT_ATTACK_TIME = 1.33333337f / 2.0f;
 constexpr float CAT_PUNCH_POWER = 250.0f;
 constexpr int CAT_ATTACK_DAMAGE = 50;
 constexpr float MOUSE_BITE_TIME = 0.416666657f;
+constexpr float MOUSE_BITE_SIZE = 10.0f;
 
 // AI를 위한 맵 설정
 constexpr float FLOOR_Y = -61.6f;
@@ -72,7 +73,8 @@ enum IO_TYPE
 	IO_RECV,
 	IO_MOVE,
 	IO_AI_MOVE,
-	IO_TIME
+	IO_TIME,
+	IO_GAME_EVENT
 };
 
 enum class Action 
@@ -125,6 +127,12 @@ enum class PLAYER_STATE
 	PS_INGAME
 };
 
+enum class GAME_EVENT
+{
+	GE_OPEN_DOOR,
+	GE_WIN_CAT,
+	GE_WIN_MOUSE
+};
 
 struct TIMER_EVENT {
 	std::chrono::system_clock::time_point wakeup_time;
@@ -161,6 +169,7 @@ constexpr float STOP_THRESHOLD = 0.9f;	// 속도가 이 값보다 작아지면 멈추는 것으�
 
 extern void print_error(const char* msg, int err_no);
 extern int GetSessionNumber(bool is_cat);
+extern int GetWaitingPlayerNum();
 
 //===========================================================
 // Directx12

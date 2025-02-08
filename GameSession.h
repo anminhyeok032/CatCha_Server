@@ -27,8 +27,13 @@ public:
 	std::unordered_map<int, std::unique_ptr<AIPlayer>> ai_players_;		// [key] = player_index <주의* CHARACTER_NUMBER 아님> / [value] = ai_player
 
 	SESSION_STATE session_state_ = SESSION_STATE::SESSION_WAIT;
-
 	std::mutex mt_session_state_;
+
+	std::unordered_map<int, bool> alive_mouse_;							// [key] = 살아있는 생쥐 여부 (player_index) / [value] = 탈출 여부, 생존 여부 - (죽으면 삭제된다)
+	std::vector<int> escape_mouse_;										// 탈출한 생쥐 번호(player_index)
+	std::vector<int> broken_cheese_num_;								// 다먹은 치즈 번호(cheese_num)
+
+	bool is_door_open_ = false;											// 현재 게임에서 문이 열린 상태
 
 	int session_num_ = -1;
 
@@ -105,23 +110,34 @@ public:
 	void BroadcastSync();																// 특정 주기마다 서버와 클라이언트 위치 및 쿼터니언 동기화 브로드캐스팅
 	void BroadcastChangeCharacter(int player_num, int CHARACTER_NUM);					// player_index, 바꿀 Character_number 캐릭터 변경 브로드캐스팅
 	void BroadcastAddCharacter(int player_num, int recv_index);							// 접속한 캐릭터 추가 브로드캐스팅
-	void BroadcastRemoveVoxelSphere(int cheese_num, const DirectX::XMFLOAT3& center);	// 삭제할 치즈와 boundingSphere 중심점 브로드캐스팅
+	void BroadcastRemoveVoxelSphere(
+		int cheese_num, const DirectX::XMFLOAT3& center, bool is_removed_all);			// 삭제할 치즈와 boundingSphere 중심점 브로드캐스팅
 	void BroadcastAIPostion(int num);													// AI 캐릭터 위치 브로드캐스팅
 	void BroadcastTime();																// 게임 시간 브로드 캐스팅
+	void BroadcastDoorOpen();															// 치즈 전부 삭제시 문 열기 브로드 캐스팅
+	void BroadcastCatWin();																// 고양이 승리 패킷 브로드 캐스팅
+	void BroadcastMouseWin();															// 쥐 승리 패킷 브로드 캐스팅
+
 
 	//===========================
 	// IO 스레드로 Send 요청(PQCS)
 	//===========================
-	void SendAIUpdate(int move_AIs);
-	void SendPlayerUpdate(int move_players);
+	void RequestSendAIUpdate(int move_AIs);
+	void RequestSendPlayerUpdate(int move_players);
+	void RequestSendGameEvent(GAME_EVENT ge);
+
 
 	void SetCharacter(int room_num, int client_index, bool is_cat);
 
 	int GetMouseNum();
 	void CheckAttackedMice();
-	void DeleteCheeseVoxel(const DirectX::XMFLOAT3& center);
+	void DeleteCheeseVoxel(const DirectX::XMFLOAT3& center);							// 치즈 삭제 및 전부 삭제시 문 열기
 	void InitializeSessionAI();
 	bool RebornToAI(int player_num);
+
+	bool CheckGameOver();																// 게임 종료 확인
+	void CheckResult();																	// 게임 결과 확인
+	void MovePlayerToWaitngSession();													// 게임 종료 후, 대기 세션으로 옮기는 함수
 };
 
 extern std::unordered_map <int, GameSession> g_sessions;

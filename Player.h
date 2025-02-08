@@ -132,4 +132,5 @@ public:
 	DirectX::XMFLOAT3 GetUp()		const { return up_; }
 	DirectX::XMFLOAT3 GetRight()	const { return right_; }
 
+	void ResetPlayer();
 };

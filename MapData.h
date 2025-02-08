@@ -1,12 +1,14 @@
 #pragma once
 #include "global.h"
 
-extern std::unordered_map<std::string, ObjectOBB> g_obbData;
+extern std::vector<ObjectOBB> g_obbData;
+extern DirectX::BoundingOrientedBox g_EscapeOBB;
 extern std::array<std::array<int, 3>, 12> g_triangle_indices;
 extern std::vector<Tile> g_tile_map;
 extern std::vector<int> g_tile_map_walkable_only;
 
-class MapData {
+class MapData 
+{
 public:
     // 맵 데이터 로드
     bool LoadMapData(const std::string& filePath);

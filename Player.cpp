@@ -428,3 +428,39 @@ void Player::MoveRight()
 {
 	velocity_vector_ = MathHelper::Add(GetVelocity(), GetRight(), acceleration_);
 }
+
+void Player::ResetPlayer()
+{
+	curr_hp_ = 0;					// 현재 체력
+	reborn_ai_character_id_ = -1;	// 부활시킬 AI 캐릭터 번호
+
+	// physics
+	speed_ = 0.0f;				// 현재 속도
+
+	// 애니메이션 동기화 관련 변수들
+	on_ground_ = false;
+	obj_state_ = Object_State::STATE_IDLE;
+	// 움직임 업데이트가 필요할때
+	force_move_update_ = false;
+
+	moveable_ = true;
+	stop_skill_time_ = 0.0f;
+
+	direction_vector_ = DirectX::XMFLOAT3();
+	velocity_vector_ = DirectX::XMFLOAT3();
+	force_vector_ = DirectX::XMFLOAT3();
+	depth_delta_ = DirectX::XMFLOAT3();
+
+	player_pitch_ = 0.0f;
+	prev_player_pitch_ = 0.0f;
+
+	delta_position_ = DirectX::XMFLOAT3();
+
+	character_state_.reset();
+
+	// 플레이어 업데이트 여부
+	needs_update_.store(false);
+
+	// bite시 생기는 구의 중점
+	bite_center_ = DirectX::XMFLOAT3();
+}

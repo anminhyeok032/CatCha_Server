@@ -1,3 +1,8 @@
+Object Name: Escape
+Position: 601.1519, 37.69776, -124.2961
+Rotation: 0, 0, 0, 1
+Extents: 136.97111, 134.2054, 63.80287
+
 Object Name: Sofa-0_OBB
 Position: -137.1706, -2.19342, -284.5263
 Rotation: 5.760117E-08, -0.7071066, 5.760115E-08, 0.7071069
@@ -289,9 +294,9 @@ Rotation: -1.569582E-07, 0, 0, 1
 Extents: 17.56684, 138.9294, 29.65136
 
 Object Name: Walls-1_OBB
-Position: -412.0812, 54.30133, 18.96183
+Position: -409.0493, 54.30133, 18.53116
 Rotation: -1.569582E-07, 0, 0, 1
-Extents: 183.502, 135.8498, 18.31848
+Extents: 186.534, 135.8498, 22.57743
 
 Object Name: Walls-2_OBB
 Position: 235.1496, 169.9881, -250.8636
@@ -299,14 +304,14 @@ Rotation: -1.569582E-07, 0, 0, 1
 Extents: 52.09978, 20.16285, 14.8215
 
 Object Name: Walls-3_OBB
-Position: 140.8492, 55.03384, -250.8635
+Position: 143.9215, 55.03384, -250.8635
 Rotation: -1.569582E-07, 0, 0, 1
-Extents: 42.14732, 135.1172, 14.8215
+Extents: 45.21988, 135.1172, 14.8215
 
 Object Name: Walls-4_OBB
-Position: 395.0261, 61.72543, -249.9966
+Position: 392.6474, 61.72543, -249.9966
 Rotation: -1.569582E-07, 0, 0, 1
-Extents: 107.5948, 128.4256, 18.95802
+Extents: 109.9734, 128.4256, 18.958
 
 Object Name: Walls-5_OBB
 Position: 84.18065, 170.2188, -121.1076
@@ -314,14 +319,14 @@ Rotation: -1.569582E-07, 0, 0, 1
 Extents: 14.84864, 19.93244, 56.01377
 
 Object Name: Walls-6_OBB
-Position: 82.06529, 54.79171, -364.3592
+Position: 83.7795, 54.79171, -362.0249
 Rotation: -1.569582E-07, 0, 0, 1
-Extents: 16.96347, 135.3593, 187.3948
+Extents: 21.49425, 135.3593, 189.7292
 
 Object Name: Walls-7_OBB
-Position: 82.4795, 54.0054, -32.69588
+Position: 85.94457, 54.0054, -36.30334
 Rotation: -1.569582E-07, 0, 0, 1
-Extents: 16.54941, 136.1457, 31.85445
+Extents: 20.01395, 136.1457, 35.46187
 
 Object Name: Walls-8_OBB
 Position: 257.9213, 50.69157, 16.04316
@@ -364,9 +369,9 @@ Rotation: -1.569582E-07, 0, 0, 1
 Extents: 53.7428, 20.83683, 15.1002
 
 Object Name: Walls-16_OBB
-Position: -96.32205, 51.60331, 16.463
+Position: -97.67732, 51.60331, 16.463
 Rotation: -1.569582E-07, 0, 0, 1
-Extents: 31.95344, 138.5478, 18.12065
+Extents: 33.30863, 138.5478, 18.12065
 
 Object Name: Walls-17_OBB
 Position: -46.64476, 68.96243, 65.00426
@@ -719,9 +724,9 @@ Rotation: -1.569582E-07, 0, 0, 1
 Extents: 8.121156, 31.28358, 8.121156
 
 Object Name: Door_003-0_OBB
-Position: 507.158, 35.79522, -124.4567
+Position: 502.6887, 35.79522, -124.4567
 Rotation: -1.569582E-07, 0, 0, 1
-Extents: 7.786801, 120.5136, 63.55975
+Extents: 5.25608, 120.5136, 63.55975
 
 Object Name: Ground-0_OBB
 Position: 54.19102, -366.5851, 66.18756

@@ -17,7 +17,8 @@ std::unordered_map<int, GameSession> g_sessions;
 concurrency::concurrent_priority_queue<TIMER_EVENT> commandQueue;
 concurrency::concurrent_priority_queue<TIMER_EVENT> AI_Queue;
 concurrency::concurrent_priority_queue<TIMER_EVENT> timer_queue;
-std::unordered_map<std::string, ObjectOBB> g_obbData;
+std::vector<ObjectOBB> g_obbData;
+DirectX::BoundingOrientedBox g_EscapeOBB;
 VoxelPatternManager g_voxel_pattern_manager;
 
 int GetSessionNumber(bool is_cat)
@@ -124,22 +125,24 @@ int GetSessionNumber(bool is_cat)
 int GetWaitingPlayerNum()
 {
 	int player_num = 0;
-	for (int i = 0; i < MAX_USER; i++)
 	{
-		auto search = g_sessions[-1].players_.find(i);
-		if (search != g_sessions[-1].players_.end())
+		std::lock_guard<std::mutex> lg(g_sessions[-1].mt_session_state_);
+		for (int i = 0; i < MAX_USER; i++)
 		{
-			player_num++;
-			continue;
-		}
-		else
-		{
-			g_sessions[-1].players_.emplace(i, std::make_unique<Player>());
-			std::cout << "Player [" << i << "] is waiting" << std::endl;
-			return player_num;
+			auto search = g_sessions[-1].players_.find(i);
+			if (search != g_sessions[-1].players_.end())
+			{
+				player_num++;
+				continue;
+			}
+			else
+			{
+				g_sessions[-1].players_.emplace(i, std::make_unique<Player>());
+				std::cout << "Player [" << i << "] is waiting" << std::endl;
+				return player_num;
+			}
 		}
 	}
-
 	std::cout << "Player [" << player_num << "] is waiting" << std::endl;
 	return player_num;
 }
@@ -332,7 +335,34 @@ void Worker()
 				delete ex_over;
 				break;
 			}
+			case IO_GAME_EVENT:
+			{
+				switch (static_cast<GAME_EVENT>(playerIndex))
+				{
+				case GAME_EVENT::GE_OPEN_DOOR:
+				{
+					g_sessions[sessionId].BroadcastDoorOpen();
+					break;
+				}
+				case GAME_EVENT::GE_WIN_CAT:
+				case GAME_EVENT::GE_WIN_MOUSE:
+				{
+					g_sessions[sessionId].CheckResult();
+					break;
+				}
+				default:
+					std::cout << "Error : IO thread IO_GAME_EVENT" << std::endl;
+					break;
+				}
 
+				break;
+			}
+
+			default:
+			{
+				std::cout << "Error : IO thread ex_over->io_key_" << std::endl;
+				break;
+			}
 
 			}
 		}
@@ -473,20 +503,20 @@ int main()
 	// 임시 저장 세션
 	g_sessions.try_emplace(-1, -1);
 
-	int others_thr_num = 0;
+
 	std::thread update_thread(UpdateThread);
 	std::thread update_thread2(UpdateThread);
 	std::thread timer_thread(TimerThread);
 	
 	std::thread AI_thread(AIUpdateThread);
-	others_thr_num = 3;
+
 
 	// 내 cpu 코어 개수만큼의 스레드 생성
 	int num_threads = std::thread::hardware_concurrency();
 	if(num_threads <= 0)
 	{
 		std::cout << "Error: No available threads" << std::endl;
-		return -1;
+		return 0;
 	}
 
 	std::vector<std::thread> worker_threads;
