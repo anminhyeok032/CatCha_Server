@@ -307,10 +307,15 @@ void GameSession::BroadcastTime()
         TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(1000), session_num_ };
         timer_queue.push(ev);
     }
-    else
+    else if (remaining_time_ <= 0 && true == is_game_start_)
     {
+        is_game_start_ = false;
         // 게임 종료
-        CheckResult();
+        RequestSendGameEvent(GAME_EVENT::GE_TIME_OVER);
+    }
+    else 
+    {
+        std::cout << "[ " << session_num_ << " ] - Time Thread 정지" << std::endl;
     }
 }
 

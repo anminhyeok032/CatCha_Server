@@ -344,6 +344,7 @@ void Worker()
 					g_sessions[sessionId].BroadcastDoorOpen();
 					break;
 				}
+				case GAME_EVENT::GE_TIME_OVER:
 				case GAME_EVENT::GE_WIN_CAT:
 				case GAME_EVENT::GE_WIN_MOUSE:
 				{
