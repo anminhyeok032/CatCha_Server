@@ -6,30 +6,33 @@ constexpr int PASSWORD_SIZE = 25;
 
 // Packet ID
 // Client -> Server
-constexpr char CS_LOGIN = 0;
-constexpr char CS_MOVE = 1;
-constexpr char CS_TIME = 2;
-constexpr char CS_ROTATE = 3;
-constexpr char CS_SYNC_PLAYER = 4;
-constexpr char CS_CHOOSE_CHARACTER = 5;
-constexpr char CS_VOXEL_LOOK = 6;
+constexpr char CS_LOGIN					= 0;
+constexpr char CS_MOVE					= 1;
+constexpr char CS_TIME					= 2;
+constexpr char CS_ROTATE				= 3;
+constexpr char CS_SYNC_PLAYER			= 4;
+constexpr char CS_CHOOSE_CHARACTER		= 5;
+constexpr char CS_VOXEL_LOOK			= 6;
 
 // Server -> Client
-constexpr char SC_LOGIN_INFO = 11;
-constexpr char SC_ADD_PLAYER = 12;
-constexpr char SC_REMOVE_PLAYER = 13;
-constexpr char SC_MOVE_PLAYER = 14;
-constexpr char SC_CHANGE_CHARACTER = 15;
-constexpr char SC_TIME = 16;
-constexpr char SC_SYNC_PLAYER = 17;
-constexpr char SC_RANDOM_VOXEL_SEED = 18;
-constexpr char SC_REMOVE_VOXEL_SPHERE = 19;
-constexpr char SC_SET_MY_ID = 20;
-constexpr char SC_GAME_START = 21;
-constexpr char SC_GAME_OPEN_DOOR = 22;
-constexpr char SC_GAME_WIN_CAT = 23;
-constexpr char SC_GAME_WIN_MOUSE = 24;
-constexpr char SC_AI_MOVE = 25;
+constexpr char SC_LOGIN_INFO			= 11;
+constexpr char SC_ADD_PLAYER			= 12;
+constexpr char SC_REMOVE_PLAYER			= 13;
+constexpr char SC_MOVE_PLAYER			= 14;
+constexpr char SC_CHANGE_CHARACTER		= 15;
+constexpr char SC_TIME					= 16;
+constexpr char SC_SYNC_PLAYER			= 17;
+constexpr char SC_RANDOM_VOXEL_SEED		= 18;
+constexpr char SC_REMOVE_VOXEL_SPHERE	= 19;
+constexpr char SC_SET_MY_ID				= 20;
+constexpr char SC_GAME_START			= 21;
+constexpr char SC_GAME_OPEN_DOOR		= 22;
+constexpr char SC_GAME_WIN_CAT			= 23;
+constexpr char SC_GAME_WIN_MOUSE		= 24;
+constexpr char SC_AI_MOVE				= 25;
+constexpr char SC_PLAYER_ESCAPE			= 26;
+constexpr char SC_PLAYER_REBORN			= 27;
+constexpr char SC_PLAYER_DEAD			= 28;
 
 #pragma pack (push, 1)
 ///////////////////////////////////////////////
@@ -173,5 +176,11 @@ struct SC_AI_MOVE_PACKET {
 	char			type;
 	int				id;
 	float			x, z;
+};
+
+struct SC_PLAYER_STATE_PACKET {
+	unsigned char	size;
+	char			type;
+	int				id;
 };
 #pragma pack (pop)

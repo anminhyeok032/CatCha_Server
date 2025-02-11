@@ -350,6 +350,21 @@ void Worker()
 					g_sessions[sessionId].CheckResult();
 					break;
 				}
+				case GAME_EVENT::GE_ESCAPE:
+				{
+					g_sessions[sessionId].BroadcastEscape();
+					break;
+				}
+				case GAME_EVENT::GE_REBORN:
+				{
+					g_sessions[sessionId].BroadcastReborn();
+					break;
+				}				
+				case GAME_EVENT::GE_DEAD:
+				{
+					g_sessions[sessionId].BroadcastDead();
+					break;
+				}
 				default:
 					std::cout << "Error : IO thread IO_GAME_EVENT" << std::endl;
 					break;

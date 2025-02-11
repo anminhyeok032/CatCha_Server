@@ -108,6 +108,9 @@ void GameSession::BroadcastGameStart()
 	p.size = sizeof(p);
 	p.type = SC_GAME_START;
 
+    // 게임 시작으로 변경
+    is_game_start_ = true;
+
     // Timer 스레드 시작
     remaining_time_ = GAME_TIME + FREEZING_TIME;
     BroadcastTime();
@@ -299,7 +302,7 @@ void GameSession::BroadcastTime()
         pl.second->DoSend(&p);
     }
     
-    if (remaining_time_ > 0)
+    if (remaining_time_ > 0 && true == is_game_start_)
     {
         TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(1000), session_num_ };
         timer_queue.push(ev);
@@ -371,6 +374,56 @@ void GameSession::BroadcastMouseWin()
 
     // 플레이어 모두 대기 서버로 이동
     MovePlayerToWaitngSession();
+}
+
+void GameSession::BroadcastEscape()
+{
+    SC_PLAYER_STATE_PACKET p;
+    p.size = sizeof(p);
+    p.type = SC_PLAYER_ESCAPE;
+
+    for (auto& mouse : escape_mouse_)
+    {
+        if (false == players_[mouse]->request_send_escape_)    continue;  // 보내기 요청 있는 애만
+        players_[mouse]->request_send_escape_ = false;
+        for (auto& pl : players_)
+        {
+            p.id = mouse;
+            pl.second->DoSend(&p);
+        }
+    }
+}
+
+void GameSession::BroadcastReborn()
+{
+    SC_PLAYER_STATE_PACKET p;
+    p.size = sizeof(p);
+    p.type = SC_PLAYER_REBORN;
+
+    // 자기 자신에게만 보냄
+    for (auto& pl : players_)
+    {
+        if (false == pl.second->request_send_reborn_)    continue;  // 보내기 요청 있는 애만
+        pl.second->request_send_reborn_ = false;
+        p.id = pl.first;
+        pl.second->DoSend(&p);
+    }
+}
+
+void GameSession::BroadcastDead()
+{
+    SC_PLAYER_STATE_PACKET p;
+    p.size = sizeof(p);
+    p.type = SC_PLAYER_DEAD;
+
+    // 자기 자신에게만 보냄
+    for (auto& pl : players_)
+    {
+        if (false == pl.second->request_send_dead_)    continue;  // 보내기 요청 있는 애만
+        pl.second->request_send_dead_ = false;
+        p.id = pl.first;
+        pl.second->DoSend(&p);
+    }
 }
 
 
@@ -476,42 +529,38 @@ int GameSession::GetMouseNum()
 
 void GameSession::CheckAttackedMice()
 {
-    // 모든 쥐 검사
-    for (auto& mouse : players_)
+    // 아직 게임 시작 안되었을때,
+    if (false == is_game_start_)
     {
-        if(mouse.second->character_id_ == NUM_CAT) continue; // 고양이는 제외
+        return;
+    }
 
-        for (const auto& mouse_attacked : cat_attacked_player_)
-        {
-            // 공격 받은 쥐
-            if (mouse_attacked.second == true)
-            {
-                // 자기 자신이면 중복 공격 방지
-                if (mouse.second->character_id_ == mouse_attacked.first)
-                {
-                    return;
-                }
-            }
-        }
+    // 모든 쥐 검사
+    for (auto& mouse : alive_mouse_)
+    {
+        if (mouse.second == true)                                               continue;           // 탈출한 쥐는 제외
+        if (true == cat_attacked_player_[players_[mouse.first]->character_id_]) continue;           // 이미 맞은 쥐에 속하면
+        if (players_[mouse.first]->obj_state_ == Object_State::STATE_DEAD)      continue;           // 죽은 쥐 제외
+        
 
         // 고양이의 공격 OBB와 쥐의 OBB 충돌 검사
-        if (mouse.second->character_state_)
+        if (players_[mouse.first]->character_state_)
         {
-            if (true == cat_attack_obb_.Intersects(mouse.second->character_state_->GetOBB()))
+            if (true == cat_attack_obb_.Intersects(players_[mouse.first]->character_state_->GetOBB()))
             {
 
-                mouse.second->velocity_vector_.x = cat_attack_direction_.x * CAT_PUNCH_POWER;
-                mouse.second->velocity_vector_.y = CAT_PUNCH_POWER / 2.0f;
-                mouse.second->velocity_vector_.z = cat_attack_direction_.z * CAT_PUNCH_POWER;
-                std::cout << "Cat Attack Success : mouse - " << mouse.second->character_id_ << std::endl;
-                cat_attacked_player_[mouse.second->character_id_] = true;
+                players_[mouse.first]->velocity_vector_.x = cat_attack_direction_.x * CAT_PUNCH_POWER;
+                players_[mouse.first]->velocity_vector_.y = CAT_PUNCH_POWER / 2.0f;
+                players_[mouse.first]->velocity_vector_.z = cat_attack_direction_.z * CAT_PUNCH_POWER;
+                std::cout << "Cat Attack Success : mouse - " << players_[mouse.first]->character_id_ << std::endl;
+                cat_attacked_player_[players_[mouse.first]->character_id_] = true;
 
-                if (mouse.second->curr_hp_ > 0)
+                if (players_[mouse.first]->curr_hp_ > 0)
                 {
-                    mouse.second->curr_hp_ -= CAT_ATTACK_DAMAGE;
+                    players_[mouse.first]->curr_hp_ -= CAT_ATTACK_DAMAGE;
                 }
 
-                mouse.second->RequestUpdate();
+                players_[mouse.first]->RequestUpdate();
             }
         }
     }
@@ -521,6 +570,12 @@ void GameSession::CheckAttackedMice()
 
 void GameSession::DeleteCheeseVoxel(const DirectX::XMFLOAT3& center)
 {
+    // 아직 게임 시작 안되었을때,
+    if (false == is_game_start_)
+    {
+        return;
+    }
+
     int cheese_num = 0;
     DirectX::BoundingSphere sphere{ center, MOUSE_BITE_SIZE };
     bool is_removed = false;
@@ -599,16 +654,37 @@ bool GameSession::RebornToAI(int player_num)
 bool GameSession::CheckGameOver()
 {
     bool need_update = true;
-    // 아직 플레이어가 다 안들어왔을때
-    if (players_.size() < SESSION_MAX_USER)
+    // 아직 게임 시작 안되었을때,
+    if (false == is_game_start_)
     {
         return need_update;
     }
+
+    bool is_everymouse_dead = true;
     // 살아있는 생쥐가 더이상 없을때
-    if (true == alive_mouse_.empty())
+    for (const auto& mouse : alive_mouse_)
     {
-        RequestSendGameEvent(GAME_EVENT::GE_WIN_CAT);
-        need_update = false;
+        if (mouse.second == false)
+        {
+            is_everymouse_dead = false;
+        }
+    }
+    if (true == is_everymouse_dead)
+    {
+        // 탈출한 쥐가 없으면 고양이 승리
+        if (escape_mouse_.empty())
+        {
+            RequestSendGameEvent(GAME_EVENT::GE_WIN_CAT);
+            need_update = false;
+            is_game_start_ = false;
+        }
+        // 탈출한 쥐 존재시 생쥐 승리
+        else
+        {
+            RequestSendGameEvent(GAME_EVENT::GE_WIN_MOUSE);
+            need_update = false;
+            is_game_start_ = false;
+        }
     }
     else
     {
@@ -630,7 +706,9 @@ bool GameSession::CheckGameOver()
                     mouse.second = true;
                     players_[mouse.first]->moveable_ = false;
                     players_[mouse.first]->needs_update_.store(false);
+                    players_[mouse.first]->request_send_escape_ = true;
                     escape_mouse_.push_back(mouse.first);
+                    RequestSendGameEvent(GAME_EVENT::GE_ESCAPE);
                 }
                 else
                 {
@@ -644,6 +722,7 @@ bool GameSession::CheckGameOver()
             {
                 RequestSendGameEvent(GAME_EVENT::GE_WIN_MOUSE);
                 need_update = false;
+                is_game_start_ = false;
             }
 
         }

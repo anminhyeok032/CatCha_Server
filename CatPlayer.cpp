@@ -454,6 +454,15 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
     {
         player->stop_skill_time_ -= deltaTime;
         need_update = true;
+
+        // 팔을 휘두를때 공격 판정
+        if (player->obj_state_ == Object_State::STATE_ACTION_ONE
+            && player->stop_skill_time_ < CAT_ATTACK_TIME / 2.0f)
+        {
+            // 해당 공격에 맞은 쥐
+            g_sessions[*player->comp_key_.session_id].CheckAttackedMice();
+        }
+
     }
     // 움직이지 못하고, 스킬 시전중에만
     else if(player->stop_skill_time_ < 0.001f && player->moveable_ == false)
@@ -521,8 +530,8 @@ void CatPlayer::ActionOne(Player* player)
     CreateAttackOBB(player, g_sessions[session_id].cat_attack_obb_);
     g_sessions[session_id].cat_attack_ = true;
     
-    // 해당 공격에 맞은 쥐
-    g_sessions[session_id].CheckAttackedMice();
+    //// 해당 공격에 맞은 쥐
+    //g_sessions[session_id].CheckAttackedMice();
 }
 
 

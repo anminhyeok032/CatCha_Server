@@ -49,6 +49,10 @@ public:
 	// 플레이어 업데이트 여부
 	std::atomic<bool> needs_update_{ false };
 
+	bool request_send_escape_ = false;
+	bool request_send_dead_ = false;
+	bool request_send_reborn_ = false;
+
 	// bite시 생기는 구의 중점
 	DirectX::XMFLOAT3 bite_center_ = DirectX::XMFLOAT3();
 

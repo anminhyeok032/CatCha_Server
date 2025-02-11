@@ -33,6 +33,7 @@ public:
 	std::vector<int> escape_mouse_;										// 탈출한 생쥐 번호(player_index)
 	std::vector<int> broken_cheese_num_;								// 다먹은 치즈 번호(cheese_num)
 
+	bool is_game_start_ = false;										// 해당 세션 게임 시작 여부
 	bool is_door_open_ = false;											// 현재 게임에서 문이 열린 상태
 
 	int session_num_ = -1;
@@ -117,14 +118,17 @@ public:
 	void BroadcastDoorOpen();															// 치즈 전부 삭제시 문 열기 브로드 캐스팅
 	void BroadcastCatWin();																// 고양이 승리 패킷 브로드 캐스팅
 	void BroadcastMouseWin();															// 쥐 승리 패킷 브로드 캐스팅
+	void BroadcastEscape();																// 탈출한 쥐 브로드 캐스팅
+	void BroadcastReborn();																// 환생하는 쥐에게 패킷 전송(해당하는 쥐에게만)
+	void BroadcastDead();																// 환샌 불가 죽은 쥐에게 패킷 전송(해당하는 쥐에게만)
 
 
 	//===========================
 	// IO 스레드로 Send 요청(PQCS)
 	//===========================
-	void RequestSendAIUpdate(int move_AIs);
-	void RequestSendPlayerUpdate(int move_players);
-	void RequestSendGameEvent(GAME_EVENT ge);
+	void RequestSendAIUpdate(int move_AIs);												// AI 위치 업데이트 IO에 요청
+	void RequestSendPlayerUpdate(int move_players);										// 플레이어 위치 업데이트 IO에 요청
+	void RequestSendGameEvent(GAME_EVENT ge);											// 게임 이벤트 업데이트 IO에 요청
 
 
 	void SetCharacter(int room_num, int client_index, bool is_cat);

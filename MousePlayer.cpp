@@ -465,6 +465,8 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
         if(true == is_reborn)
 		{
             player->stop_skill_time_ = 5.0f;
+            player->request_send_reborn_ = true;
+            g_sessions[*player->comp_key_.session_id].RequestSendGameEvent(GAME_EVENT::GE_REBORN);
 		}
         // 환생 실패시
         else
@@ -472,6 +474,9 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
             player->stop_skill_time_ = 10000.0f;
             // 사망시 생존 목록에서 삭제
             g_sessions[*player->comp_key_.session_id].alive_mouse_.erase(*player->comp_key_.player_index);
+            player->request_send_dead_ = true;
+            g_sessions[*player->comp_key_.session_id].RequestSendGameEvent(GAME_EVENT::GE_DEAD);
+            player->reborn_ai_character_id_ = -1;
         }
 	}
 

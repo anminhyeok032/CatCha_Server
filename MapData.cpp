@@ -200,6 +200,11 @@ void MapData::CheckTileMap4AI()
             {
                 tile.walkable = false;
             }
+            // AI가 출구로 가지 못하게 설정
+            if (true == g_EscapeOBB.Intersects(tile_aabb))
+            {
+                tile.walkable = false;
+            }
         }
     }
     // walkable이 true인 타일만 담아 사용
