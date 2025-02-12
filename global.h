@@ -51,6 +51,7 @@ constexpr float CAT_PUNCH_POWER = 250.0f;
 constexpr int CAT_ATTACK_DAMAGE = 50;
 constexpr float MOUSE_BITE_TIME = 0.416666657f;
 constexpr float MOUSE_BITE_SIZE = 10.0f;
+constexpr float MOUSE_REBORN_TIME = 5.0f;
 
 // AI를 위한 맵 설정
 constexpr float FLOOR_Y = -61.6f;

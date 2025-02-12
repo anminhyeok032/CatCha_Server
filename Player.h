@@ -13,16 +13,16 @@ public:
 	// 플레이어 정보
 	char name[NAME_SIZE];
 	char password[PASSWORD_SIZE];
-	int	curr_hp_ = 0;	// 현재 체력
+	int	curr_hp_ = 100;	// 현재 체력
 	int reborn_ai_character_id_ = -1;	// 부활시킬 AI 캐릭터 번호
 
 	// physics
 	float speed_ = 0.0f;				// 현재 속도
-	float max_speed_ = 150.f;			// 최대 속도
-	float acceleration_ = 50.0f;		// 가속
-	float deceleration_ = 1000.0f;		// 감속
+	const float max_speed_ = 150.f;			// 최대 속도
+	const float acceleration_ = 50.0f;		// 가속
+	const float deceleration_ = 1000.0f;		// 감속
 
-	float jump_power_ = 400.0f;
+	float jump_power_ = 500.0f;
 
 	// 애니메이션 동기화 관련 변수들
 	bool on_ground_ = false;
@@ -39,8 +39,8 @@ public:
 	DirectX::XMFLOAT3 force_vector_ = DirectX::XMFLOAT3();
 	DirectX::XMFLOAT3 depth_delta_ = DirectX::XMFLOAT3();
 
-	float player_pitch_;
-	float prev_player_pitch_;
+	float player_pitch_ = 0.0f;
+	float prev_player_pitch_ = 0.0f;
 
 	DirectX::XMFLOAT3 delta_position_ = DirectX::XMFLOAT3();
 

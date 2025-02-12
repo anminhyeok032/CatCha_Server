@@ -44,6 +44,10 @@ void GameSession::Update()
         TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(UPDATE_PERIOD_INT), session_num_ };
         commandQueue.push(ev);
     }
+    else
+    {
+        std::cout << "[ " << session_num_ << " ] - Player Update Thread 정지" << std::endl;
+    }
     
 }
 
@@ -76,9 +80,17 @@ void GameSession::UpdateAI()
     {
         RequestSendAIUpdate(move_AIs);
     }
-    // 정해진 주기로 실행하기 위해 queue에 다시 담기
-    TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(AI_UPDATE_PERIOD_INT / 2), session_num_ };
-    AI_Queue.push(ev);
+
+    if (true == is_game_start_)
+    {
+        // 정해진 주기로 실행하기 위해 queue에 다시 담기
+        TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(AI_UPDATE_PERIOD_INT / 2), session_num_ };
+        AI_Queue.push(ev);
+    }
+    else
+    {
+        std::cout << "[ " << session_num_ << " ] - AI Thread 정지" << std::endl;
+    }
 }
 
 

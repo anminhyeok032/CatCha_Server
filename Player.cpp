@@ -431,7 +431,8 @@ void Player::MoveRight()
 
 void Player::ResetPlayer()
 {
-	curr_hp_ = 0;					// 현재 체력
+	character_id_ = NUM_GHOST;
+	curr_hp_ = 100;					// 현재 체력
 	reborn_ai_character_id_ = -1;	// 부활시킬 AI 캐릭터 번호
 
 	// physics
@@ -453,6 +454,17 @@ void Player::ResetPlayer()
 
 	player_pitch_ = 0.0f;
 	prev_player_pitch_ = 0.0f;
+	// 받은 pitch 변화값 총량
+	total_pitch_ = 0;
+
+	rotation_quat_ = { 0, 0, 0, 1 };						// 초기 쿼터니언 (단위 쿼터니언)
+	rotation_matrix_ = MathHelper::Identity_4x4();		// 회전 행렬
+
+	look_ = { 0.0f, 0.0f, 1.0f };
+	up_ = { 0.0f, 1.0f, 0.0f };
+	right_ = { 1.0f, 0.0f, 0.0f };
+
+	dirty_ = false;  // 회전 상태가 변경되었는지 확인
 
 	delta_position_ = DirectX::XMFLOAT3();
 
@@ -463,4 +475,9 @@ void Player::ResetPlayer()
 
 	// bite시 생기는 구의 중점
 	bite_center_ = DirectX::XMFLOAT3();
+
+	// 결과 조건 초기화
+	request_send_escape_ = false;
+	request_send_dead_ = false;
+	request_send_reborn_ = false;
 }

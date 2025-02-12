@@ -212,6 +212,8 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
             // 점프 중 땅에 닿으면 점프 종료로 변환
             if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
             {
+                // 예측된 거리에서 멈추면 떠있기 때문에 (최소 거리-쥐의 중점 높이)를 위치를 내려서 원래 OBB가 충돌한것처럼 만듦
+                player->position_.y -= min_distance - obb_.Extents.y;
                 player->obj_state_ = Object_State::STATE_JUMP_END;
             }
         }
@@ -447,9 +449,9 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
     player->ApplyFriction(deltaTime);
     // 위치 업데이트
     player->position_ = MathHelper::Add(player->position_, player->delta_position_);
-    if (player->position_.y < -62.6f)
+    if (player->position_.y < FLOOR_Y)
     {
-        player->position_.y = -62.59f;
+        player->position_.y = FLOOR_Y;
     }
     //std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
 
@@ -464,7 +466,7 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
         // 환생 성공시
         if(true == is_reborn)
 		{
-            player->stop_skill_time_ = 5.0f;
+            player->stop_skill_time_ = MOUSE_REBORN_TIME;
             player->request_send_reborn_ = true;
             g_sessions[*player->comp_key_.session_id].RequestSendGameEvent(GAME_EVENT::GE_REBORN);
 		}
@@ -501,6 +503,7 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
             player->position_ = g_sessions[*player->comp_key_.session_id].ai_players_[player->reborn_ai_character_id_]->position_;
             player->rotation_quat_ = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
             player->dirty_ = true;
+            player->stop_skill_time_ = 3.0f;
         }
         player->obj_state_ = Object_State::STATE_IDLE;
         need_update = true;
