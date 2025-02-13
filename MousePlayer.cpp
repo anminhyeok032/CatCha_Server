@@ -225,6 +225,16 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
                 DirectX::XMVectorGetX(
                     DirectX::XMVector3Dot(slide_vector, normalized_closest_normal)));
             slide_vector = DirectX::XMVectorSubtract(slide_vector, P);
+
+            // 옆면에 닿으면 벽타기 기능
+            if (DirectX::XMVectorGetY(normalized_closest_normal) > -0.9f)
+            {
+                slide_vector = DirectX::XMVectorSetY(slide_vector, MOUSE_WALL_WALKING_VELOCITY);
+                if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
+                {
+                    player->obj_state_ = Object_State::STATE_MOVE;
+                }
+            }
         }
 
         DirectX::XMStoreFloat3(&player->depth_delta_, depth_delta);
