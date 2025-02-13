@@ -194,6 +194,7 @@ void GameSession::BroadcastPosition(int player)
     // cat_attacked을 최하위 비트에 저장
     p.state = (state_value << 1) 
         | (cat_attacked_player_[pl->character_id_] ? 1 : 0);
+    p.curr_hp = static_cast<unsigned char>(pl->curr_hp_);
 
     if (pl->stop_skill_time_ > 0.001f)
     {

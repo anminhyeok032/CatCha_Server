@@ -128,6 +128,7 @@ struct SC_MOVE_PLAYER_PACKET {
 	float 			x, y, z;						// 움직인 위치
 	float			player_pitch;					// rotate 정보	
 	unsigned char	state;							// Object_State와 is_attacked를 합친 값
+	unsigned char	curr_hp;						// (0~100) current_hp
 };
 
 struct SC_SYNC_PLAYER_PACKET {
