@@ -50,6 +50,10 @@ public:
 
 	// 공격
 	void ActionOne(Player* player) override;
+	// 차징 점프
+	void ChargingJump(Player* player, float jump_power) override;
+	void ActionFourCharging(Player* player, float deltaTime) override;
+
 	// 공격 바운딩 박스 생성
 	void CreateAttackOBB(Player* player, DirectX::BoundingOrientedBox& box);
 	// 공격 바운딩 박스 초기화

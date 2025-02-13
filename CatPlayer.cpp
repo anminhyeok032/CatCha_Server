@@ -17,6 +17,9 @@ void CatPlayer::InputKey(Player* player, uint8_t key_)
         case Action::ACTION_ONE:
             //ActionOne(player);
             break;
+        case Action::ACTION_FIVE:
+            is_key_pressed = true;
+            break;
         default:
             break;
         }
@@ -532,6 +535,49 @@ void CatPlayer::ActionOne(Player* player)
     
     //// 해당 공격에 맞은 쥐
     //g_sessions[session_id].CheckAttackedMice();
+}
+
+void CatPlayer::ChargingJump(Player* player, float jump_power)
+{
+    if (player->obj_state_ == Object_State::STATE_ACTION_FOUR)
+    {
+        //std::cout << "점프!!!" << std::endl;
+        // 점프 시작으로 변경
+        player->obj_state_ = Object_State::STATE_JUMP_START;
+        // 점프 파워로 적용
+
+        player->velocity_vector_.x = CHARGING_JUMP_FORCE * jump_power;
+        player->velocity_vector_.y = CHARGING_JUMP_FORCE * jump_power;
+        player->velocity_vector_.z = CHARGING_JUMP_FORCE * jump_power;
+
+        // 점프는 한번만 적용되게 키 인풋 map에서 삭제
+        player->keyboard_input_[Action::ACTION_JUMP] = false;
+        player->keyboard_input_[Action::ACTION_FOUR] = false;
+        // 점프시 땅에서 떨어진걸로 판정
+        player->on_ground_ = false;
+        // 애니메이션 시간 적용
+        player->stop_skill_time_ = 0.666666687f;
+
+        player->jump_charging_time_ = 0.0f;
+
+    }
+    else
+    {
+        // 점프는 한번만 적용되게 키 인풋 map에서 삭제
+        player->keyboard_input_[Action::ACTION_JUMP] = false;
+    }
+}
+
+void CatPlayer::ActionFourCharging(Player* player, float deltaTime)
+{
+    player->obj_state_ = Object_State::STATE_ACTION_FOUR;
+    player->jump_charging_time_ += deltaTime;
+    player->stop_skill_time_ = player->jump_charging_time_;
+    player->jump_charging_time_ = MathHelper::Min(player->jump_charging_time_, CAT_MAX_JUMP_CHARGING_TIME);
+
+    player->velocity_vector_.x = player->velocity_vector_.z = 0.0f;
+
+    std::cout << player->jump_charging_time_ << std::endl;
 }
 
 

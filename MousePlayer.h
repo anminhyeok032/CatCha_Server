@@ -26,6 +26,10 @@ public:
 
 	void Jump(Player* player) override;
 
+	// 차징 점프
+	void ChargingJump(Player* player, float jump_power) override {};
+	void ActionFourCharging(Player* player, float deltaTime) override {};
+
 	// 충돌 처리
 	void CheckIntersects(Player* player, float deltaTime) override;
 

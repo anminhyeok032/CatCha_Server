@@ -22,7 +22,7 @@ public:
 	const float acceleration_ = 50.0f;		// 가속
 	const float deceleration_ = 1000.0f;		// 감속
 
-	float jump_power_ = 500.0f;
+	float jump_power_ = 400.0f;
 
 	// 애니메이션 동기화 관련 변수들
 	bool on_ground_ = false;
@@ -33,6 +33,7 @@ public:
 	// 스킬 사용시 움직이지 않도록
 	bool moveable_ = true;
 	float stop_skill_time_ = 0.0f;
+	float jump_charging_time_ = 0.0f;
 
 	DirectX::XMFLOAT3 direction_vector_ = DirectX::XMFLOAT3();
 	DirectX::XMFLOAT3 velocity_vector_ = DirectX::XMFLOAT3();

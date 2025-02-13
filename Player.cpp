@@ -251,6 +251,13 @@ bool Player::UpdatePosition(float deltaTime)
 						keyboard_input_[Action::ACTION_ONE] = false;
 						character_state_->ActionOne(this);
 						break;
+					case Action::ACTION_FOUR:
+						character_state_->ActionFourCharging(this, deltaTime);
+						break;
+					case Action::ACTION_FIVE:
+						keyboard_input_[Action::ACTION_FIVE] = false;
+						character_state_->ChargingJump(this, jump_charging_time_);
+						break;
 					default:
 						break;
 					}
