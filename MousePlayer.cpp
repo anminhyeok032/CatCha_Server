@@ -494,7 +494,7 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
         player->stop_skill_time_ = 0.0f;
         player->moveable_ = true;
 
-        // 캐릭터가 죽었을때 AI로 환생 성공시
+        // 캐릭터가 죽었을때 AI로 **환생 성공시**
         if (player->obj_state_ == Object_State::STATE_DEAD)
         {
             // 캐릭터 교체 브로드캐스트
@@ -502,6 +502,7 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
             // AI로 환생
             player->position_ = g_sessions[*player->comp_key_.session_id].ai_players_[player->reborn_ai_character_id_]->position_;
             player->rotation_quat_ = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+            player->rotation_matrix_ = MathHelper::Identity_4x4();
             player->dirty_ = true;
             player->stop_skill_time_ = 3.0f;
         }

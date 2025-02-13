@@ -37,17 +37,32 @@ void GameSession::Update()
         RequestSendPlayerUpdate(move_players);
     }
 
+
     // 게임 종료가 안되었으면 다시 업데이트
-    if (true == CheckGameOver())
+    if (false == CheckGameOver())
     {
         // 정해진 주기로 실행하기 위해 queue에 다시 담기
         TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(UPDATE_PERIOD_INT), session_num_ };
         commandQueue.push(ev);
     }
+    // 게임 종료 및 모든 세션 관련 스레드(ai, time) 종료시
     else
     {
-        std::cout << "[ " << session_num_ << " ] - Player Update Thread 정지" << std::endl;
+        game_over_.store(true);
+        if (true == is_reset_ai_.load() && true == is_reset_timer_.load())
+        {
+            std::cout << "[ " << session_num_ << " ] - Player Update Thread 정지" << std::endl;
+            MovePlayerToWaitngSession();
+        }
+        else
+        {
+            // 시간 스레드와 ai 스레드 종료 대기 위해 queue에 다시 담기
+            TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(1000), session_num_ };
+            commandQueue.push(ev);
+        }
     }
+
+    
     
 }
 
@@ -75,20 +90,23 @@ void GameSession::UpdateAI()
     // 현재 세션 시간 업데이트
     lastupdatetime_ = current_time;
 
-    // 움직임 업데이트가 필요할때만 클라이언트에게 브로드캐스팅
-    if (true == need_update_send)
-    {
-        RequestSendAIUpdate(move_AIs);
-    }
-
+    
+    // 게임중인 상황에만 업데이트
     if (true == is_game_start_)
     {
+        // 움직임 업데이트가 필요할때만 클라이언트에게 브로드캐스팅
+        if (true == need_update_send)
+        {
+            RequestSendAIUpdate(move_AIs);
+        }
+
         // 정해진 주기로 실행하기 위해 queue에 다시 담기
         TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(AI_UPDATE_PERIOD_INT / 2), session_num_ };
         AI_Queue.push(ev);
     }
     else
     {
+        is_reset_ai_.store(true);
         std::cout << "[ " << session_num_ << " ] - AI Thread 정지" << std::endl;
     }
 }
@@ -122,6 +140,10 @@ void GameSession::BroadcastGameStart()
 
     // 게임 시작으로 변경
     is_game_start_ = true;
+    is_door_open_ = false;
+    is_reset_ai_.store(false);
+    is_reset_timer_.store(false);
+    game_over_.store(false);
 
     // Timer 스레드 시작
     remaining_time_ = GAME_TIME + FREEZING_TIME;
@@ -322,11 +344,15 @@ void GameSession::BroadcastTime()
     else if (remaining_time_ <= 0 && true == is_game_start_)
     {
         is_game_start_ = false;
-        // 게임 종료
+        is_reset_timer_.store(true);
+        game_over_.store(true);
+        // 게임 종료 이벤트
         RequestSendGameEvent(GAME_EVENT::GE_TIME_OVER);
     }
     else 
     {
+        is_game_start_ = false;
+        is_reset_timer_.store(true);
         std::cout << "[ " << session_num_ << " ] - Time Thread 정지" << std::endl;
     }
 }
@@ -367,7 +393,7 @@ void GameSession::BroadcastCatWin()
     }
     
     // 플레이어 모두 대기 서버로 이동
-    MovePlayerToWaitngSession();
+    //MovePlayerToWaitngSession();
 }
 
 void GameSession::BroadcastMouseWin()
@@ -390,7 +416,7 @@ void GameSession::BroadcastMouseWin()
     }
 
     // 플레이어 모두 대기 서버로 이동
-    MovePlayerToWaitngSession();
+    //MovePlayerToWaitngSession();
 }
 
 void GameSession::BroadcastEscape()
@@ -670,11 +696,12 @@ bool GameSession::RebornToAI(int player_num)
 
 bool GameSession::CheckGameOver()
 {
-    bool need_update = true;
+    bool game_over = false;
     // 아직 게임 시작 안되었을때,
     if (false == is_game_start_)
     {
-        return need_update;
+        game_over = game_over_.load();
+        return game_over;
     }
 
     bool is_everymouse_dead = true;
@@ -692,15 +719,17 @@ bool GameSession::CheckGameOver()
         if (escape_mouse_.empty())
         {
             RequestSendGameEvent(GAME_EVENT::GE_WIN_CAT);
-            need_update = false;
+            game_over = true;
             is_game_start_ = false;
+            game_over_.store(true);
         }
         // 탈출한 쥐 존재시 생쥐 승리
         else
         {
             RequestSendGameEvent(GAME_EVENT::GE_WIN_MOUSE);
-            need_update = false;
+            game_over = true;
             is_game_start_ = false;
+            game_over_.store(true);
         }
     }
     else
@@ -738,13 +767,14 @@ bool GameSession::CheckGameOver()
             if (true == escape_all)
             {
                 RequestSendGameEvent(GAME_EVENT::GE_WIN_MOUSE);
-                need_update = false;
+                game_over = true;
                 is_game_start_ = false;
+                game_over_.store(true);
             }
 
         }
     }
-    return need_update;
+    return game_over;
 }
 
 void GameSession::CheckResult()
@@ -772,18 +802,32 @@ void GameSession::MovePlayerToWaitngSession()
             players_[i]->ResetPlayer();
         }
         int* temp_session_num = new int(-1);
-        int* client_id = new int(GetWaitingPlayerNum());
-        if (*client_id != -1)
+        int client_id = GetWaitingPlayerNum();
+        if (client_id != -1)
         {
             // 새로운 세션으로 임시 세션 플레이어 정보 옮기
-            g_sessions[*temp_session_num].players_.emplace(*client_id, std::move(players_[i]));
-            CompletionKey* completion_key = new CompletionKey{ temp_session_num, client_id };
-            g_sessions[*temp_session_num].players_[*client_id]->SetCompletionKey(*completion_key);
+            g_sessions[*temp_session_num].players_.insert_or_assign(client_id, std::move(players_[i]));
 
+            *g_sessions[*temp_session_num].players_[client_id]->comp_key_.session_id = -1;
+            *g_sessions[*temp_session_num].players_[client_id]->comp_key_.player_index = client_id;
 
             // 대기서버 플레이어 receive
-            g_sessions[*temp_session_num].players_[*client_id]->prev_packet_.clear();
-            g_sessions[*temp_session_num].players_[*client_id]->DoReceive();
+            g_sessions[*temp_session_num].players_[client_id]->prev_packet_.clear();
+            g_sessions[*temp_session_num].players_[client_id]->DoReceive();
         }
     }
+
+    players_.clear();
+    ai_players_.clear();
+    cheese_octree_.clear();
+    lastupdatetime_ = GetServerTime();
+    remaining_time_ = GAME_TIME;	// 5분
+    cat_attack_obb_.Center = DirectX::XMFLOAT3(0, -9999.0f, 0);
+    for (int i = 0; i < CHEESE_NUM; i++)
+    {
+        cheese_octree_.emplace_back(g_voxel_pattern_manager.voxel_patterns_[i]);
+    }
+
+    //session_state_ = SESSION_STATE::SESSION_WAIT;
+
 }

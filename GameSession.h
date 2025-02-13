@@ -35,7 +35,10 @@ public:
 
 	bool is_game_start_ = false;										// 해당 세션 게임 시작 여부
 	bool is_door_open_ = false;											// 현재 게임에서 문이 열린 상태
-
+	std::atomic<bool> is_reset_ai_{ false };							// 종료 로직이 실행됐는지 다른 스레드와 비교하여 가장 마지막에 종료된 스레드에게 종료 로직을 시켜주기 위한 bool
+	std::atomic<bool> is_reset_timer_{ false };							// 종료 로직이 실행됐는지 다른 스레드와 비교하여 가장 마지막에 종료된 스레드에게 종료 로직을 시켜주기 위한 bool
+	std::atomic<bool> game_over_{ false };								// 종료 로직이 실행됐는지 다른 스레드와 비교하여 가장 마지막에 종료된 스레드에게 종료 로직을 시켜주기 위한 bool
+	
 	int session_num_ = -1;
 
 	// ElapsedTime 계산을 위한 변수

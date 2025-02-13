@@ -266,6 +266,7 @@ void Worker()
 					{
 						std::cout << "player num : " << playerIndex << " packet_size : " << packet_size << " buffer size : " << buffer.size() << std::endl;
 						std::cout << "패킷이 완전하지 않음\n";
+						buffer.clear();
 						break;
 					}
 				}
