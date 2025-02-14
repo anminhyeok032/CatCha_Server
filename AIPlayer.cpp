@@ -184,6 +184,7 @@ bool AIPlayer::UpdatePosition(float deltaTime)
             // TODO : path erase 사용 문제 해결
             // 현재 경로에서 제거
             path_.erase(path_.begin());
+            SetBoundingSphere();
         }
         // 시간 계산 값 이용해서 다음 노드로 이동해서 Position_ 업데이트
         else 
@@ -193,10 +194,11 @@ bool AIPlayer::UpdatePosition(float deltaTime)
             position_.x += dx * move_percent;
             position_.z += dz * move_percent;
             left_distance = 0.0f;
+            SetBoundingSphere();
         }
     }
 
-    SetBoundingSphere();
+
 
     // 경로가 비어 있다면 목표에 도달한 상태로 설정
     if (path_.empty()) 

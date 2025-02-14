@@ -268,18 +268,30 @@ bool Player::UpdatePosition(float deltaTime)
 		{
 			deltaTime = UPDATE_PERIOD * 2.0f;
 		}
+		// 차징중에는 위치 고정
+		if (jump_charging_time_ > 0.01f)
+		{
+			velocity_vector_.x = velocity_vector_.z = 0.0f;
+		}
 
-		// 물리처리 - 움직였다면 true 반환
+		bool moved = false;
+		ApplyGravity(deltaTime);
+		// 물리 처리
+		moved = character_state_->CalculatePhysics(this, deltaTime);
+
 		// 충돌 처리
 		character_state_->CheckIntersects(this, deltaTime);
 
 		// 치즈와의 충돌 처리
-		bool moved = character_state_->CheckCheeseIntersects(this, deltaTime);
-
-		// 물리 처리
-		if (true == character_state_->CalculatePhysics(this, deltaTime))
+		if (true == character_state_->CheckCheeseIntersects(this, deltaTime))
 		{
-			 moved = true;
+			moved = true;
+		}
+
+		// 최종 위치 동기화
+		if (true == character_state_->CalculatePosition(this, deltaTime))
+		{
+			moved = true;
 		}
 
 		character_state_->UpdateOBB(this);
@@ -330,25 +342,7 @@ bool Player::UpdateVelocity(float time_step)
 		speed_ = max_speed_;
 	}
 	DirectX::XMFLOAT3 delta = MathHelper::Multiply(GetVelocity(), time_step);
-	//delta.y = 0.0f;  // Y축 제거
 	delta_position_ = MathHelper::Add(delta_position_, delta);
-	//delta_position_ = MathHelper::Add(delta_position_, GetVelocity());
-
-	// 떨어질때, 점프 idle로 변환
-	// y가 아래로 향할때 && 점프시작이 아니다 && 현재 idle||move 상태라면
-	if (velocity_vector_.y < -0.0001f && obj_state_ != Object_State::STATE_JUMP_START 
-		&& (obj_state_ == Object_State::STATE_IDLE || obj_state_ == Object_State::STATE_MOVE))
-	{
-		// 공중에 뜬 상태 && 애니메이션 jump_idle로 변경
-		on_ground_= false;
-		obj_state_ = Object_State::STATE_JUMP_IDLE;
-	}
-
-	// 제자리 점프시 업데이트를 위해 추가
-	if (obj_state_ == Object_State::STATE_JUMP_END)
-	{
-		return true;
-	}
 
 	// 속도가 0인지 검사
 	return speed_ != 0.0f || velocity_vector_.y != 0.0f;

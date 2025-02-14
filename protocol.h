@@ -177,6 +177,7 @@ struct SC_AI_MOVE_PACKET {
 	char			type;
 	int				id;
 	float			x, z;
+	unsigned char	attacked;
 };
 
 struct SC_PLAYER_STATE_PACKET {

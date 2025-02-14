@@ -45,6 +45,9 @@ public:
 	// 움직임 변화 감지를 위한 bool return
 	bool CalculatePhysics(Player* player, float deltaTime) override;
 
+	// velocity 포지션에 적용 및 애니메이션 스테이트 설정
+	bool CalculatePosition(Player* player, float deltaTime) override;
+
 	// OBB 업데이트
 	void UpdateOBB(Player* player) override;
 

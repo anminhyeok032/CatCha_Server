@@ -319,6 +319,17 @@ void GameSession::BroadcastAIPostion(int num)
     p.x = ai_players_[num]->position_.x;
     p.z = ai_players_[num]->position_.z;
 
+    if (true == ai_players_[num]->is_attacked_.load())
+    {
+        p.attacked = true;
+        ai_players_[num]->is_attacked_.store(false);
+    }
+    else
+    {
+        p.attacked = false;
+    }
+    
+
     for (auto& pl : players_)
     {
         pl.second->DoSend(&p);
@@ -609,6 +620,37 @@ void GameSession::CheckAttackedMice()
         }
     }
 }
+
+bool GameSession::CheckAttackedAI()
+{
+    bool succeed_attack= false;
+    // 아직 게임 시작 안되었을때,
+    if (false == is_game_start_)
+    {
+        return succeed_attack;
+    }
+
+    // 모든 쥐 검사
+    for (auto& ai : ai_players_)
+    {
+        if (false == ai.second->is_activate_.load())                            continue;           // 사용되지 않는(환생된) ai 쥐는 제외
+        if (true == cat_attacked_player_[ai.first])                             continue;           // 이미 맞은 쥐에 속하면
+
+
+        // 고양이의 공격 OBB와 쥐의 OBB 충돌 검사
+        {
+            if (true == cat_attack_obb_.Intersects(ai.second->bounding_sphere_))
+            {
+                std::cout << "Cat Attack Success : AI - " << ai.first << std::endl;
+                cat_attacked_player_[ai.first] = true;
+                ai.second->is_attacked_.store(true);
+                succeed_attack = true;
+            }
+        }
+    }
+    return succeed_attack;
+}
+
 
 
 

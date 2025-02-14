@@ -45,16 +45,20 @@ constexpr float FIXED_TIME_STEP = 1.0f / 60.0f;
 constexpr float UPDATE_PERIOD = 1.0f / 60.0f;
 constexpr int	UPDATE_PERIOD_INT = static_cast<int>(UPDATE_PERIOD * 1000);
 constexpr int	AI_UPDATE_PERIOD_INT = 1000;
+
+// cat
 constexpr float JUMP_END_TIME = 0.3f;
 constexpr float CAT_ATTACK_TIME = 1.33333337f / 2.0f;
 constexpr float CAT_PUNCH_POWER = 250.0f;
 constexpr int	CAT_ATTACK_DAMAGE = 50;
+constexpr float CAT_STUN_TIME = 1.6666666f / 2.0f;
 constexpr float CHARGING_JUMP_FORCE = 400.0f;
 constexpr float CAT_MAX_JUMP_CHARGING_TIME = 2.0f;
+// mouse
 constexpr float MOUSE_BITE_TIME = 0.416666657f;
 constexpr float MOUSE_BITE_SIZE = 10.0f;
 constexpr float MOUSE_REBORN_TIME = 5.0f;
-constexpr float MOUSE_WALL_WALKING_VELOCITY = 30.0f;
+constexpr float MOUSE_WALL_WALKING_VELOCITY = 50.0f;
 
 // AI를 위한 맵 설정
 constexpr float FLOOR_Y = -61.6f;
@@ -102,7 +106,7 @@ enum class Object_State {
 	STATE_IDLE, STATE_MOVE,
 	STATE_JUMP_START, STATE_JUMP_IDLE, STATE_JUMP_END,
 	STATE_ACTION_ONE, STATE_ACTION_TWO, STATE_ACTION_THREE, STATE_ACTION_FOUR, STATE_ACTION_FIVE,
-	STATE_DEAD
+	STATE_DEAD, STATE_STUN
 };
 
 enum class SOCKET_TYPE

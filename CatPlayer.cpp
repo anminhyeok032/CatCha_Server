@@ -66,14 +66,13 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
     // 4. 찾은 삼각형의 노멀벡터를 이용해서 velocity 투영해서 캐릭터의 velocity 벡터를 조정
     // 5. 얻은 깊이값을 이용해 물체를 뚫지 않도록 위치 조정
 
-    player->ApplyGravity(deltaTime);
-
     DirectX::XMVECTOR currentPos = DirectX::XMLoadFloat3(&obb_.Center);
-    DirectX::XMVECTOR slide_vector = DirectX::XMLoadFloat3(&player->velocity_vector_);
+    DirectX::XMVECTOR delta_pos = DirectX::XMLoadFloat3(&player->delta_position_);
+    DirectX::XMVECTOR slide_vector = delta_pos;
 
 
     // 모든 오브젝트 충돌체크
-    for (const auto& object : g_obbData)
+     for (const auto& object : g_obbData)
     {
         // slidevector가 0이면 충돌체크 불필요
         if (DirectX::XMVectorGetX(DirectX::XMVector3Length(slide_vector)) < 0.0001f)
@@ -110,6 +109,7 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
         // **1. 위/아래 면 검사**
         // velocity의 y축만 사용
         DirectX::XMVECTOR d = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&object.obb.Center), currentPos);
+        //DirectX::XMVECTOR d = slide_vector;
         DirectX::XMVECTOR check_d = DirectX::XMVectorSet(0.0f, DirectX::XMVectorGetY(d), 0.0f, 0.0f);
         if (DirectX::XMVectorGetX(DirectX::XMVector3Length(check_d)) > 0.0001f)
         {
@@ -204,6 +204,7 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
             }
 
             player->on_ground_ = true;
+            player->velocity_vector_.y = 0.0f;
             slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
 
             // y축에서 공중에 뜨는것 방지 살짝 눌러줌
@@ -230,13 +231,14 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
         }
 
         // 깊이만큼 이동
+        //slide_vector = DirectX::XMVectorAdd(slide_vector, depth_delta);
         DirectX::XMStoreFloat3(&player->depth_delta_, depth_delta);
         player->position_ = MathHelper::Add(player->position_, player->depth_delta_);
         player->depth_delta_ = DirectX::XMFLOAT3();
         UpdateOBB(player);
     }
 
-    DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
+    DirectX::XMStoreFloat3(&player->delta_position_, slide_vector);
 }
 
 bool CatPlayer::CheckCheeseIntersects(Player* player, float deltaTime)
@@ -245,10 +247,10 @@ bool CatPlayer::CheckCheeseIntersects(Player* player, float deltaTime)
 
     DirectX::BoundingBox ChesseAABB;
     DirectX::XMVECTOR currentPos = DirectX::XMLoadFloat3(&obb_.Center);
-    DirectX::XMVECTOR slide_vector = DirectX::XMLoadFloat3(&player->velocity_vector_);
+    DirectX::XMVECTOR slide_vector = DirectX::XMLoadFloat3(&player->delta_position_);
 
     // 예측 OBB
-    DirectX::XMVECTOR pred_pos = DirectX::XMVectorAdd(currentPos, DirectX::XMVectorScale(slide_vector, deltaTime));
+    DirectX::XMVECTOR pred_pos = DirectX::XMVectorAdd(currentPos, slide_vector);
     DirectX::XMFLOAT3 pred_pos_f3;
     DirectX::XMStoreFloat3(&pred_pos_f3, pred_pos);
     DirectX::BoundingSphere player_sphere = DirectX::BoundingSphere(pred_pos_f3, obb_.Extents.y);
@@ -335,6 +337,7 @@ bool CatPlayer::CheckCheeseIntersects(Player* player, float deltaTime)
                 }
 
                 player->on_ground_ = true;
+                player->velocity_vector_.y = 0.0f;
                 slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
 
                 // 점프 중 땅에 닿으면 점프 종료로 변환
@@ -356,7 +359,7 @@ bool CatPlayer::CheckCheeseIntersects(Player* player, float deltaTime)
     }
     if( true == crashing_cheese )
 	{
-		DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
+		DirectX::XMStoreFloat3(&player->delta_position_, slide_vector);
 
         return true;
 	}
@@ -443,14 +446,38 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
 	player->ApplyForces(deltaTime);
     // 마찰력 적용
 	player->ApplyFriction(deltaTime);
-	// 위치 업데이트
-	player->position_ = MathHelper::Add(player->position_, player->delta_position_);
-    if(player->position_.y < FLOOR_Y)
-	{
-		player->position_.y = FLOOR_Y;
-	}
 
-	//std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
+    return need_update;
+}
+
+bool CatPlayer::CalculatePosition(Player* player, float deltaTime)
+{
+    bool need_update = true;
+
+    // 떨어질때, 점프 idle로 변환
+    // y가 아래로 향할때 && 점프시작이 아니다 && 현재 idle||move 상태라면
+    if (player->delta_position_.y < -5.01f && player->obj_state_ != Object_State::STATE_JUMP_START
+	    && (player->obj_state_ == Object_State::STATE_IDLE || player->obj_state_ == Object_State::STATE_MOVE))
+    {
+	    // 공중에 뜬 상태 && 애니메이션 jump_idle로 변경
+        player->on_ground_= false;
+        player->obj_state_ = Object_State::STATE_JUMP_IDLE;
+    }
+
+    if (true == IsZeroVector(player->delta_position_))
+    {
+        need_update = false;
+    }
+
+    // 위치 업데이트
+    player->position_ = MathHelper::Add(player->position_, player->delta_position_);
+    if (player->position_.y < FLOOR_Y)
+    {
+        player->position_.y = FLOOR_Y;
+    }
+   
+    UpdateOBB(player);
+    //std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
 
     // 스킬 시간이 다 갈때까지 state 유지
     if (player->stop_skill_time_ > 0.001f)
@@ -464,11 +491,18 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
         {
             // 해당 공격에 맞은 쥐
             g_sessions[*player->comp_key_.session_id].CheckAttackedMice();
+            // ai쥐 공격 체크
+            if (true == g_sessions[*player->comp_key_.session_id].CheckAttackedAI())
+            {
+                player->obj_state_ = Object_State::STATE_STUN;
+                player->stop_skill_time_ = CAT_STUN_TIME;
+                InitAttackOBB(player, g_sessions[*player->comp_key_.session_id].cat_attack_obb_);
+            }
         }
 
     }
     // 움직이지 못하고, 스킬 시전중에만
-    else if(player->stop_skill_time_ < 0.001f && player->moveable_ == false)
+    else if (player->stop_skill_time_ < 0.001f && player->moveable_ == false)
     {
         // 공격이 끝났다면 공격박스 초기화
         if (player->obj_state_ == Object_State::STATE_ACTION_ONE)
@@ -499,8 +533,8 @@ bool CatPlayer::CalculatePhysics(Player* player, float deltaTime)
             }
         }
     }
-        
-	return need_update;
+
+    return need_update;
 }
 
 void CatPlayer::UpdateOBB(Player* player)
@@ -544,11 +578,11 @@ void CatPlayer::ChargingJump(Player* player, float jump_power)
         //std::cout << "점프!!!" << std::endl;
         // 점프 시작으로 변경
         player->obj_state_ = Object_State::STATE_JUMP_START;
-        // 점프 파워로 적용
-
-        player->velocity_vector_.x = CHARGING_JUMP_FORCE * jump_power;
+  
         player->velocity_vector_.y = CHARGING_JUMP_FORCE * jump_power;
-        player->velocity_vector_.z = CHARGING_JUMP_FORCE * jump_power;
+        // 힘으로 추가 적용
+        player->force_vector_ = MathHelper::Add(player->force_vector_, MathHelper::Multiply(
+            player->look_, CHARGING_JUMP_FORCE * jump_power));
 
         // 점프는 한번만 적용되게 키 인풋 map에서 삭제
         player->keyboard_input_[Action::ACTION_JUMP] = false;
@@ -566,18 +600,25 @@ void CatPlayer::ChargingJump(Player* player, float jump_power)
         // 점프는 한번만 적용되게 키 인풋 map에서 삭제
         player->keyboard_input_[Action::ACTION_JUMP] = false;
     }
+    //std::cout << "Lunch--" << std::endl;
 }
 
 void CatPlayer::ActionFourCharging(Player* player, float deltaTime)
 {
-    player->obj_state_ = Object_State::STATE_ACTION_FOUR;
-    player->jump_charging_time_ += deltaTime;
-    player->stop_skill_time_ = player->jump_charging_time_;
-    player->jump_charging_time_ = MathHelper::Min(player->jump_charging_time_, CAT_MAX_JUMP_CHARGING_TIME);
-
-    player->velocity_vector_.x = player->velocity_vector_.z = 0.0f;
-
-    std::cout << player->jump_charging_time_ << std::endl;
+    if (player->obj_state_ == Object_State::STATE_IDLE 
+        || player->obj_state_ == Object_State::STATE_MOVE
+        || player->obj_state_ == Object_State::STATE_ACTION_FOUR)
+    {
+        player->obj_state_ = Object_State::STATE_ACTION_FOUR;
+        player->jump_charging_time_ += deltaTime * 2.0f;
+        player->stop_skill_time_ = player->jump_charging_time_;
+        player->jump_charging_time_ = MathHelper::Min(player->jump_charging_time_, CAT_MAX_JUMP_CHARGING_TIME);
+        //std::cout << "Charging--" << std::endl;
+    }
+    else
+    {
+        player->keyboard_input_[Action::ACTION_FOUR] = false;
+    }
 }
 
 
@@ -612,9 +653,10 @@ void CatPlayer::InitAttackOBB(Player* player, DirectX::BoundingOrientedBox& box)
 
     int session_id = *player->comp_key_.session_id;
 
-    // 해당 공격에 맞은 쥐들 초기화
+    // 플레이어 업데이트 요청
     for(const auto& mouse : g_sessions[session_id].players_)
 	{
+        // 해당 공격에 맞은 쥐들 초기화
         if (true == g_sessions[session_id].cat_attacked_player_[mouse.second->character_id_])
         {
             g_sessions[session_id].cat_attacked_player_[mouse.second->character_id_] = false;
@@ -622,4 +664,13 @@ void CatPlayer::InitAttackOBB(Player* player, DirectX::BoundingOrientedBox& box)
             mouse.second->force_move_update_ = true;
         }
 	}
+
+    // 해당 공격에 맞은 ai 쥐들 초기화
+    for (auto& ai : g_sessions[session_id].ai_players_)
+    {
+        if (true == g_sessions[session_id].cat_attacked_player_[ai.first])
+        {
+            g_sessions[session_id].cat_attacked_player_[ai.first] = false;
+        }
+    }
 }

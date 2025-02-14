@@ -137,7 +137,8 @@ public:
 	void SetCharacter(int room_num, int client_index, bool is_cat);
 
 	int GetMouseNum();
-	void CheckAttackedMice();
+	void CheckAttackedMice();															// 공격 OBB와 Player 쥐 충돌체크
+	bool CheckAttackedAI();																// 공격 OBB와 AI 쥐 충돌 체크
 	void DeleteCheeseVoxel(const DirectX::XMFLOAT3& center);							// 치즈 삭제 및 전부 삭제시 문 열기
 	void InitializeSessionAI();
 	bool RebornToAI(int player_num);

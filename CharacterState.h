@@ -24,6 +24,9 @@ public:
     // 물리 및 위치 업데이트
     virtual bool CalculatePhysics(Player* player, float deltaTime) = 0;
 
+    // velocity 포지션에 적용 및 애니메이션 스테이트 설정
+    virtual bool CalculatePosition(Player* player, float deltaTime) = 0;
+
     virtual void ActionOne(Player* player) =0;
     // 차징 점프
     virtual void ActionFourCharging(Player* player, float deltaTime) = 0;

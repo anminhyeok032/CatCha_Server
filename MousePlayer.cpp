@@ -64,16 +64,15 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
     // 4. 찾은 삼각형의 노멀벡터를 이용해서 velocity 투영해서 캐릭터의 velocity 벡터를 조정
     // 5. 얻은 깊이값을 이용해 물체를 뚫지 않도록 위치 조정
 
-    player->ApplyGravity(deltaTime);
-
     DirectX::XMVECTOR currentPos = DirectX::XMLoadFloat3(&obb_.Center);
-    DirectX::XMVECTOR slide_vector = DirectX::XMLoadFloat3(&player->velocity_vector_);
+    DirectX::XMVECTOR slide_vector = DirectX::XMLoadFloat3(&player->delta_position_);
 
     // 예측 OBB
-    DirectX::XMVECTOR pred_pos = DirectX::XMVectorAdd(currentPos, DirectX::XMVectorScale(slide_vector, deltaTime));
+    DirectX::XMVECTOR pred_pos = DirectX::XMVectorAdd(currentPos, slide_vector);
     DirectX::XMFLOAT3 pred_pos_f3;
     DirectX::XMStoreFloat3(&pred_pos_f3, pred_pos);
     DirectX::BoundingOrientedBox pred_obb = DirectX::BoundingOrientedBox(pred_pos_f3, obb_.Extents, obb_.Orientation);
+
 
     // 모든 오브젝트 충돌체크
     for (const auto& object : g_obbData)
@@ -207,13 +206,17 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
             }
 
             player->on_ground_ = true;
+            player->velocity_vector_.y = 0.0f;
             slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
 
             // 점프 중 땅에 닿으면 점프 종료로 변환
             if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
             {
                 // 예측된 거리에서 멈추면 떠있기 때문에 (최소 거리-쥐의 중점 높이)를 위치를 내려서 원래 OBB가 충돌한것처럼 만듦
-                player->position_.y -= min_distance - obb_.Extents.y;
+                slide_vector = DirectX::XMVectorSetY(
+                    slide_vector,
+                    DirectX::XMVectorGetY(slide_vector) - (min_distance - obb_.Extents.y)
+                );
                 player->obj_state_ = Object_State::STATE_JUMP_END;
             }
         }
@@ -226,10 +229,10 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
                     DirectX::XMVector3Dot(slide_vector, normalized_closest_normal)));
             slide_vector = DirectX::XMVectorSubtract(slide_vector, P);
 
-            // 옆면에 닿으면 벽타기 기능
+            // (아랫면 제외)옆면에 닿으면 벽타기 기능
             if (DirectX::XMVectorGetY(normalized_closest_normal) > -0.9f)
             {
-                slide_vector = DirectX::XMVectorSetY(slide_vector, MOUSE_WALL_WALKING_VELOCITY);
+                slide_vector = DirectX::XMVectorSetY(slide_vector, MOUSE_WALL_WALKING_VELOCITY * deltaTime);
                 if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
                 {
                     player->obj_state_ = Object_State::STATE_MOVE;
@@ -243,7 +246,7 @@ void MousePlayer::CheckIntersects(Player* player, float deltaTime)
         UpdateOBB(player);
     }
 
-    DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
+    DirectX::XMStoreFloat3(&player->delta_position_, slide_vector);
 }
 
 bool MousePlayer::CheckCheeseIntersects(Player* player, float deltaTime)
@@ -252,10 +255,10 @@ bool MousePlayer::CheckCheeseIntersects(Player* player, float deltaTime)
 
     DirectX::BoundingBox ChesseAABB;
     DirectX::XMVECTOR currentPos = DirectX::XMLoadFloat3(&obb_.Center);
-    DirectX::XMVECTOR slide_vector = DirectX::XMLoadFloat3(&player->velocity_vector_);
+    DirectX::XMVECTOR slide_vector = DirectX::XMLoadFloat3(&player->delta_position_);
 
     // 예측 OBB
-    DirectX::XMVECTOR pred_pos = DirectX::XMVectorAdd(currentPos, DirectX::XMVectorScale(slide_vector, deltaTime));
+    DirectX::XMVECTOR pred_pos = DirectX::XMVectorAdd(currentPos, slide_vector);
     DirectX::XMFLOAT3 pred_pos_f3;
     DirectX::XMStoreFloat3(&pred_pos_f3, pred_pos);
     DirectX::BoundingSphere player_sphere = DirectX::BoundingSphere(pred_pos_f3, obb_.Extents.y);
@@ -343,11 +346,22 @@ bool MousePlayer::CheckCheeseIntersects(Player* player, float deltaTime)
                 }
 
                 player->on_ground_ = true;
+                player->velocity_vector_.y = 0.0f;
                 slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
 
                 // 점프 중 땅에 닿으면 점프 종료로 변환
                 if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
                 {
+                    player->obj_state_ = Object_State::STATE_JUMP_END;
+                }
+
+                if (player->obj_state_ == Object_State::STATE_JUMP_IDLE)
+                {
+                    // 예측된 거리에서 멈추면 떠있기 때문에 (최소 거리-쥐의 중점 높이)를 위치를 내려서 원래 OBB가 충돌한것처럼 만듦
+                    slide_vector = DirectX::XMVectorSetY(
+                        slide_vector,
+                        DirectX::XMVectorGetY(slide_vector) - (obb_.Extents.y)
+                    );
                     player->obj_state_ = Object_State::STATE_JUMP_END;
                 }
             }
@@ -365,7 +379,7 @@ bool MousePlayer::CheckCheeseIntersects(Player* player, float deltaTime)
 
     if (true == crashing_cheese)
     {
-        DirectX::XMStoreFloat3(&player->velocity_vector_, slide_vector);
+        DirectX::XMStoreFloat3(&player->delta_position_, slide_vector);
 
         return true;
     }
@@ -457,29 +471,57 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
     player->ApplyForces(deltaTime);
     // 마찰력 적용
     player->ApplyFriction(deltaTime);
+
+    return need_update;
+}
+
+bool MousePlayer::CalculatePosition(Player* player, float deltaTime)
+{
+    bool need_update = true;
+
+    // 떨어질때, 점프 idle로 변환
+    // y가 아래로 향할때 && 점프시작이 아니다 && 현재 idle||move 상태라면
+    if (player->delta_position_.y < -5.01f && player->obj_state_ != Object_State::STATE_JUMP_START
+        && (player->obj_state_ == Object_State::STATE_IDLE || player->obj_state_ == Object_State::STATE_MOVE))
+    {
+        // 공중에 뜬 상태 && 애니메이션 jump_idle로 변경
+        player->on_ground_ = false;
+        player->obj_state_ = Object_State::STATE_JUMP_IDLE;
+    }
+
+    if (true == IsZeroVector(player->delta_position_))
+    {
+        need_update = false;
+    }
+
     // 위치 업데이트
     player->position_ = MathHelper::Add(player->position_, player->delta_position_);
     if (player->position_.y < FLOOR_Y)
     {
         player->position_.y = FLOOR_Y;
     }
+    else if (player->position_.y > 173.17)
+    {
+        player->position_.y = 173.17;
+    }
+    UpdateOBB(player);
     //std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;
 
-    if(player->curr_hp_ <= 0)
-	{
-		player->obj_state_ = Object_State::STATE_DEAD;
+    if (player->curr_hp_ <= 0)
+    {
+        player->obj_state_ = Object_State::STATE_DEAD;
         player->moveable_ = false;
-		need_update = true;
+        need_update = true;
 
         // 죽었을때 AI로 환생 시도 처리
         bool is_reborn = g_sessions[*player->comp_key_.session_id].RebornToAI(*player->comp_key_.player_index);
         // 환생 성공시
-        if(true == is_reborn)
-		{
+        if (true == is_reborn)
+        {
             player->stop_skill_time_ = MOUSE_REBORN_TIME;
             player->request_send_reborn_ = true;
             g_sessions[*player->comp_key_.session_id].RequestSendGameEvent(GAME_EVENT::GE_REBORN);
-		}
+        }
         // 환생 실패시
         else
         {
@@ -490,7 +532,7 @@ bool MousePlayer::CalculatePhysics(Player* player, float deltaTime)
             g_sessions[*player->comp_key_.session_id].RequestSendGameEvent(GAME_EVENT::GE_DEAD);
             player->reborn_ai_character_id_ = -1;
         }
-	}
+    }
 
     // 스킬 시간이 다 갈때까지 state 유지
     if (player->stop_skill_time_ > 0.001f)

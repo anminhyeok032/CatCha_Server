@@ -20,6 +20,8 @@ public:
 
 	std::atomic<bool> is_activate_{ true };
 
+	std::atomic<bool> is_attacked_{ false };
+
 	// A*로 찾은 경로
 	std::vector<std::pair<int, int>> path_;
 
