@@ -502,7 +502,7 @@ bool MousePlayer::CalculatePosition(Player* player, float deltaTime)
     }
     else if (player->position_.y > 173.17)
     {
-        player->position_.y = 173.17;
+        player->position_.y = 173.17f;
     }
     UpdateOBB(player);
     //std::cout << "현재 위치 : " << player->position_.x << ", " << player->position_.y << ", " << player->position_.z << std::endl;

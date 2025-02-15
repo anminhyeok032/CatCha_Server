@@ -56,7 +56,7 @@ constexpr float CHARGING_JUMP_FORCE = 400.0f;
 constexpr float CAT_MAX_JUMP_CHARGING_TIME = 2.0f;
 // mouse
 constexpr float MOUSE_BITE_TIME = 0.416666657f;
-constexpr float MOUSE_BITE_SIZE = 10.0f;
+constexpr float MOUSE_BITE_SIZE = 4.0f;
 constexpr float MOUSE_REBORN_TIME = 5.0f;
 constexpr float MOUSE_WALL_WALKING_VELOCITY = 50.0f;
 

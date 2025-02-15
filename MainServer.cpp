@@ -208,19 +208,20 @@ void Worker()
 					// 인게임 전 임시 Session에 담아 캐릭터 선택시 옮김
 					int* temp_session_num = new int(-1);
 					{
-						std::lock_guard<std::mutex> lg{ g_sessions[*temp_session_num].players_[*client_id]->mt_player_server_state_};
+						std::lock_guard<std::mutex> lg{ g_sessions[*temp_session_num].players_[*client_id]->mt_player_server_state_ };
 						g_sessions[*temp_session_num].players_[*client_id]->player_server_state_ = PLAYER_STATE::PS_ALLOC;
-					}
-					g_sessions[*temp_session_num].players_[*client_id]->SetSocket(g_client_socket);
-					
-					// 임시 Completion Key 생성
-					CompletionKey* completion_key = new CompletionKey{ temp_session_num, client_id};
-					g_sessions[*temp_session_num].players_[*client_id]->SetCompletionKey(*completion_key);
 
-					// IOCP 등록
-					CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(completion_key), 0);
-					// 수신 시작
-					g_sessions[*temp_session_num].players_[*client_id]->DoReceive();
+						g_sessions[*temp_session_num].players_[*client_id]->SetSocket(g_client_socket);
+
+						// 임시 Completion Key 생성
+						CompletionKey* completion_key = new CompletionKey{ temp_session_num, client_id };
+						g_sessions[*temp_session_num].players_[*client_id]->SetCompletionKey(*completion_key);
+
+						// IOCP 등록
+						CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_client_socket), g_h_iocp, reinterpret_cast<ULONG_PTR>(completion_key), 0);
+						// 수신 시작
+						g_sessions[*temp_session_num].players_[*client_id]->DoReceive();
+					}
 				}
 				else 
 				{
@@ -302,7 +303,7 @@ void Worker()
 
 				// 10번 이상 이동이 있을 때마다 보정을 위한 위치 브로드캐스팅
 				g_sessions[sessionId].update_count_++;
-				if(g_sessions[sessionId].update_count_ >= 50)
+				if(g_sessions[sessionId].update_count_ >= 60)
 				{
 					g_sessions[sessionId].update_count_ = 0;
 					g_sessions[sessionId].BroadcastSync();

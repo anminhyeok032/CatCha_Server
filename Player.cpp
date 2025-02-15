@@ -95,28 +95,30 @@ void Player::ProcessPacket(char* packet)
 		{
 			std::lock_guard<std::mutex> lg{ mt_player_server_state_ };
 			player_server_state_ = PLAYER_STATE::PS_INGAME;
+
+
+			// [매칭] 새로 들어갈 세션 정보 저장
+			int session_id = GetSessionNumber(p->is_cat);
+			int client_id = static_cast<int>(g_sessions[session_id].CheckCharacterNum());
+
+			// 새로운 세션으로 임시 세션 플레이어 정보 옮기
+			int prev_session_num = *comp_key_.session_id;
+			int prev_player_index = *comp_key_.player_index;
+			g_sessions[session_id].players_.emplace(client_id, std::move(g_sessions[*comp_key_.session_id].players_[*comp_key_.player_index]));
+			*comp_key_.session_id = session_id;
+			*comp_key_.player_index = client_id;
+
+			// 캐릭터 선택
+			g_sessions[session_id].SetCharacter(session_id, client_id, p->is_cat);
+			std::cout << "[ " << name << " ] - " << "[ " << session_id << " ] 세션에 " << client_id << "번째 플레이어로 " << (p->is_cat ? "Cat" : "Mouse") << "로 입장" << std::endl;
+
+			// 새로운 플레이어 receive
+			g_sessions[session_id].players_[client_id]->prev_packet_.clear();
+			g_sessions[session_id].players_[client_id]->DoReceive();
 		}
-
-		// [매칭] 새로 들어갈 세션 정보 저장
-		int session_id = GetSessionNumber(p->is_cat);
-		int client_id = static_cast<int>(g_sessions[session_id].CheckCharacterNum());
-
-		// 새로운 세션으로 임시 세션 플레이어 정보 옮기
-		g_sessions[session_id].players_.emplace(client_id, std::move(g_sessions[*comp_key_.session_id].players_[*comp_key_.player_index]));
-		*comp_key_.session_id = session_id;
-		*comp_key_.player_index = client_id;
-
-		// 캐릭터 선택
-		g_sessions[session_id].SetCharacter(session_id, client_id, p->is_cat);
-
-		std::cout << "[ " << name << " ] - " << "[ " << session_id << " ] 세션에 " << client_id << "번째 플레이어로 " << (p->is_cat ? "Cat" : "Mouse") << "로 입장" << std::endl;
-
+		
 		// 치즈 랜덤 모양 전송
 		SendRandomCheeseSeedPacket();
-		
-		// 새로운 플레이어 receive
-		g_sessions[session_id].players_[client_id]->prev_packet_.clear();
-		g_sessions[session_id].players_[client_id]->DoReceive();
 		break;
 	}
 	case CS_MOVE:
@@ -481,4 +483,7 @@ void Player::ResetPlayer()
 	request_send_escape_ = false;
 	request_send_dead_ = false;
 	request_send_reborn_ = false;
+
+	keyboard_input_.clear();
+	key_ = 0;
 }

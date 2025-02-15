@@ -32,8 +32,6 @@ public:
 	Over_IO recv_over_;
 	SOCKET socket_ = INVALID_SOCKET;
 
-	// 클라이언트 주소
-	sockaddr_in client_addr_ = {};
 
 	// 닉네임 
 

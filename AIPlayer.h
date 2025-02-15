@@ -41,7 +41,6 @@ public:
 
 	~AIPlayer()
 	{
-		std::cout << "AIPlayer Destructor" << std::endl;
 	}
 
 	// Player 초기화를 위한 가상 함수

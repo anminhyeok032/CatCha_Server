@@ -67,7 +67,6 @@ public:
 
 	~Player() 
 	{
-		std::cout << "Player Destructor" << std::endl;
 	}
 
 	void SetSocket(SOCKET socket) override { socket_ = socket; }

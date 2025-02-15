@@ -223,7 +223,7 @@ void GameSession::BroadcastPosition(int player)
     // 모든 클라이언트에게 브로드캐스팅
     for (auto& pl : players_)
     {
-        pl.second->DoSend(&p);
+        if(pl.second)   pl.second->DoSend(&p);
     }
     
 }
@@ -247,7 +247,7 @@ void GameSession::BroadcastSync()
         for (auto& player : players_) // 세션에 속한 클라이언트 목록
         {
             if(pl.first == player.first) continue; // 자기 자신 제외
-            player.second->DoSend(&p);
+            if (pl.second)   player.second->DoSend(&p);
         }
     }
 }
@@ -263,7 +263,7 @@ void GameSession::BroadcastChangeCharacter(int player_num, int CHARACTER_NUM)
     p.new_character_num = static_cast<uint8_t>(players_[player_num]->character_id_);
     for (auto& pl : players_)
 	{
-		pl.second->DoSend(&p);
+        if (pl.second)   pl.second->DoSend(&p);
 	}
 }
 
@@ -297,7 +297,7 @@ void GameSession::BroadcastRemoveVoxelSphere(int cheese_num, const DirectX::XMFL
 
 	for (auto& pl : players_)
 	{
-		pl.second->DoSend(&p);
+        if (pl.second)   pl.second->DoSend(&p);
 	}
 }
 
@@ -332,7 +332,7 @@ void GameSession::BroadcastAIPostion(int num)
 
     for (auto& pl : players_)
     {
-        pl.second->DoSend(&p);
+        if (pl.second)   pl.second->DoSend(&p);
     }
 }
 
@@ -345,7 +345,7 @@ void GameSession::BroadcastTime()
 
     for (auto& pl : players_)
     {
-        pl.second->DoSend(&p);
+        if (pl.second)   pl.second->DoSend(&p);
     }
     
     if (remaining_time_ > 0 && true == is_game_start_)
@@ -377,7 +377,7 @@ void GameSession::BroadcastDoorOpen()
     
     for (auto& pl : players_)
     {
-        pl.second->DoSend(&p);
+        if (pl.second)   pl.second->DoSend(&p);
     }
 
     std::cout << "[ " << session_num_ << " ] - 치즈 다먹어서 문 열림" << std::endl;
@@ -401,7 +401,7 @@ void GameSession::BroadcastCatWin()
 
     for (auto& pl : players_)
     {
-        pl.second->DoSend(&p);
+        if (pl.second)   pl.second->DoSend(&p);
     }
     
     // 플레이어 모두 대기 서버로 이동
@@ -424,7 +424,7 @@ void GameSession::BroadcastMouseWin()
 
     for (auto& pl : players_)
     {
-        pl.second->DoSend(&p);
+        if (pl.second)   pl.second->DoSend(&p);
     }
 
     // 플레이어 모두 대기 서버로 이동
@@ -444,7 +444,7 @@ void GameSession::BroadcastEscape()
         for (auto& pl : players_)
         {
             p.id = mouse;
-            pl.second->DoSend(&p);
+            if (pl.second)   pl.second->DoSend(&p);
         }
     }
 }
@@ -461,7 +461,7 @@ void GameSession::BroadcastReborn()
         if (false == pl.second->request_send_reborn_)    continue;  // 보내기 요청 있는 애만
         pl.second->request_send_reborn_ = false;
         p.id = pl.first;
-        pl.second->DoSend(&p);
+        if (pl.second)   pl.second->DoSend(&p);
     }
 }
 
@@ -477,7 +477,7 @@ void GameSession::BroadcastDead()
         if (false == pl.second->request_send_dead_)    continue;  // 보내기 요청 있는 애만
         pl.second->request_send_dead_ = false;
         p.id = pl.first;
-        pl.second->DoSend(&p);
+        if (pl.second)   pl.second->DoSend(&p);
     }
 }
 
@@ -843,20 +843,17 @@ void GameSession::MovePlayerToWaitngSession()
             std::lock_guard<std::mutex> lg{ players_[i]->mt_player_server_state_ };
             players_[i]->player_server_state_ = PLAYER_STATE::PS_ALLOC;
             players_[i]->ResetPlayer();
-        }
-        int* temp_session_num = new int(-1);
-        int client_id = GetWaitingPlayerNum();
-        if (client_id != -1)
-        {
-            // 새로운 세션으로 임시 세션 플레이어 정보 옮기
-            g_sessions[*temp_session_num].players_.insert_or_assign(client_id, std::move(players_[i]));
 
-            *g_sessions[*temp_session_num].players_[client_id]->comp_key_.session_id = -1;
-            *g_sessions[*temp_session_num].players_[client_id]->comp_key_.player_index = client_id;
+            int* temp_session_num = new int(-1);
+            int client_id = GetWaitingPlayerNum();
+            if (client_id != -1)
+            {
+                // 새로운 세션으로 임시 세션 플레이어 정보 옮기
+                g_sessions[*temp_session_num].players_.insert_or_assign(client_id, std::move(players_[i]));
 
-            // 대기서버 플레이어 receive
-            g_sessions[*temp_session_num].players_[client_id]->prev_packet_.clear();
-            g_sessions[*temp_session_num].players_[client_id]->DoReceive();
+                *g_sessions[*temp_session_num].players_[client_id]->comp_key_.session_id = -1;
+                *g_sessions[*temp_session_num].players_[client_id]->comp_key_.player_index = client_id;
+            }
         }
     }
 
