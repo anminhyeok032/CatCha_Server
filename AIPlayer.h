@@ -15,7 +15,8 @@ class AIPlayer : public Character
 public:
 	int current_x_;
 	int current_z_;
-
+	int target_x_;
+	int	target_z_;
 	bool is_reached_ = false;
 
 	std::atomic<bool> is_activate_{ true };
@@ -37,6 +38,8 @@ public:
 		socket_ = INVALID_SOCKET;
 		current_x_ = TILE_MAP_WIDTH / TILE_SIZE / 2;
 		current_z_ = TILE_MAP_LENGTH / TILE_SIZE / 2;
+		target_x_ = TILE_MAP_WIDTH / TILE_SIZE / 2;
+		target_z_ = TILE_MAP_LENGTH / TILE_SIZE / 2;
 	}
 
 	~AIPlayer()

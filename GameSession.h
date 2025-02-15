@@ -43,6 +43,7 @@ public:
 
 	// ElapsedTime 계산을 위한 변수
 	uint64_t lastupdatetime_ = 0;
+	uint64_t lastupdatetime_ai_ = 0;
 	uint64_t last_game_time_ = 0;
 
 	// 해당 세션의 남은 시간

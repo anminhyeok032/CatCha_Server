@@ -136,19 +136,27 @@ bool AIPlayer::UpdatePosition(float deltaTime)
 
         int tile = g_tile_map_walkable_only[rand_tile];
 
-        int target_x = tile / TILE_X_CORR;
-        int target_z = tile % TILE_X_CORR;
+        target_x_ = tile / TILE_X_CORR;
+        target_z_ = tile % TILE_X_CORR;
 
-        FindPath(target_x, target_z);
+        FindPath(target_x_, target_z_);
         return false;
 	}
 
     // 타일맵 원점 보정 값 - (0,0)이 -TILE_MAP_WIDTH / 2.0f 만큼 이동
     const float tile_map_offset_x = -TILE_MAP_WIDTH / 2.0f;
     const float tile_map_offset_z = -TILE_MAP_LENGTH / 2.0f;
-
+    float tile_per_speed;
     // 속도
-    const float tile_per_speed = 100.0f * TILE_SIZE; // 칸/초
+    if (false == is_attacked_.load())
+    {
+        tile_per_speed = 50.0f * TILE_SIZE; // 칸/초
+    }
+    else
+    {
+        // 타격 당했을시 속도 빠르게 도망감
+        tile_per_speed = 200.0f * TILE_SIZE; // 칸/초
+    }
 
     // 남은 거리 계산 (현재 타일에서 다음 타일까지)
     float left_distance = tile_per_speed * deltaTime;

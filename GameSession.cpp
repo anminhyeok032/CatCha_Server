@@ -73,13 +73,17 @@ void GameSession::UpdateAI()
     uint64_t current_time = GetServerTime();
     int move_AIs = 0;
 
-    float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
-
+    float deltaTime = (current_time - lastupdatetime_ai_) / 1000.0f;
+    if (deltaTime > (AI_UPDATE_PERIOD_INT / 5) / 1000.0f)
+    {
+        deltaTime = (AI_UPDATE_PERIOD_INT / 5) / 1000.0f;
+    }
+    std::cout << deltaTime << std::endl;
     // 움직인 AI의 Postion만 업데이트 하도록 int 4마리의 움직임 여부를 파싱해서 담음
     for (auto& pl : ai_players_)
     {
         if (pl.second->is_activate_.load() == false) continue;
-        if (true == pl.second->UpdatePosition(deltaTime))
+        if (true == pl.second->UpdatePosition(deltaTime / 10.0f))
         {
             need_update_send = true;
             move_AIs |= (1 << pl.first);
@@ -88,7 +92,7 @@ void GameSession::UpdateAI()
     }
 
     // 현재 세션 시간 업데이트
-    lastupdatetime_ = current_time;
+    lastupdatetime_ai_ = current_time;
 
     
     // 게임중인 상황에만 업데이트
@@ -101,7 +105,7 @@ void GameSession::UpdateAI()
         }
 
         // 정해진 주기로 실행하기 위해 queue에 다시 담기
-        TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(AI_UPDATE_PERIOD_INT / 2), session_num_ };
+        TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(AI_UPDATE_PERIOD_INT / 5), session_num_ };
         AI_Queue.push(ev);
     }
     else
@@ -709,6 +713,7 @@ void GameSession::InitializeSessionAI()
         ai_players_[i]->SetBoundingSphere();
 	}
     std::cout << "Create Session AI - " << session_num_ << std::endl;
+    lastupdatetime_ai_ = GetServerTime();
     TIMER_EVENT ev{ std::chrono::system_clock::now(), session_num_ };
     AI_Queue.push(ev);
 }
@@ -861,6 +866,7 @@ void GameSession::MovePlayerToWaitngSession()
     ai_players_.clear();
     cheese_octree_.clear();
     lastupdatetime_ = GetServerTime();
+    lastupdatetime_ai_ = GetServerTime();
     remaining_time_ = GAME_TIME;	// 5분
     cat_attack_obb_.Center = DirectX::XMFLOAT3(0, -9999.0f, 0);
     for (int i = 0; i < CHEESE_NUM; i++)

@@ -399,7 +399,7 @@ void UpdateThread()
 			if (ev.wakeup_time > std::chrono::system_clock::now()) 
 			{
 				commandQueue.push(ev);
-				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 				continue;
 			}
 			else
@@ -428,7 +428,7 @@ void AIUpdateThread()
 			if (ev.wakeup_time > std::chrono::system_clock::now())
 			{
 				AI_Queue.push(ev);
-				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 				continue;
 			}
 			else
@@ -455,7 +455,7 @@ void TimerThread()
 			if (ev.wakeup_time > current_time) 
 			{
 				timer_queue.push(ev);		
-				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 				continue;
 			}
 			else
