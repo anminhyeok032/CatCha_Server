@@ -24,6 +24,11 @@ public:
 
 	float jump_power_ = 400.0f;
 
+	// 받은 pitch 변화값 총량
+	float total_pitch_ = 0;
+	// 고양이 차징 점프에 사용하는 yaw 변화값 총량
+	float total_yaw_ = 0;
+
 	// 애니메이션 동기화 관련 변수들
 	bool on_ground_ = false;
 	Object_State obj_state_ = Object_State::STATE_IDLE;
@@ -106,7 +111,7 @@ public:
 
 
 	// 회전 업데이트
-	void UpdateRotation(float degree);
+	void UpdatePitch(float degree);	
 	// Look, Up, Right 업데이트
 	void UpdateLookUpRight();
 	// 속도 업데이트
@@ -117,8 +122,7 @@ public:
 	void ApplyForces(float time_step);
 	// 마찰 적용
 	void ApplyFriction(float time_step);
-	// 중력 적용
-	void ApplyGravity(float time_step);
+
 
 	void Set_OBB(DirectX::BoundingOrientedBox obb);
 

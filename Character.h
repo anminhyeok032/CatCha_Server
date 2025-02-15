@@ -7,8 +7,6 @@ public:
 	// 캐릭터 정보
 	DirectX::XMFLOAT3 position_ = DirectX::XMFLOAT3();
 
-	// 받은 pitch 변화값 총량
-	float total_pitch_ = 0;
 
 	DirectX::XMFLOAT4 rotation_quat_ = { 0, 0, 0, 1 };						// 초기 쿼터니언 (단위 쿼터니언)
 	DirectX::XMFLOAT4X4 rotation_matrix_ = MathHelper::Identity_4x4();		// 회전 행렬

@@ -17,6 +17,10 @@ private:
 	float attack_height = extents_.y;	// 공격 범위 높이
 	float attack_range = extents_.z;	// 공격 범위 길이
 
+	float total_yaw_ = 0.0f;
+
+	DirectX::XMFLOAT4 rotation_cat_quat_ = { 0, 0, 0, 1 };						// 차징 점프를 위한 쿼터니언 (단위 쿼터니언)
+
 public:
 	// 생성자
 	CatPlayer()
@@ -56,6 +60,11 @@ public:
 	// 차징 점프
 	void ChargingJump(Player* player, float jump_power) override;
 	void ActionFourCharging(Player* player, float deltaTime) override;
+	// 차징 점프를 위한 고양이 쿼터니언(yaw 회전이 추가된)
+	void UpdateYaw(Player* player, float degree) override;
+
+	// 중력 적용
+	void ApplyGravity(Player* player, float time_step) override;
 
 	// 공격 바운딩 박스 생성
 	void CreateAttackOBB(Player* player, DirectX::BoundingOrientedBox& box);

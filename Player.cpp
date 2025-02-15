@@ -136,12 +136,24 @@ void Player::ProcessPacket(char* packet)
 		CS_ROTATE_PACKET* p = reinterpret_cast<CS_ROTATE_PACKET*>(packet);
 		player_pitch_ = p->player_pitch;
 		total_pitch_ += player_pitch_;
+
 		//std::cout << "플레이어 pitch : " << player_pitch_ << std::endl;
-		UpdateRotation(player_pitch_);
+		UpdatePitch(player_pitch_);
+
 		if (dirty_)
 		{
-
 			UpdateLookUpRight();
+			if (p->player_yaw != 0.0f)
+			{
+				// 고양이 차징 점프용 yaw 변화량 저장
+				if (character_state_)
+				{
+					total_yaw_ += p->player_yaw;
+					total_yaw_ = MathHelper::Min(RIGHT_ANGLE_RADIAN - 0.01f, MathHelper::Max(total_yaw_, -RIGHT_ANGLE_RADIAN + 0.01f));
+					character_state_->UpdateYaw(this, total_yaw_);
+				}
+
+			}
 
 			// 회전 상태 초기화
 			dirty_ = false;
@@ -171,13 +183,15 @@ void Player::ProcessPacket(char* packet)
 			// 캐릭터의 위치 및 방향 벡터
 			DirectX::XMFLOAT3 look{ p->look_x, p->look_y, p->look_z };
 			DirectX::XMFLOAT3 position = character_state_.get()->GetOBB().Center;
+			position.y += (4.0f - (5.104148f / 2.0f));	// 카메라 높이에 맞춰줌
+			
 
 			DirectX::XMVECTOR player_position = XMLoadFloat3(&position);
 			DirectX::XMVECTOR normal_look = DirectX::XMVector3Normalize(XMLoadFloat3(&look));
 
 			// 공격 OBB의 중심점 설정
 			// 캐릭터 앞 공격 범위의 절반만큼 이동
-			DirectX::XMVECTOR center_offset = DirectX::XMVectorScale(normal_look, 5.0f);
+			DirectX::XMVECTOR center_offset = DirectX::XMVectorScale(normal_look, MOUSE_BITE_SIZE);
 			DirectX::XMVECTOR attack_center = DirectX::XMVectorAdd(player_position, center_offset);
 			DirectX::XMStoreFloat3(&position, attack_center);
 
@@ -277,7 +291,7 @@ bool Player::UpdatePosition(float deltaTime)
 		}
 
 		bool moved = false;
-		ApplyGravity(deltaTime);
+		character_state_->ApplyGravity(this, deltaTime);
 		// 물리 처리
 		moved = character_state_->CalculatePhysics(this, deltaTime);
 
@@ -315,7 +329,7 @@ bool Player::UpdatePosition(float deltaTime)
 	return false;
 }
 
-void Player::UpdateRotation(float degree)
+void Player::UpdatePitch(float degree)
 {
 	DirectX::XMStoreFloat4(&rotation_quat_,
 		DirectX::XMQuaternionMultiply(DirectX::XMLoadFloat4(&rotation_quat_),
@@ -379,28 +393,19 @@ void Player::ApplyForces(float time_step)
 
 void Player::ApplyFriction(float time_step) 
 {
-	float speed = MathHelper::Length(MathHelper::Multiply(GetForce(), time_step));
-	if (speed > 0.0f) 
-	{
-		float dec = deceleration_ * time_step;
-		
-		if (speed > 0.0f) // 0으로 안나눠지게
-		{
-			float new_speed = MathHelper::Max(speed - dec, 0.0f);
-			float scale_factor = new_speed / speed;
-			force_vector_ = MathHelper::Multiply(GetForce(), scale_factor);
-			//force_vector_.x *= scale_factor;
-			//force_vector_.y *= scale_factor;
-			//force_vector_.z *= scale_factor;
-		}
-	}
-}
+	DirectX::XMFLOAT3 delta = MathHelper::Multiply(GetForce(), time_step);
+	float force = MathHelper::Length_XZ(delta);
 
-void Player::ApplyGravity(float time_step)
-{
-	if (velocity_vector_.y > -300.0f)
-	{
-		velocity_vector_.y -= GRAVITY * time_step;
+	if (true == on_ground_) {
+		if (force > 0.0f) {
+			float friction = FRICTION * time_step;
+			float new_force = MathHelper::Max(force - friction, 0.0f);
+
+			DirectX::XMFLOAT3 calculated_force = MathHelper::Multiply(GetForce(), new_force / force);
+			force_vector_.x = calculated_force.x;
+			//force_vector_.y = calculated_force.y;
+			force_vector_.z = calculated_force.z;
+		}
 	}
 }
 
@@ -459,6 +464,7 @@ void Player::ResetPlayer()
 	prev_player_pitch_ = 0.0f;
 	// 받은 pitch 변화값 총량
 	total_pitch_ = 0;
+	total_yaw_ = 0;
 
 	rotation_quat_ = { 0, 0, 0, 1 };						// 초기 쿼터니언 (단위 쿼터니언)
 	rotation_matrix_ = MathHelper::Identity_4x4();		// 회전 행렬

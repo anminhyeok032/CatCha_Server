@@ -15,6 +15,12 @@ public:
     // 차징 점프
     virtual void ChargingJump(Player* player, float jump_power) = 0;
 
+    // 차징 점프를 위한 고양이 쿼터니언(yaw 회전이 추가된)
+    virtual void UpdateYaw(Player* player, float degree) = 0;
+
+ 	// 중력 적용
+    virtual void ApplyGravity(Player* player, float time_step) = 0;
+
     // 충돌 처리
     virtual void CheckIntersects(Player* player, float deltaTime) = 0;
 

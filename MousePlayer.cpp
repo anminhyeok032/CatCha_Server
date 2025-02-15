@@ -56,6 +56,14 @@ void MousePlayer::Jump(Player* player)
 
 
 
+void MousePlayer::ApplyGravity(Player* player, float time_step)
+{
+    if (player->velocity_vector_.y > -300.0f)
+    {
+        player->velocity_vector_.y -= GRAVITY * time_step;
+    }
+}
+
 void MousePlayer::CheckIntersects(Player* player, float deltaTime)
 {
     // 1. bounding sphere를 이용해 검사 범위 축소

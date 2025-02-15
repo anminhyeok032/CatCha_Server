@@ -52,7 +52,7 @@ constexpr float CAT_ATTACK_TIME = 1.33333337f / 2.0f;
 constexpr float CAT_PUNCH_POWER = 250.0f;
 constexpr int	CAT_ATTACK_DAMAGE = 50;
 constexpr float CAT_STUN_TIME = 1.6666666f / 2.0f;
-constexpr float CHARGING_JUMP_FORCE = 400.0f;
+constexpr float CHARGING_JUMP_FORCE = 300.0f;
 constexpr float CAT_MAX_JUMP_CHARGING_TIME = 2.0f;
 // mouse
 constexpr float MOUSE_BITE_TIME = 0.416666657f;
@@ -177,8 +177,9 @@ extern concurrency::concurrent_priority_queue<TIMER_EVENT> commandQueue;
 extern concurrency::concurrent_priority_queue<TIMER_EVENT> AI_Queue;
 
 constexpr float GRAVITY = 980.0f;
-constexpr float FRICTION = 0.99f;
+constexpr float FRICTION = 100.0f;
 constexpr float STOP_THRESHOLD = 0.9f;	// 속도가 이 값보다 작아지면 멈추는 것으로 간주
+
 
 extern void print_error(const char* msg, int err_no);
 extern int GetSessionNumber(bool is_cat);
@@ -198,7 +199,8 @@ struct ObjectOBB
 	DirectX::BoundingOrientedBox obb;
 	DirectX::XMVECTOR worldAxes[3];         // 충돌 계산을 위한 월드좌표계에서의 축
 };
-
+// 고양이 차징 점프 카메라 각 계산을 위한 값
+constexpr float RIGHT_ANGLE_RADIAN = DirectX::XMConvertToRadians(70.0f);
 
 #define EPSILON					1.0e-10f
 

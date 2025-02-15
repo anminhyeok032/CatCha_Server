@@ -58,6 +58,7 @@ struct CS_ROTATE_PACKET {
 	unsigned char	size;
 	char			type;
 	float			player_pitch;
+	float			player_yaw;
 };
 
 struct CS_SYNC_PLAYER_PACKET {

@@ -239,6 +239,7 @@ void GameSession::BroadcastSync()
         p.x = players_[pl.first]->position_.x;
         p.y = players_[pl.first]->position_.y;
         p.z = players_[pl.first]->position_.z;
+
         p.quat_x = players_[pl.first]->rotation_quat_.x;
         p.quat_y = players_[pl.first]->rotation_quat_.y;
         p.quat_z = players_[pl.first]->rotation_quat_.z;
@@ -246,7 +247,6 @@ void GameSession::BroadcastSync()
 
         for (auto& player : players_) // 세션에 속한 클라이언트 목록
         {
-            if(pl.first == player.first) continue; // 자기 자신 제외
             if (pl.second)   player.second->DoSend(&p);
         }
     }

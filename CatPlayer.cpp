@@ -204,6 +204,7 @@ void CatPlayer::CheckIntersects(Player* player, float deltaTime)
             }
 
             player->on_ground_ = true;
+            player->force_vector_.y = 0.0f;
             player->velocity_vector_.y = 0.0f;
             slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
 
@@ -337,6 +338,7 @@ bool CatPlayer::CheckCheeseIntersects(Player* player, float deltaTime)
                 }
 
                 player->on_ground_ = true;
+                player->force_vector_.y = 0.0f;
                 player->velocity_vector_.y = 0.0f;
                 slide_vector = DirectX::XMVectorSetY(slide_vector, 0.0f);
 
@@ -579,10 +581,14 @@ void CatPlayer::ChargingJump(Player* player, float jump_power)
         // 점프 시작으로 변경
         player->obj_state_ = Object_State::STATE_JUMP_START;
   
-        player->velocity_vector_.y = CHARGING_JUMP_FORCE * jump_power;
+        //player->velocity_vector_.y = CHARGING_JUMP_FORCE * jump_power;
         // 힘으로 추가 적용
+        DirectX::XMMATRIX rotate_matrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&rotation_cat_quat_));
+        DirectX::XMFLOAT3 look_ = MathHelper::Normalize(MathHelper::Multiply(DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), rotate_matrix));
+
+
         player->force_vector_ = MathHelper::Add(player->force_vector_, MathHelper::Multiply(
-            player->look_, CHARGING_JUMP_FORCE * jump_power));
+           look_, CHARGING_JUMP_FORCE * jump_power));
 
         // 점프는 한번만 적용되게 키 인풋 map에서 삭제
         player->keyboard_input_[Action::ACTION_JUMP] = false;
@@ -619,6 +625,20 @@ void CatPlayer::ActionFourCharging(Player* player, float deltaTime)
     {
         player->keyboard_input_[Action::ACTION_FOUR] = false;
     }
+}
+
+void CatPlayer::UpdateYaw(Player* player, float degree)
+{
+    DirectX::XMStoreFloat4(&rotation_cat_quat_, DirectX::XMLoadFloat4(&player->rotation_quat_));
+
+    DirectX::XMStoreFloat4(&rotation_cat_quat_, DirectX::XMQuaternionMultiply(
+        DirectX::XMLoadFloat4(&rotation_cat_quat_),
+        DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&player->GetRight()), degree)));
+}
+
+void CatPlayer::ApplyGravity(Player* player, float time_step)
+{
+    player->velocity_vector_.y -= GRAVITY * time_step;
 }
 
 

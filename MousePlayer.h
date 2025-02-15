@@ -29,6 +29,11 @@ public:
 	// 차징 점프
 	void ChargingJump(Player* player, float jump_power) override {};
 	void ActionFourCharging(Player* player, float deltaTime) override {};
+	// 차징 점프를 위한 고양이 쿼터니언(yaw 회전이 추가된)
+	void UpdateYaw(Player* player, float degree) override {};
+
+	// 중력 적용
+	void ApplyGravity(Player* player, float time_step) override;
 
 	// 충돌 처리
 	void CheckIntersects(Player* player, float deltaTime) override;
