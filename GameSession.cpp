@@ -83,7 +83,6 @@ void GameSession::UpdateAI()
     {
         deltaTime = (AI_UPDATE_PERIOD_INT / 5) / 1000.0f;
     }
-    std::cout << deltaTime << std::endl;
     // 움직인 AI의 Postion만 업데이트 하도록 int 4마리의 움직임 여부를 파싱해서 담음
     for (auto& pl : ai_players_)
     {

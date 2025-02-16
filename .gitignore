@@ -2,7 +2,6 @@
 /Debug
 /Release 
 /x64
-*.exe 
 *.ilk 
 *.pdb 
 *.obj 
@@ -15,4 +14,3 @@
 *.db 
 *.iobj
 *.ipdb
-/TempClient/Client/LabProject/.vs/LabProjects
