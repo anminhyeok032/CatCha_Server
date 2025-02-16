@@ -18,6 +18,11 @@ void GameSession::Update()
     {
         // 업데이트 요청이 없으면
         if(pl.second->needs_update_.load() == false) continue;
+        if (pl.second->disconnect_.load() == true)
+        {
+            DisconnectPlayer(pl.first);
+            continue;
+        }
 
         if (true == pl.second->UpdatePosition(deltaTime))
         {
@@ -748,6 +753,21 @@ bool GameSession::CheckGameOver()
     // 아직 게임 시작 안되었을때,
     if (false == is_game_start_)
     {
+        // 게임 시작전 접속 종료한 플레이어 삭제
+        {
+            std::lock_guard<std::mutex> ll{ mt_session_state_ };
+            for (auto it = players_.begin(); it != players_.end(); )
+            {
+                if (it->second->player_server_state_ == PLAYER_STATE::PS_FREE)
+                {
+                    it = players_.erase(it);
+                }
+                else
+                {
+                    ++it;
+                }
+            }
+        }
         game_over = game_over_.load();
         return game_over;
     }
@@ -848,6 +868,13 @@ void GameSession::MovePlayerToWaitngSession()
             std::lock_guard<std::mutex> lg{ players_[i]->mt_player_server_state_ };
             players_[i]->player_server_state_ = PLAYER_STATE::PS_ALLOC;
             players_[i]->ResetPlayer();
+            // 도중에 나간 플레이어는 제외
+            if (players_[i]->player_server_state_ == PLAYER_STATE::PS_FREE 
+                && players_[i]->socket_ == INVALID_SOCKET)
+            {
+                players_.erase(i);
+                continue;
+            }
 
             int* temp_session_num = new int(-1);
             int client_id = GetWaitingPlayerNum();
@@ -875,5 +902,49 @@ void GameSession::MovePlayerToWaitngSession()
     }
 
     //session_state_ = SESSION_STATE::SESSION_WAIT;
+
+}
+
+void GameSession::DisconnectPlayer(int num)
+{
+    std::lock_guard<std::mutex> ll{ mt_session_state_};
+    // 게임이 시작한 상태에서는 
+    if (is_game_start_ == true)
+    {
+        // 고양이가 나간 경우
+        if (players_[num]->character_id_ == NUM_CAT)
+        {
+            players_[num]->player_server_state_ = PLAYER_STATE::PS_FREE;
+            is_game_start_ = false;
+            game_over_.store(true);
+            players_[num]->socket_ = INVALID_SOCKET;
+            RequestSendGameEvent(GAME_EVENT::GE_WIN_MOUSE);
+        }
+        // 생쥐가 나간 경우
+        else
+        {
+            players_[num]->player_server_state_ = PLAYER_STATE::PS_FREE;
+            alive_mouse_.erase(num);
+            players_[num]->socket_ = INVALID_SOCKET;
+            players_[num]->obj_state_ = Object_State::STATE_DEAD;
+        }
+    }
+    else
+    {
+        // 고양이가 나간 경우
+        if (players_[num]->character_id_ == NUM_CAT)
+        {
+            players_[num]->player_server_state_ = PLAYER_STATE::PS_FREE;
+            players_[num]->socket_ = INVALID_SOCKET;
+            session_state_ = SESSION_STATE::SESSION_WAIT;
+        }
+        // 생쥐가 나간 경우
+        else
+        {
+            players_[num]->player_server_state_ = PLAYER_STATE::PS_FREE;
+            alive_mouse_.erase(num);
+            players_[num]->socket_ = INVALID_SOCKET;
+        }
+    }
 
 }

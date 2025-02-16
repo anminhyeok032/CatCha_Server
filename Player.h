@@ -54,6 +54,7 @@ public:
 
 	// 플레이어 업데이트 여부
 	std::atomic<bool> needs_update_{ false };
+	std::atomic<bool> disconnect_{ false };
 
 	bool request_send_escape_ = false;
 	bool request_send_dead_ = false;

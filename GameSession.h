@@ -147,6 +147,7 @@ public:
 	bool CheckGameOver();																// 게임 종료 확인
 	void CheckResult();																	// 게임 결과 확인
 	void MovePlayerToWaitngSession();													// 게임 종료 후, 대기 세션으로 옮기는 함수
+	void DisconnectPlayer(int num);														// 플레이어 연결 끊김
 };
 
 extern std::unordered_map <int, GameSession> g_sessions;

@@ -21,6 +21,8 @@ std::vector<ObjectOBB> g_obbData;
 DirectX::BoundingOrientedBox g_EscapeOBB;
 VoxelPatternManager g_voxel_pattern_manager;
 
+void Disconnect(CompletionKey* key);
+
 int GetSessionNumber(bool is_cat)
 {
 	int room_num = 0;
@@ -156,18 +158,19 @@ void Worker()
 		Over_IO* over = nullptr;
 		BOOL ret = GetQueuedCompletionStatus(g_h_iocp, &bytes, &key, (LPOVERLAPPED*)&over, INFINITE);
 		Over_IO* ex_over = reinterpret_cast<Over_IO*>(over);
+		CompletionKey* completionKey = reinterpret_cast<CompletionKey*>(key);
 		// add logic
 		if (FALSE == ret)
 		{
 			if (ex_over->io_key_ == IO_ACCEPT)
 			{
-				//std::cout << "Error : Accept" << std::endl;
-				//disconnect(key);
+				std::cout << "Error : Accept" << std::endl;
+				Disconnect(completionKey);
 			}
 			else
 			{
-				//std::cout << "Error : GQCS error Client [" << key << "]" << std::endl;
-				//disconnect(key);
+				std::cout << "Error : GQCS error Client [" << *completionKey->session_id << " - " << *completionKey->player_index  << "]" << std::endl;
+				Disconnect(completionKey);
 				if (ex_over->io_key_ == IO_SEND) delete ex_over;
 				continue;
 			}
@@ -176,15 +179,14 @@ void Worker()
 		{
 			if ((ex_over->io_key_ == IO_RECV) || (ex_over->io_key_ == IO_SEND))
 			{
-				//std::cout << "Error : Client [" << key << "]" << std::endl;
-				//disconnect(key);
+				std::cout << "Error : Client [" << *completionKey->session_id << " - " << *completionKey->player_index << "]" << std::endl;
+				Disconnect(completionKey);
 				if (ex_over->io_key_ == IO_SEND) delete ex_over;
 				continue;
 			}
 		}
 
 		// Completion Key를 통해 세션 및 플레이어 식별
-		CompletionKey* completionKey = reinterpret_cast<CompletionKey*>(key);
 		int sessionId;
 		int playerIndex;
 		if (!completionKey || !completionKey->session_id || !completionKey->player_index)
@@ -473,6 +475,22 @@ void TimerThread()
 			continue;
 		}
 	}
+}
+
+void Disconnect(CompletionKey* key)
+{
+	{
+		std::lock_guard<std::mutex> ll(g_sessions[*key->session_id].mt_session_state_);
+		if (*key->session_id == -1)
+		{
+			g_sessions[*key->session_id].players_.erase(*key->player_index);
+		}
+		else
+		{
+			g_sessions[*key->session_id].players_[*key->player_index]->disconnect_.store(true);
+		}
+	}
+
 }
 
 int main()

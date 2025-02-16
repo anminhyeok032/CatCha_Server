@@ -189,7 +189,6 @@ bool AIPlayer::UpdatePosition(float deltaTime)
 
             left_distance -= dist_next_tile;
 
-            // TODO : path erase 사용 문제 해결
             // 현재 경로에서 제거
             path_.erase(path_.begin());
             SetBoundingSphere();
