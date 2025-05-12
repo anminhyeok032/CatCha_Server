@@ -40,10 +40,21 @@ CatCha_Server/
 ```
 
 ##  실행
-다운로드된 폴더 내 `Catcha_Server.exe`를 직접 실행
-```bash
-Catcha_Server/Catcha_Server.exe
-```
+1. **서버 실행**
+다운로드된 폴더 내 `Catcha_Server.exe` 실행
+   ```bash
+   Catcha_Server/Catcha_Server.exe
+   ```
+2. **클라이언트 준비 및 실행**
+   - 클라이언트 다운로드:
+     ```bash
+     https://github.com/Guigak/Catcha/tree/Networkver
+     ```
+   - `networkip.txt` 파일을 열어 서버의 IPv4 주소를 입력하고 저장
+   - 클라이언트 폴더 내 `Catcha.exe` 실행
+     ```bash
+     Catcha/Catcha.exe
+     ```
 
 ##  Movement & Controls (이동 및 조작)
 1. **클라이언트 입력**: 키보드(이동) 및 마우스(회전) 입력 패킷 전송
