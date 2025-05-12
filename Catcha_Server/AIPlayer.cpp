@@ -84,8 +84,7 @@ void AIPlayer::FindPath(int target_x, int target_z)
 			// 시작 노드 추가
 			path_.push_back({ current_x_, current_z_ });
 
-			// 경로 뒤집기
-			std::reverse(path_.begin(), path_.end());
+			// 경로 완성
             is_reached_ = false;
 			break;
 		}
@@ -169,7 +168,7 @@ bool AIPlayer::UpdatePosition(float deltaTime)
         float current_z = static_cast<float>(current_z_) * TILE_SIZE + tile_map_offset_z;
 
         // 다음 타일 목표 위치
-        std::pair<int, int> next_tile = path_.front();
+        std::pair<int, int> next_tile = path_.back();
         float target_x = static_cast<float>(next_tile.first) * TILE_SIZE + tile_map_offset_x;
         float target_z = static_cast<float>(next_tile.second) * TILE_SIZE + tile_map_offset_z;
 
@@ -190,7 +189,7 @@ bool AIPlayer::UpdatePosition(float deltaTime)
             left_distance -= dist_next_tile;
 
             // 현재 경로에서 제거
-            path_.erase(path_.begin());
+            path_.pop_back();
             SetBoundingSphere();
         }
         // 시간 계산 값 이용해서 다음 노드로 이동해서 Position_ 업데이트
