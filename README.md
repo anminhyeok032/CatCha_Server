@@ -1,5 +1,8 @@
 # CatCha Server Project
 
+##  프로젝트 게임 플레이영상
+[![Watch the Demo Video](https://img.youtube.com/vi/ojGJYacFAhw/0.jpg)](https://www.youtube.com/watch?v=ojGJYacFAhw&t=2s)
+
 ##  프로젝트 구조
 ```
 CatCha_Server/
