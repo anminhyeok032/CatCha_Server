@@ -1,6 +1,6 @@
 #pragma once
 constexpr int PORT_NUM = 4000;
-constexpr int BUF_SIZE = 200;
+constexpr int BUF_SIZE = 256;
 constexpr int NAME_SIZE = 25;
 constexpr int PASSWORD_SIZE = 25;
 
@@ -52,6 +52,7 @@ struct CS_MOVE_PACKET {
 	unsigned char	size;
 	char			type;
 	uint8_t			keyinput;
+	unsigned	move_time;
 };
 
 struct CS_ROTATE_PACKET {
@@ -125,11 +126,13 @@ struct SC_REMOVE_PLAYER_PACKET {
 struct SC_MOVE_PLAYER_PACKET {
 	unsigned char	size;
 	char			type;
+	int				room_num;
 	int				id;								// 서버에 접속해 있는 캐릭터 번호
 	float 			x, y, z;						// 움직인 위치
 	float			player_pitch;					// rotate 정보	
 	unsigned char	state;							// Object_State와 is_attacked를 합친 값
 	unsigned char	curr_hp;						// (0~100) current_hp
+	unsigned int	move_time;						// stress test를 위한 시간
 };
 
 struct SC_SYNC_PLAYER_PACKET {
@@ -165,6 +168,7 @@ struct SC_SET_MY_ID_PACKET {
 	unsigned char	size;
 	char			type;
 	unsigned char	my_id;							// 자신의 아이디 번호
+	int				room_num;
 };
 
 struct SC_GAME_STATE_PACKET {

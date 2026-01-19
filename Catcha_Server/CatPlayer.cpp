@@ -558,7 +558,7 @@ void CatPlayer::ActionOne(Player* player)
 	{
 		return;
 	}
-    std::cout << "공격****" << std::endl;
+    //std::cout << "공격****" << std::endl;
     player->moveable_ = false;
     player->stop_skill_time_ = CAT_ATTACK_TIME;
     player->obj_state_ = Object_State::STATE_ACTION_ONE;

@@ -37,6 +37,9 @@ public:
 	std::unordered_map<Action, bool> keyboard_input_;
 	uint8_t key_ = 0;
 
+	// 동접 체크용
+	unsigned int last_connect_time;
+
 
 public:
 	// Player 초기화를 위한 가상 함수

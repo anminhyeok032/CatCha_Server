@@ -52,6 +52,7 @@ void Player::SendMyPlayerNumber()
 	SC_SET_MY_ID_PACKET p;
 	p.size = sizeof(p);
 	p.type = SC_SET_MY_ID;
+	p.room_num = *comp_key_.session_id;
 	p.my_id = *comp_key_.player_index;
 	DoSend(&p);
 }
@@ -81,7 +82,7 @@ void Player::ProcessPacket(char* packet)
 		strcpy_s(password, p->password);
 
 		// TODO : SQL 연결 작업 추가 필요
-		std::cout << name << " login " << std::endl;
+		//std::cout << name << " login " << std::endl;
 
 		SendLoginInfoPacket(true);
 
@@ -90,7 +91,7 @@ void Player::ProcessPacket(char* packet)
 	case CS_CHOOSE_CHARACTER:
 	{
 		CS_CHOOSE_CHARACTER_PACKET* p = reinterpret_cast<CS_CHOOSE_CHARACTER_PACKET*>(packet);
-		std::cout << "캐릭터 선택 : " << (p->is_cat ? "Cat" : "Mouse") << std::endl;
+		//std::cout << "캐릭터 선택 : " << (p->is_cat ? "Cat" : "Mouse") << std::endl;
 
 		{
 			std::lock_guard<std::mutex> lg{ mt_player_server_state_ };
@@ -110,7 +111,7 @@ void Player::ProcessPacket(char* packet)
 
 			// 캐릭터 선택
 			g_sessions[session_id].SetCharacter(session_id, client_id, p->is_cat);
-			std::cout << "[ " << name << " ] - " << "[ " << session_id << " ] 세션에 " << client_id << "번째 플레이어로 " << (p->is_cat ? "Cat" : "Mouse") << "로 입장" << std::endl;
+			//std::cout << "[ " << name << " ] - " << "[ " << session_id << " ] 세션에 " << client_id << "번째 플레이어로 " << (p->is_cat ? "Cat" : "Mouse") << "로 입장" << std::endl;
 
 			// 새로운 플레이어 receive
 			g_sessions[session_id].players_[client_id]->prev_packet_.clear();
@@ -125,6 +126,7 @@ void Player::ProcessPacket(char* packet)
 	{
 		CS_MOVE_PACKET* p = reinterpret_cast<CS_MOVE_PACKET*>(packet);
 		key_ = p->keyinput;
+		last_connect_time = p->move_time;
 		if (character_state_)
 		{
 			character_state_->InputKey(this, key_);

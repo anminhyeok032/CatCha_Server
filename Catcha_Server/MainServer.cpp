@@ -140,12 +140,12 @@ int GetWaitingPlayerNum()
 			else
 			{
 				g_sessions[-1].players_.emplace(i, std::make_unique<Player>());
-				std::cout << "Player [" << i << "] is waiting" << std::endl;
+				//std::cout << "Player [" << i << "] is waiting" << std::endl;
 				return player_num;
 			}
 		}
 	}
-	std::cout << "Player [" << player_num << "] is waiting" << std::endl;
+	//std::cout << "Player [" << player_num << "] is waiting" << std::endl;
 	return player_num;
 }
 
@@ -250,12 +250,19 @@ void Worker()
 
 				// 해당 캐릭터 버퍼 재조립
 				auto& buffer = player->prev_packet_;
-				buffer.insert(buffer.end(), p, p + bytes);
+				buffer.insert(buffer.end(), ex_over->send_buf_, ex_over->send_buf_ + bytes);
 
 				// 패킷 처리
 				while (buffer.size() > 0)
 				{
 					size_t packet_size = static_cast<size_t>(buffer[0]);
+					/*if (packet_size > 100)
+					{
+						std::cout << "player num : " << playerIndex << " packet_size : " << packet_size << " buffer size : " << buffer.size() << std::endl;
+						buffer.clear();
+						g_sessions[sessionId].players_.erase(playerIndex);
+						break;
+					}*/
 
 					if (packet_size <= buffer.size())
 					{
@@ -269,7 +276,7 @@ void Worker()
 					{
 						std::cout << "player num : " << playerIndex << " packet_size : " << packet_size << " buffer size : " << buffer.size() << std::endl;
 						std::cout << "패킷이 완전하지 않음\n";
-						buffer.clear();
+						//buffer.clear();
 						break;
 					}
 				}
@@ -281,6 +288,7 @@ void Worker()
 				else
 				{
 					// 새로운 세션으로 임시 세션 플레이어 정보 옮기
+					std::lock_guard<std::mutex> ll{ g_sessions[sessionId].mt_session_state_ };
 					g_sessions[sessionId].players_.erase(playerIndex);
 				}
 				

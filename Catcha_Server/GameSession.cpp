@@ -56,7 +56,7 @@ void GameSession::Update()
         game_over_.store(true);
         if (true == is_reset_ai_.load() && true == is_reset_timer_.load())
         {
-            std::cout << "[ " << session_num_ << " ] - Player Update Thread 정지" << std::endl;
+            //std::cout << "[ " << session_num_ << " ] - Player Update Thread 정지" << std::endl;
             MovePlayerToWaitngSession();
         }
         else
@@ -115,7 +115,7 @@ void GameSession::UpdateAI()
     else
     {
         is_reset_ai_.store(true);
-        std::cout << "[ " << session_num_ << " ] - AI Thread 정지" << std::endl;
+        //std::cout << "[ " << session_num_ << " ] - AI Thread 정지" << std::endl;
     }
 }
 
@@ -196,6 +196,9 @@ void GameSession::BroadcastPosition(int player)
     p.player_pitch = pl->total_pitch_;
     // 쌓인 pitch 초기화
     pl->total_pitch_ = 0.0f;
+    
+    p.room_num = session_num_;
+    p.move_time = static_cast<unsigned>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
     
     // state와 cat_attacked를 파싱해서 unsigned char로 변환
     unsigned char state_value = static_cast<unsigned char>(pl->obj_state_);
@@ -373,7 +376,7 @@ void GameSession::BroadcastTime()
     {
         is_game_start_ = false;
         is_reset_timer_.store(true);
-        std::cout << "[ " << session_num_ << " ] - Time Thread 정지" << std::endl;
+        //std::cout << "[ " << session_num_ << " ] - Time Thread 정지" << std::endl;
     }
 }
 
@@ -388,13 +391,13 @@ void GameSession::BroadcastDoorOpen()
         if (pl.second)   pl.second->DoSend(&p);
     }
 
-    std::cout << "[ " << session_num_ << " ] - 치즈 다먹어서 문 열림" << std::endl;
+    //std::cout << "[ " << session_num_ << " ] - 치즈 다먹어서 문 열림" << std::endl;
     is_door_open_ = true;
 }
 
 void GameSession::BroadcastCatWin()
 {
-    std::cout << "[ " << session_num_ << " ] - CAT PLAYER WIN" << std::endl;
+    //std::cout << "[ " << session_num_ << " ] - CAT PLAYER WIN" << std::endl;
     SC_GAME_STATE_PACKET p;
     p.size = sizeof(p);
     p.type = SC_GAME_WIN_CAT;
