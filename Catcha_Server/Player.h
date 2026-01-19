@@ -60,6 +60,15 @@ public:
 	bool request_send_dead_ = false;
 	bool request_send_reborn_ = false;
 
+	// 지연 보정을 위한 시간 변수
+	std::chrono::system_clock::time_point last_packet_arrival_time_;
+	const float EXPECTED_PACKET_INTERVAL = UPDATE_PERIOD; // (클라이언트 전송 주기에 맞춰 수정)
+	const float MAX_LATENCY_COMPENSATION = 0.2f;   // 최대 0.2초까지만 예측 보정 (순간이동 방지)
+
+	// 지연 보정값을 누적할 아토믹 변수 (락 프리)
+	std::atomic<float> pending_latency_x_{ 0.0f };
+	std::atomic<float> pending_latency_z_{ 0.0f };
+
 	// bite시 생기는 구의 중점
 	DirectX::XMFLOAT3 bite_center_ = DirectX::XMFLOAT3();
 
@@ -131,6 +140,11 @@ public:
 	// 움직임 변화 감지를 위한 bool return
 	bool UpdatePosition(float deltaTime);
 
+	DirectX::XMFLOAT3 GetInputDirection(uint8_t key_input);
+
+	// 지연 보정 함수
+	void CompensateLatency(float latency, DirectX::XMFLOAT3 direction);
+
 
 	void MoveForward();
 	void MoveBack();
@@ -142,4 +156,9 @@ public:
 	DirectX::XMFLOAT3 GetRight()	const { return right_; }
 
 	void ResetPlayer();
+
+	void AtomicAddFloat(std::atomic<float>& target, float value) {
+		float current = target.load();
+		while (!target.compare_exchange_weak(current, current + value));
+	}
 };

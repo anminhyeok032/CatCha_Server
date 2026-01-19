@@ -7,34 +7,55 @@
 
 void GameSession::Update()
 {
-    bool need_update_send = false;
+    // 현재 시간 측정
     uint64_t current_time = GetServerTime();
-    int move_players = 0;
-   
-    float deltaTime = (current_time - lastupdatetime_) / 1000.0f;
 
-    // 움직인 플레이어의 Postion만 업데이트 하도록 int 5마리의 움직임 여부를 파싱해서 담음
-    for (auto& pl : players_)
-    {
-        // 업데이트 요청이 없으면
-        if(pl.second->needs_update_.load() == false) continue;
-        if (pl.second->disconnect_.load() == true)
-        {
-            DisconnectPlayer(pl.first);
-            continue;
-        }
+    // 지난번 업데이트 이후 흐른 시간 계산 (경과 시간)
+    double frameTime = (current_time - lastupdatetime_) / 1000.0;
 
-        if (true == pl.second->UpdatePosition(deltaTime))
-        {
-            need_update_send = true;
-            move_players |= (1 << pl.first);
-            //std::cout << "Player " << pl.first << " Move" << std::endl;
-            //std::cout << "Position : " << pl.second->position_.x << ", " << pl.second->position_.y << ", " << pl.second->position_.z << std::endl;
-        }
-    }
+    // 타임 스파이크 방지 (Spiral of Death 방지)
+    // 렉이 너무 심하게 걸려도 한 번에 0.25초(250ms) 이상은 처리하지 않도록 제한
+    if (frameTime > 0.25) frameTime = 0.25;
 
-    // 현재 세션 시간 업데이트
+    accumulator_ += frameTime;
+
+    // lastupdatetime_ 갱신
     lastupdatetime_ = current_time;
+
+    // -------------------------------------------------------------
+    // 물리 업데이트 루프
+    // -------------------------------------------------------------
+    const double FIXED_STEP = UPDATE_PERIOD; // 1/60.0
+    const int MAX_STEPS = 5; // 안전장치
+
+    bool need_update_send = false;
+    int move_players = 0;
+    int steps = 0;
+
+    // 누적된 시간이 고정 스텝보다 크면, 그만큼 잘라서 사용
+    while (accumulator_ >= FIXED_STEP && steps < MAX_STEPS)
+    {
+        for (auto& pl : players_)
+        {
+            if (pl.second->needs_update_.load() == false) continue;
+            if (pl.second->disconnect_.load() == true)
+            {
+                DisconnectPlayer(pl.first);
+                continue;
+            }
+
+            // 고정된 시간(FIXED_STEP)으로 물리 연산
+            if (pl.second->UpdatePosition(static_cast<float>(FIXED_STEP)))
+            {
+                need_update_send = true;
+                move_players |= (1 << pl.first);
+            }
+        }
+
+        // 남은 자투리 시간은 accumulator_에 남아 다음 프레임에 사용
+        accumulator_ -= FIXED_STEP;
+        steps++;
+    }
 
     // 움직임 업데이트가 필요할때만 클라이언트에게 브로드캐스팅
     if (true == need_update_send)

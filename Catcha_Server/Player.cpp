@@ -125,6 +125,42 @@ void Player::ProcessPacket(char* packet)
 	case CS_MOVE:
 	{
 		CS_MOVE_PACKET* p = reinterpret_cast<CS_MOVE_PACKET*>(packet);
+
+		// 패킷 내용 미리 파싱 (InputKey 호출 전)
+		bool is_pressed = p->keyinput & 0x01;
+		uint8_t key_stroke = p->keyinput >> 1;
+		Action action = static_cast<Action>(key_stroke);
+
+		// 패킷이 이동 시작(Pressed)을 의미하는지 확인
+		// 키를 뗄 때(Released)는 보정하면 안 됨 (미끄러짐 방지)
+		if (true == is_pressed)
+		{
+			auto now = std::chrono::system_clock::now();
+			if (last_packet_arrival_time_.time_since_epoch().count() > 0)
+			{
+				std::chrono::duration<float> diff = now - last_packet_arrival_time_;
+				float packet_gap = diff.count();
+				float latency = packet_gap - EXPECTED_PACKET_INTERVAL;
+
+				// 지연이 발생했다면
+				if (latency > 0.05f) // 50ms 이상
+				{
+					if (latency > MAX_LATENCY_COMPENSATION)
+						latency = MAX_LATENCY_COMPENSATION;
+
+					// 현재 속도가 아니라, 입력된 키의 방향을 구함
+					DirectX::XMFLOAT3 input_dir = GetInputDirection(p->keyinput);
+
+					// 입력된 방향으로 지연 보정 수행
+					CompensateLatency(latency, input_dir);
+				}
+			}
+		}
+
+		last_packet_arrival_time_ = std::chrono::system_clock::now();
+
+		// --------------------------------------------------------------------
+
 		key_ = p->keyinput;
 		last_connect_time = p->move_time;
 		if (character_state_)
@@ -297,6 +333,23 @@ bool Player::UpdatePosition(float deltaTime)
 		// 물리 처리
 		moved = character_state_->CalculatePhysics(this, deltaTime);
 
+
+		// 지연된 값이 있다면 delta값에 추가
+		float latency_x = pending_latency_x_.exchange(0.0f);
+		float latency_z = pending_latency_z_.exchange(0.0f);
+
+		// 수정된 지연 보정 위치
+		if (abs(latency_x) > 0.0001f || abs(latency_z) > 0.0001f)
+		{
+			delta_position_.x += latency_x;
+			delta_position_.z += latency_z;
+
+			// 지연 보정이 있으면 무조건 움직임 처리
+			moved = true;
+
+			// std::cout << "Inject Latency into Delta: " << latency_x << ", " << latency_z << std::endl;
+		}
+
 		// 충돌 처리
 		character_state_->CheckIntersects(this, deltaTime);
 
@@ -329,6 +382,62 @@ bool Player::UpdatePosition(float deltaTime)
 		return moved;
 	}
 	return false;
+}
+
+
+// 패킷의 키 정보를 바탕으로 이동할 방향 벡터를 리턴하는 함수
+DirectX::XMFLOAT3 Player::GetInputDirection(uint8_t key_input)
+{
+	float x = 0.0f;
+	float z = 0.0f;
+
+	uint8_t key_stroke = key_input >> 1;
+	Action action = static_cast<Action>(key_stroke);
+
+	switch (action)
+	{
+	case Action::MOVE_FORWARD: z += 1.0f; break;
+	case Action::MOVE_BACK:    z -= 1.0f; break;
+	case Action::MOVE_LEFT:    x -= 1.0f; break;
+	case Action::MOVE_RIGHT:   x += 1.0f; break;
+	}
+
+	DirectX::XMVECTOR vLook = DirectX::XMLoadFloat3(&look_);
+	DirectX::XMVECTOR vRight = DirectX::XMLoadFloat3(&right_);
+
+	DirectX::XMVECTOR vDir = DirectX::XMVectorZero();
+	vDir = DirectX::XMVectorAdd(vDir, DirectX::XMVectorScale(vLook, z));
+	vDir = DirectX::XMVectorAdd(vDir, DirectX::XMVectorScale(vRight, x));
+
+	vDir = DirectX::XMVector3Normalize(vDir);
+
+	DirectX::XMFLOAT3 dir;
+	DirectX::XMStoreFloat3(&dir, vDir);
+	return dir;
+}
+
+void Player::CompensateLatency(float latency, DirectX::XMFLOAT3 direction)
+{
+	if (!character_state_) return;
+
+	// 지연 보정 적용 비율 (0.3)
+	// 0.3f의 의미: 가속 구간임을 감안하여 평균 속도로 보정한다 + 과도한 튀는 현상을 막는다
+	const float COMPENSATION_RATIO = 0.3f;
+
+	// 거리 = 방향 * 최대속도 * 지연시간 * 보정비율
+	DirectX::XMVECTOR vDir = DirectX::XMLoadFloat3(&direction);
+
+	// 비율을 곱해서 보정량을 줄임
+	DirectX::XMVECTOR vDelta = DirectX::XMVectorScale(vDir, max_speed_ * latency * COMPENSATION_RATIO);
+
+	DirectX::XMFLOAT3 delta_move;
+	DirectX::XMStoreFloat3(&delta_move, vDelta);
+
+	// Atomic 누적
+	AtomicAddFloat(pending_latency_x_, delta_move.x);
+	AtomicAddFloat(pending_latency_z_, delta_move.z);
+
+	dirty_ = true;
 }
 
 void Player::UpdatePitch(float degree)

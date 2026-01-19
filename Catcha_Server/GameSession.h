@@ -68,6 +68,9 @@ public:
 	// 치즈 옥트리
 	std::vector<OctreeNode> cheese_octree_;
 
+	// 자투리 시간을 저장할 변수
+	double accumulator_ = 0.0;
+
 public:
 	GameSession()
 	{
