@@ -255,7 +255,7 @@ void Worker()
 				// 菩哦 贸府
 				while (buffer.size() > 0)
 				{
-					size_t packet_size = static_cast<size_t>(buffer[0]);
+					size_t packet_size = static_cast<size_t>(static_cast<unsigned char>(buffer[0]));
 					/*if (packet_size > 100)
 					{
 						std::cout << "player num : " << playerIndex << " packet_size : " << packet_size << " buffer size : " << buffer.size() << std::endl;
@@ -546,6 +546,7 @@ int main()
 
 	// 烙矫 历厘 技记
 	g_sessions.try_emplace(-1, -1);
+	g_sessions.reserve(MAX_SESSION_COUNT);
 
 
 	std::thread update_thread(UpdateThread);

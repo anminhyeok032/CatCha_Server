@@ -409,6 +409,12 @@ DirectX::XMFLOAT3 Player::GetInputDirection(uint8_t key_input)
 	vDir = DirectX::XMVectorAdd(vDir, DirectX::XMVectorScale(vLook, z));
 	vDir = DirectX::XMVectorAdd(vDir, DirectX::XMVectorScale(vRight, x));
 
+	// 길이(LengthSquared)가 너무 작으면 정규화 하지 말고 0벡터 리턴
+	if (DirectX::XMVectorGetX(DirectX::XMVector3LengthSq(vDir)) < 0.0001f)
+	{
+		return DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	}
+
 	vDir = DirectX::XMVector3Normalize(vDir);
 
 	DirectX::XMFLOAT3 dir;
@@ -419,6 +425,10 @@ DirectX::XMFLOAT3 Player::GetInputDirection(uint8_t key_input)
 void Player::CompensateLatency(float latency, DirectX::XMFLOAT3 direction)
 {
 	if (!character_state_) return;
+
+	// 방향 벡터가 0이면(정지/점프 제자리) 보정 스킵
+	if (abs(direction.x) < 0.001f && abs(direction.z) < 0.001f)
+		return;
 
 	// 지연 보정 적용 비율 (0.3)
 	// 0.3f의 의미: 가속 구간임을 감안하여 평균 속도로 보정한다 + 과도한 튀는 현상을 막는다

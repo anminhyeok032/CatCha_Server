@@ -57,16 +57,16 @@ void GameSession::Update()
         steps++;
     }
 
-    // 움직임 업데이트가 필요할때만 클라이언트에게 브로드캐스팅
-    if (true == need_update_send)
-    {
-        RequestSendPlayerUpdate(move_players);
-    }
-
 
     // 게임 종료가 안되었으면 다시 업데이트
     if (false == CheckGameOver())
     {
+        // 움직임 업데이트가 필요할때만 클라이언트에게 브로드캐스팅
+        if (true == need_update_send)
+        {
+            RequestSendPlayerUpdate(move_players);
+        }
+
         // 정해진 주기로 실행하기 위해 queue에 다시 담기
         TIMER_EVENT ev{ std::chrono::system_clock::now() + std::chrono::milliseconds(UPDATE_PERIOD_INT), session_num_ };
         commandQueue.push(ev);

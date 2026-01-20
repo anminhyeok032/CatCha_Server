@@ -32,8 +32,10 @@
 
 constexpr short PORT = 4000;
 constexpr int BUFSIZE = 256;
+constexpr int MAX_PACKET_SIZE = BUFSIZE-1;
 constexpr int SESSION_MAX_USER = 5;
 constexpr int SESSION_MAX_NPC = 4;
+constexpr int MAX_SESSION_COUNT = 1000;
 
 constexpr int MAX_USER = SESSION_MAX_USER * 1000;
 constexpr int MAX_NPC = 4000;
